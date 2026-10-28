@@ -273,6 +273,21 @@ describe("envelopeLeft and groupLeft", () => {
     expect(movableFrom(row("pay", { assigned: 5_000, remaining: 5_000, card }))).toBe(0);
   });
 
+  it("lets refunded money move out, even taking Assigned below $0.00", () => {
+    const month = (assigned: number, released: number, spent: number, saved = 0) =>
+      computeEnvelopeMonth({ month: "2026-10", assigned, released, spent }, saved);
+    // Reimbursements beyond the month's spending: −$85 assigned, $107.72 refunded.
+    const reimbursed = month(-8_500, 0, -10_772);
+    expect(reimbursed.remaining).toBe(2_272);
+    expect(movableFrom(row("reimbursed", reimbursed))).toBe(2_272);
+    // Only refunds, nothing assigned: all of them can move.
+    expect(movableFrom(row("refund", month(0, 0, -3_000)))).toBe(3_000);
+    // Refunds plus money released from Saved: the released part stays put.
+    expect(movableFrom(row("mixed", month(0, 5_000, -1_000, 5_000)))).toBe(1_000);
+    // Spending that refunds only partly cancel leaves nothing refunded.
+    expect(movableFrom(row("partial", month(2_000, 0, 500)))).toBe(1_500);
+  });
+
   it("allows moves only in this month and later", () => {
     expect(canMoveIn("2026-10", "2026-10")).toBe(true);
     expect(canMoveIn("2026-11", "2026-10")).toBe(true);

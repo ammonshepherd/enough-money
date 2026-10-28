@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.37.2.
+Version described: 0.38.0.
 
 ## 1. Purpose
 
@@ -424,8 +424,10 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   can be moved). Moving lowers this envelope's Assigned and raises the other
   envelope's (`move_between_envelopes`), or returns the money to Available to
   Assign. At most `movableFrom` (`budgetMath.ts`): the smaller of Remaining
-  and Assigned, so neither goes below $0.00 and money released from Saved
-  stays in the envelope ("You can move at most $X."). Only in this month
+  and Assigned + Refunded, so Remaining stays at $0.00 or more and money
+  released from Saved stays in the envelope ("You can move at most $X.").
+  Refunds can move like Assigned money (v0.38.0), so an envelope that only
+  collects reimbursements can pass them on even if Assigned goes below $0.00. Only in this month
   and later (`canMoveIn`; a past move would change the Saved carried into
   later months) and never out of a card's payment envelope; there, and at
   $0.00, the amount is not a button.

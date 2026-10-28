@@ -211,7 +211,8 @@ non-card budget balances − all envelope money (P included)`.
   below. Tapping what is left (decided in v0.31.0) opens "Move money": an
   amount goes to another envelope's Assigned or back to Available to
   Assign, lowering this envelope's Assigned; at most the smaller of
-  Remaining and Assigned (`movableFrom`; released Saved stays put), only in
+  Remaining and Assigned + Refunded (`movableFrom`; refunds can be passed
+  on even below $0.00 Assigned, v0.38.0; released Saved stays put), only in
   this month and later (`canMoveIn`), never from a card's payment envelope
   (`MoveFromEnvelope`). Tapping line 1 opens the envelope sheet (`EnvelopeSheet`, a bottom
   sheet): group (a picker that moves the envelope to another group) and
