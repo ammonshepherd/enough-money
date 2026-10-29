@@ -584,13 +584,15 @@ export function envelopeLeft(row: EnvelopeRow): Cents {
 /**
  * How much can be moved out of an envelope (to another envelope or back to
  * Available to Assign) by lowering its Assigned: no more than is left
- * (Remaining stays at $0.00 or more) and no more than is assigned (Assigned
- * stays at $0.00 or more; money released from Saved stays put). A card's
- * payment envelope gives nothing: its money is for the card bill.
+ * (Remaining stays at $0.00 or more) and no more than was assigned or
+ * refunded this month (money released from Saved stays put). Refunds count
+ * because they came in from outside, like Assigned: an envelope that only
+ * collects reimbursements can pass them on, even taking Assigned below $0.00.
+ * A card's payment envelope gives nothing: its money is for the card bill.
  */
 export function movableFrom(row: EnvelopeRow): Cents {
   if (row.card) return 0;
-  return Math.max(0, Math.min(row.remaining, row.assigned));
+  return Math.max(0, Math.min(row.remaining, row.assigned + row.refunded));
 }
 
 /**
