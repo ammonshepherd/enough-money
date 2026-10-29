@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.38.0.
+Version described: 0.39.0.
 
 ## 1. Purpose
 
@@ -24,6 +24,10 @@ and the backup format name keep the old name.
 ## 2. Project structure
 
 ```
+index.html        the home page at / (plain HTML; see §5 Home page and guide)
+guide/index.html  the guide at /guide/
+app/index.html    the app's page at /app/
+src/site/         the home page's and guide's stylesheet and scripts (no React)
 src/models/       types, pure functions, data stores (no React)
 src/controllers/  React hooks: load data, handle actions, call models
 src/views/        React components (pages in src/views/pages/; the Budget
@@ -32,12 +36,14 @@ src/views/        React components (pages in src/views/pages/; the Budget
                   src/views/transactions/)
 src/styles.css    all styling
 public/icons/     app icons (see CLAUDE.md "App icons")
+public/guide/     the guide's screenshots (npm run guide:screenshots)
 supabase/migrations/  every schema change, applied in order
 docs/mockups/     static design mockups (reference only, not shipped)
 e2e/              Playwright UI tests (in-memory store)
 e2e-db/           Playwright UI tests against the test database
 integration/      integration and RLS tests against the test database
 scripts/          test-database seed script and its safety guard
+guide-screenshots/  Playwright specs that take the guide's pictures
 ```
 
 Key model modules: `budgetMath.ts` (all budget math), `money.ts` (parse and
@@ -103,12 +109,16 @@ always show what the store holds.
 
 `npm run dev | build | preview | typecheck | lint | format | format:check |
 test (= test:unit) | test:ui | test:integration | test:ui:db | db:seed:test |
-backup`. `npm run backup` (`scripts/backup-database.ts`) saves production's
+backup | guide:screenshots`. `npm run guide:screenshots` reseeds the test
+project, builds like `test:ui:db` and saves the guide's pictures to
+`public/guide/` (`playwright.screenshots.config.ts`, `guide-screenshots/`):
+phone shots at 390×844 (2× pixels) and one desktop shot at 1280×800,
+signed in as test user A, saving nothing (dialogs are cancelled). `npm run backup` (`scripts/backup-database.ts`) saves production's
 data as the Settings → Export JSON (the `export_backup` function, run as the
 household's owner through the Supabase CLI login, no password) in
 `.backups/` (ignored by git), keeping the 5 newest. Run before every merge.
 UI tests build with the memory store into `dist-e2e/` and run against
-`vite preview` on port 4173: every spec at phone width (Pixel 7), and
+`vite preview` on port 4173, with `/app/` as their base URL: every spec at phone width (Pixel 7), and
 `*.desktop.spec.ts` at 1280×800 (the desktop layout); `test:ui:db` builds with
 `--mode test` into `dist-e2e-db/` (port 4174) and signs in as test user A.
 
@@ -208,6 +218,29 @@ These are implemented in `budgetMath.ts` and the controllers:
   forward from its last month.
 
 ## 5. Screens
+
+### Home page and guide
+
+Plain HTML pages beside the app (since v0.39.0), styled by
+`src/site/site.css` in the app's colours and type, light only, phone first.
+Both have a sticky header (coin and name, which hides below 27rem; links to
+the guide and "Open the app" at `/app/`) and a footer.
+
+- Home page (`/`): a hero ("Give every dollar a job. Keep what you don't
+  spend.", Open the app, Read the guide, a framed phone screenshot); "Three
+  numbers, and nothing hidden" (Assigned, Remaining, Saved); "What's
+  different", six features each with a screenshot, alternating sides on
+  wide screens (Saved is a reserve; no negative envelopes and the cover
+  order; card payment envelopes; review before it counts; CSV import
+  without duplicates; the number pad); smaller feature cards and the
+  desktop screenshot; a closing purple band. `src/site/home.ts` sends a
+  visit with an app hash (`/#budget/2026-10`, old links) or one opened as
+  an installed app to `/app/`, keeping the hash (`appRedirect`).
+- Guide (`/guide/`): 15 numbered steps with a contents list (sticky beside
+  the steps from 64rem), each with the screen it describes: sign in and
+  install, accounts, envelopes, assigning, adding a transaction, the cover
+  prompt, CSV import, review, Saved, moving money, credit cards, search and
+  reconcile, a new month, Settings and backup, the desktop layout.
 
 ### App shell
 

@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Supabase project and never touch real data.
 export default defineConfig({
   testDir: "./e2e",
-  use: { baseURL: "http://localhost:4173/" },
+  use: { baseURL: "http://localhost:4173/app/" },
   projects: [
     // Phone width: every spec except the desktop ones.
     {
@@ -23,7 +23,7 @@ export default defineConfig({
   webServer: {
     command:
       "VITE_DATA_STORE=memory vite build --outDir dist-e2e && vite preview --outDir dist-e2e --port 4173 --strictPort",
-    url: "http://localhost:4173/",
+    url: "http://localhost:4173/app/",
     reuseExistingServer: !process.env.CI,
   },
 });

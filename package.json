@@ -1,7 +1,7 @@
 {
   "name": "enough-money",
   "private": true,
-  "version": "0.38.0",
+  "version": "0.39.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,7 +18,8 @@
     "test:ui": "playwright test",
     "test:ui:db": "playwright test --config playwright.db.config.ts",
     "db:seed:test": "node scripts/seed-test-db.ts",
-    "backup": "node scripts/backup-database.ts"
+    "backup": "node scripts/backup-database.ts",
+    "guide:screenshots": "npm run db:seed:test && playwright test --config playwright.screenshots.config.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
