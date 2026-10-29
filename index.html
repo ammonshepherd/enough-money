@@ -4,17 +4,351 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#4b2a68" />
-    <meta name="description" content="Enough Money is a simple envelope-style budgeting app." />
-    <!-- Browser tab: the simple SVG where supported, PNG and ICO otherwise. -->
+    <meta
+      name="description"
+      content="Enough Money is an envelope budget for your household: money you don't spend is saved, envelopes never go negative, and credit cards are paid from money already set aside."
+    />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.ico" sizes="any" />
-    <!-- iPhone and iPad home screen. -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" sizes="180x180" />
-    <title>Enough Money</title>
+    <title>Enough Money: an envelope budget for your household</title>
+    <script type="module" src="/src/site/home.ts"></script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/"
+          ><img src="/icons/icon.svg" alt="" width="36" height="36" /><span class="brand-name"
+            >Enough Money</span
+          ></a
+        >
+        <nav class="site-nav" aria-label="Site">
+          <a class="hide-small" href="#different">What's different</a>
+          <a href="/guide/">Guide</a>
+          <a class="button small" href="/app/">Open the app</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div class="wrap">
+          <div>
+            <p class="eyebrow">Envelope budgeting</p>
+            <h1>Give every dollar a job. <em>Keep</em> what you don't spend.</h1>
+            <p class="lead">
+              Enough Money is an envelope budget for your household. Put money in envelopes, spend
+              from them, and watch what's left pile up as savings, safely out of reach until you
+              choose to use it.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="/app/">Open the app</a>
+              <a class="button secondary" href="/guide/">Read the guide</a>
+            </div>
+            <p class="hero-note">
+              Works on your phone, tablet or computer, and installs on your home screen. Accounts
+              are by invitation.
+            </p>
+          </div>
+          <figure class="phone">
+            <img
+              src="/guide/budget.png"
+              width="780"
+              height="1688"
+              alt="The Budget page: credit card debt, Available to Assign, and envelopes with Planned, Assigned, Spent and a Saved pill."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="section tinted" aria-labelledby="numbers-title">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="eyebrow">How an envelope works</p>
+            <h2 id="numbers-title">Three numbers, and nothing hidden</h2>
+            <p class="lead">
+              Every envelope, every month, keeps the same simple story. The arithmetic never changes
+              and never goes below zero.
+            </p>
+          </div>
+          <div class="formula">
+            <div class="formula-card">
+              <h3>Assigned</h3>
+              <p>The money you give the envelope this month, from Available to Assign.</p>
+            </div>
+            <div class="formula-card">
+              <h3>Remaining</h3>
+              <p>Assigned, minus what you spend. This is what you can spend right now.</p>
+            </div>
+            <div class="formula-card saved">
+              <h3>Saved</h3>
+              <p>
+                Whatever is left at the end of a month moves here and keeps growing, month after
+                month.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="different" aria-labelledby="different-title">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="eyebrow">What's different</p>
+            <h2 id="different-title">Built around the habits that make budgets work</h2>
+            <p class="lead">
+              Most budgeting apps track where money went. Enough Money is built to help you decide
+              where it goes, and to stop you quietly undoing those decisions.
+            </p>
+          </div>
+
+          <article class="feature">
+            <div>
+              <span class="tag">Saved is a reserve</span>
+              <h3>Unspent money is saved, not spent by accident</h3>
+              <p>
+                In many envelope apps, leftover money simply rolls into next month's balance, where
+                it is easy to spend without noticing. Here it moves into the envelope's
+                <strong>Saved</strong> reserve, marked with a purple pill and a little sparkle.
+              </p>
+              <p>
+                Saved money still belongs to the envelope, but you can only spend it after you
+                choose <strong>Move some into Remaining</strong>. Dipping into savings is always a
+                decision, never a surprise.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/envelope-sheet.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="The Groceries envelope: $354.57 remaining, and a purple Saved panel holding $80.00 with a button to move some into Remaining."
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div>
+              <span class="tag">No negative envelopes</span>
+              <h3>Overspend? Cover it now, not later</h3>
+              <p>
+                An envelope can never go below zero. If a purchase is bigger than what's left, the
+                app asks you to cover the difference before it saves, always in the same order:
+              </p>
+              <ol class="order">
+                <li>release some of this envelope's Saved,</li>
+                <li>move money from another envelope,</li>
+                <li>assign more from Available to Assign.</li>
+              </ol>
+              <p>
+                You always know where the money came from, and there's never a red number waiting to
+                be cleaned up later.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/cover-prompt.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="A prompt: Fun Money would be $25.00 short in October 2026. Envelopes can't go negative. Release $25.00 from Fun Money's Saved. Cover and save."
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div>
+              <span class="tag">Credit cards, handled</span>
+              <h3>Every card gets its own payment envelope</h3>
+              <p>
+                Each credit card has a payment envelope that fills up on its own. Buy groceries on
+                the card and the money moves from Groceries into the card's payment envelope, so the
+                cash to pay the bill is already set aside.
+              </p>
+              <p>
+                The envelope shows <strong>Available to pay</strong> and any
+                <strong>Remaining debt</strong> the envelope can't cover yet. A
+                <strong>Credit card debt</strong> banner on every page keeps the total in view.
+                Refunds and statement credits just lower what you owe.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/budget-cards.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="The Test Visa payment envelope: $42.50 available to pay and $125.00 remaining debt, between envelope groups."
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div>
+              <span class="tag">Review before it counts</span>
+              <h3>Nothing counts until you've looked at it</h3>
+              <p>
+                Imported transactions arrive <strong>Uncategorized</strong> and wait in a
+                <strong>To review</strong> list. A paycheck doesn't add to your budget until you
+                mark it as Income, and a purchase doesn't leave an envelope until you pick one.
+              </p>
+              <p>
+                Your budget only moves when you decide. Income rules can mark regular paychecks for
+                you as they're imported.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/all-accounts.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="All accounts: money in and out for the month, and a To review card holding one Uncategorized charge of $19.99."
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div>
+              <span class="tag">Your bank's file, no connection</span>
+              <h3>Import your bank's CSV, never twice</h3>
+              <p>
+                Download a CSV file from your bank or card website and choose it. Columns are
+                detected for you and remembered for each account. Your bank login never touches the
+                app.
+              </p>
+              <p>
+                Rows already imported are skipped. A bank row that matches a transaction you typed
+                in yourself is matched to it, keeping your envelope and notes, instead of being
+                added a second time.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/import-preview.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="The import preview: 4 new transactions from 2026-10-20 to 2026-10-23, one inflow marked Income by your rules, and an Import 4 transactions button."
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div>
+              <span class="tag">Made for thumbs</span>
+              <h3>A number pad that does the sums</h3>
+              <p>
+                On a phone, tapping Assigned opens a number pad along the bottom of the screen. Type
+                a new total, or tap <kbd>+</kbd> or <kbd>−</kbd> to add to or take from what's
+                already there. "500.00 + 25.00 = $525.00", no mental arithmetic.
+              </p>
+              <p>
+                Amounts fill in cents first, like a cash register: type 1, 2, 3 and you get $1.23.
+              </p>
+            </div>
+            <figure class="phone">
+              <img
+                src="/guide/assign-pad.png"
+                width="780"
+                height="1688"
+                loading="lazy"
+                alt="The Assigned number pad for Groceries showing 500.00 + 25.00 = $525.00, with digits, minus, plus and an Assign button."
+              />
+            </figure>
+          </article>
+        </div>
+      </section>
+
+      <section class="section tinted" aria-labelledby="more-title">
+        <div class="wrap">
+          <div class="section-head">
+            <p class="eyebrow">And the rest</p>
+            <h2 id="more-title">The details are thought through</h2>
+          </div>
+          <div class="cards">
+            <div class="card">
+              <h3>Transfers aren't spending</h3>
+              <p>
+                Moving money between your accounts, or paying a card, is one linked entry. It's
+                never counted as income or spending.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Split a purchase</h3>
+              <p>One store receipt, several envelopes: groceries and a gift in a single entry.</p>
+            </div>
+            <div class="card">
+              <h3>Planned is just a plan</h3>
+              <p>
+                Write down what you expect to spend. Spent turns orange when it passes the plan,
+                without blocking anything.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Start next month in one tap</h3>
+              <p>A new month offers to copy last month's plan or last month's spending.</p>
+            </div>
+            <div class="card">
+              <h3>Tracking accounts</h3>
+              <p>Follow a loan or investment account's balance without it touching your budget.</p>
+            </div>
+            <div class="card">
+              <h3>Mark it reconciled</h3>
+              <p>
+                Tick off rows that match your statement; a green bank icon shows what's checked.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Shared with your household</h3>
+              <p>
+                Everyone in the household sees the same budget. No one outside it can see a thing.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Your data, in one file</h3>
+              <p>Export everything to a single backup file at any time from Settings.</p>
+            </div>
+            <div class="card">
+              <h3>Phone first, desk friendly</h3>
+              <p>
+                Install it like an app on your phone. On a computer it spreads out, with a sidebar
+                and a side panel.
+              </p>
+            </div>
+          </div>
+          <figure class="screen-wide desktop-shot">
+            <img
+              src="/guide/desktop-budget.png"
+              width="1280"
+              height="800"
+              loading="lazy"
+              alt="The Budget page on a computer: a sidebar with accounts, envelope rows in a table, and the Groceries envelope open in a side panel."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="closing" aria-labelledby="closing-title">
+        <div class="wrap">
+          <h2 id="closing-title">Enough, on purpose.</h2>
+          <p>Decide where your money goes, spend with confidence, and let the rest add up.</p>
+          <div class="hero-actions">
+            <a class="button" href="/app/">Open the app</a>
+            <a class="button secondary" href="/guide/">How to use it</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>Enough Money · enoughmoney.app</span>
+        <span><a href="/guide/">Guide</a> · <a href="/app/">Open the app</a></span>
+      </div>
+    </footer>
   </body>
 </html>

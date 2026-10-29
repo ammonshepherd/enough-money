@@ -82,7 +82,7 @@ test("signing out returns to the sign-in page", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
 });
 
-test("assets and manifest are served from the site root", async ({ page }) => {
+test("the app opens at /app/, with assets and manifest from the site root", async ({ page }) => {
   await page.goto("./");
   const logo = page.locator(".brand img");
   await expect(logo).toHaveAttribute("src", "/icons/icon.svg");
@@ -91,7 +91,9 @@ test("assets and manifest are served from the site root", async ({ page }) => {
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
   expect(manifestHref).toBe("/manifest.webmanifest");
   const manifest = await (await page.request.get(manifestHref!)).json();
-  expect(manifest).toMatchObject({ start_url: "/", scope: "/" });
+  // The id stays "/" (the app's address until v0.39.0), so installed copies
+  // are the same app.
+  expect(manifest).toMatchObject({ start_url: "/app/", scope: "/app/", id: "/" });
 
   // Every app icon, in the manifest and in <head>, loads from the base path.
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([

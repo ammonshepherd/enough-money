@@ -4,9 +4,11 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import packageJson from "./package.json" with { type: "json" };
 
-// Cloudflare serves the app from the root of https://enoughmoney.app/,
-// so every URL the build produces starts with this path.
+// Cloudflare serves the site from the root of https://enoughmoney.app/,
+// so every URL the build produces starts with this path. The home page is
+// at the root, the guide at /guide/ and the app itself at /app/.
 const BASE = "/";
+const APP = `${BASE}app/`;
 
 // The test Supabase project (see docs/testing.md); production is lkaurrcarzzkbqdwqfge.
 const TEST_PROJECT_REF = "kiqbgjgvptgknmboazaq";
@@ -95,6 +97,17 @@ export default defineConfig(({ command, mode }) => {
   if (command === "build") checkBuildEnv(mode);
   return {
     base: BASE,
+    build: {
+      // Three pages share one build (and its /assets/): the home page, the
+      // guide and the app. Each HTML file is an entry.
+      rollupOptions: {
+        input: {
+          home: "index.html",
+          guide: "guide/index.html",
+          app: "app/index.html",
+        },
+      },
+    },
     define: {
       // Replaced at build time; read through src/models/appInfo.ts.
       __APP_VERSION__: JSON.stringify(packageJson.version),
@@ -117,12 +130,21 @@ export default defineConfig(({ command, mode }) => {
           "icons/apple-touch-icon.png",
           "icons/icon.svg",
         ],
+        workbox: {
+          // Only the app works offline. The home page and guide always come
+          // from the network, so a visit to / never shows a stale copy.
+          globIgnores: ["index.html", "guide/**"],
+          navigateFallback: "app/index.html",
+          navigateFallbackAllowlist: [/^\/app\//],
+        },
         manifest: {
           name: "Enough Money",
           short_name: "Enough Money",
           description: "A simple envelope-style budgeting app.",
-          start_url: BASE,
-          scope: BASE,
+          // The app opens at /app/. The id stays "/" (where the app lived
+          // until v0.39.0) so browsers treat it as the same installed app.
+          start_url: APP,
+          scope: APP,
           id: BASE,
           display: "standalone",
           background_color: "#faf8fc",

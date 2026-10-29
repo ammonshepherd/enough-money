@@ -23,19 +23,31 @@ always describes the app as of that version (including §9, not built yet).
   `kiqbgjgvptgknmboazaq` ("budget-buddy-test"), used only by tests; see
   `docs/testing.md`.
 - Vitest (unit/integration) and Playwright (UI).
-- Hash routing, so any static host serves every page from one `index.html`.
+- Hash routing, so any static host serves every app page from one
+  `app/index.html`.
+- Site pages (decided in v0.39.0): the home page (`index.html`, at `/`) and
+  the guide (`guide/index.html`, at `/guide/`) are plain HTML beside the app,
+  built by Vite as extra entries (`src/site/`: one stylesheet, no React).
+  The app lives at `/app/`. The home page sends old app links
+  (`/#budget/…`) and installed copies that open `/` on to `/app/`
+  (`appRedirect`). The guide's pictures (`public/guide/`) are taken from the
+  test database by `npm run guide:screenshots`; retake them when a pictured
+  screen changes, and keep the home page and guide in step with the app.
 - Hosting (moved from GitHub Pages in v0.37.0): Cloudflare at
   `https://enoughmoney.app` (Cloudflare registrar and DNS), a Worker that
   only serves static files (`wrangler.jsonc`: no workers.dev or preview
   URLs, since every build uses the production database). The GitHub Actions
   workflow `deploy.yml` checks and builds every PR and, on pushes to `main`,
   runs `wrangler deploy` (pinned version) after the checks pass. Vite `base`
-  is `/`; the PWA manifest scope/start_url/id match. Supabase URL and anon
+  is `/`; the PWA manifest's start_url and scope are `/app/`, and its id
+  stays `/` (the app's address until v0.39.0) so installed copies stay the
+  same app. Only the app is precached; the home page and guide always come
+  from the network. Supabase URL and anon
   key are injected at build time from repository Actions variables;
   `CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable)
-  deploy. Supabase Auth Site URL and redirect URL must include
-  `https://enoughmoney.app`. Public sign-up and every provider but email
-  stay off. The built page carries a Content Security Policy
+  deploy. Supabase Auth Site URL is
+  `https://enoughmoney.app/app/`, and the redirect URLs include it. Public sign-up and every provider but email
+  stay off. Every built page carries a Content Security Policy
   (`vite.config.ts`), as a `<meta>` tag and in `dist/_headers` (sent as a
   header by Cloudflare, with `frame-ancestors 'none'`); a new outside
   resource must be added to it. Cloudflare features that inject scripts

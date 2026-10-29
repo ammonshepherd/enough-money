@@ -1,0 +1,673 @@
+/*
+ * The home page (/) and the guide (/guide/). Plain pages outside the app:
+ * same colours and type as the app, no React. Phone first.
+ */
+:root {
+  color-scheme: light;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  --bg: #faf8fc;
+  --surface: #ffffff;
+  --surface-muted: #f2ecf7;
+  --border: #e3dbe9;
+  --text: #281a35;
+  --text-muted: #6b5e76;
+  --brand: #4b2a68;
+  --brand-deep: #3a1f52;
+  --brand-light: #eee5f7;
+  --accent: #8051a2;
+  --green: #1f7a45;
+  --red: #a32626;
+  --gold: #d29a3b;
+  --gold-light: #fbf1dc;
+  --shadow: 0 1rem 3rem rgba(75, 42, 104, 0.12);
+  --radius: 1.25rem;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+img {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+a {
+  color: var(--brand);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.wrap {
+  inline-size: min(100% - 2rem, 70rem);
+  margin-inline: auto;
+}
+
+.skip {
+  position: absolute;
+  inset-inline-start: -999px;
+}
+
+.skip:focus {
+  inset-inline-start: 1rem;
+  inset-block-start: 1rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border-radius: 0.5rem;
+}
+
+/* Header: logo and name on the left, links on the right. */
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 5;
+  background: rgb(250 248 252 / 0.92);
+  backdrop-filter: blur(12px);
+  border-block-end: 1px solid var(--border);
+}
+
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.75rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand img {
+  inline-size: 2.25rem;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-weight: 700;
+}
+
+.site-nav a:not(.button) {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.site-nav a:not(.button):hover,
+.site-nav a[aria-current="page"] {
+  color: var(--brand);
+}
+
+/* Buttons, as links. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 2.75rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--brand-deep);
+}
+
+.button.secondary {
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+.button.secondary:hover {
+  background: #e4d6f1;
+}
+
+.button.small {
+  min-block-size: 2.25rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.95rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lead {
+  color: var(--text-muted);
+  font-size: 1.15rem;
+}
+
+/* A phone screenshot, framed like a phone. */
+.phone {
+  inline-size: min(100%, 18rem);
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 2.4rem;
+  background: #1d1426;
+  box-shadow: var(--shadow);
+}
+
+.phone img {
+  border-radius: 1.9rem;
+}
+
+.phone figcaption {
+  margin-block: 0.5rem 0.25rem;
+  color: #e6dcf0;
+}
+
+.screen-wide {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+figcaption {
+  margin-block-start: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ---------- Home page ---------- */
+
+.hero {
+  padding-block: 3rem 4rem;
+  background:
+    radial-gradient(60rem 30rem at 85% 10%, #eee5f7 0%, transparent 60%),
+    radial-gradient(40rem 20rem at 0% 100%, #fbf1dc 0%, transparent 60%);
+}
+
+.hero .wrap {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+.hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2.3rem, 7vw, 3.8rem);
+  font-weight: 900;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--brand);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1.5rem 1rem;
+}
+
+.hero-note {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.hero .phone {
+  justify-self: center;
+  rotate: 2deg;
+}
+
+.section {
+  padding-block: 4rem;
+}
+
+.section.tinted {
+  background: var(--surface-muted);
+}
+
+.section-head {
+  max-inline-size: 42rem;
+  margin-block-end: 2.5rem;
+}
+
+.section-head h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 900;
+}
+
+/* The three numbers every envelope keeps. */
+.formula {
+  display: grid;
+  gap: 1rem;
+}
+
+.formula-card {
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.formula-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.formula-card p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.formula-card.saved {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+
+.formula-card.saved p {
+  color: #e6dcf0;
+}
+
+/* One feature: words beside its picture, alternating sides on wide screens. */
+.feature {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding-block: 2.5rem;
+  border-block-start: 1px solid var(--border);
+}
+
+.feature:first-of-type {
+  border-block-start: 0;
+}
+
+.feature h3 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 900;
+}
+
+.feature p {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.feature .phone {
+  justify-self: center;
+}
+
+.tag {
+  display: inline-block;
+  margin-block-end: 0.75rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--gold-light);
+  color: #7a5310;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.order {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.order li {
+  position: relative;
+  margin-block-end: 0.5rem;
+  padding-inline-start: 2.4rem;
+  counter-increment: step;
+}
+
+.order li::before {
+  content: counter(step);
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.05rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1.7rem;
+  block-size: 1.7rem;
+  border-radius: 50%;
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+/* Smaller features, in a grid of cards. */
+.cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  padding: 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.card p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.desktop-shot {
+  margin-block-start: 3rem;
+}
+
+.closing {
+  padding-block: 4rem;
+  background: var(--brand);
+  color: #fff;
+  text-align: center;
+}
+
+.closing h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 900;
+}
+
+.closing p {
+  margin: 0 auto 1.5rem;
+  max-inline-size: 36rem;
+  color: #e6dcf0;
+}
+
+.closing .button {
+  background: #fff;
+  color: var(--brand);
+}
+
+.closing .button.secondary {
+  background: transparent;
+  color: #fff;
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
+.closing .hero-actions {
+  justify-content: center;
+}
+
+.site-footer {
+  padding-block: 2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.site-footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* ---------- Guide ---------- */
+
+.guide-head {
+  padding-block: 2.5rem 1.5rem;
+}
+
+.guide-head h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 900;
+}
+
+.guide-layout {
+  display: grid;
+  gap: 2rem;
+  padding-block-end: 4rem;
+}
+
+.toc {
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.toc h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.toc ol {
+  margin: 0;
+  padding-inline-start: 1.3rem;
+}
+
+.toc li {
+  margin-block: 0.3rem;
+}
+
+.toc a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.toc a:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+.step {
+  padding-block: 2rem;
+  border-block-start: 1px solid var(--border);
+  scroll-margin-block-start: 5rem;
+}
+
+.step:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.step h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 900;
+}
+
+.step h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.step-body {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.step-body .phone {
+  justify-self: center;
+}
+
+.step ol,
+.step ul {
+  padding-inline-start: 1.3rem;
+}
+
+.step li {
+  margin-block: 0.4rem;
+}
+
+.tip {
+  margin: 1rem 0;
+  padding: 0.9rem 1.1rem;
+  border-inline-start: 4px solid var(--gold);
+  border-radius: 0 0.75rem 0.75rem 0;
+  background: var(--gold-light);
+}
+
+.tip strong {
+  color: #7a5310;
+}
+
+.shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.shots .phone {
+  inline-size: min(100%, 15rem);
+}
+
+kbd,
+.ui {
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.35rem;
+  background: var(--brand-light);
+  color: var(--brand);
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---------- Wider screens ---------- */
+
+@media (min-width: 48rem) {
+  .hero {
+    padding-block: 4.5rem 5.5rem;
+  }
+
+  .hero .wrap {
+    grid-template-columns: 1.2fr 1fr;
+  }
+
+  .formula {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .feature {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 3rem;
+  }
+
+  .feature:nth-of-type(even) > :first-child {
+    order: 2;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .step-body {
+    grid-template-columns: 1fr 15rem;
+  }
+
+  .step-body .phone {
+    inline-size: 15rem;
+    position: sticky;
+    inset-block-start: 5.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .guide-layout {
+    grid-template-columns: 15rem 1fr;
+  }
+
+  .toc {
+    position: sticky;
+    inset-block-start: 5.5rem;
+    align-self: start;
+  }
+}
+
+/* The narrowest phones: the coin alone, so the links fit beside it. */
+@media (max-width: 27rem) {
+  .brand-name {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+@media (max-width: 30rem) {
+  .site-nav {
+    gap: 0.9rem;
+  }
+
+  .site-nav .hide-small {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

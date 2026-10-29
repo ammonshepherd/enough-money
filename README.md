@@ -8,7 +8,7 @@ budgeting rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Version
 
-The current application version is **0.37.0** (kept in `package.json`; the app shows it in
+The current application version is **0.39.0** (kept in `package.json`; the app shows it in
 the header, and `docs/SPEC.md` describes that version).
 
 Versions follow:
@@ -22,16 +22,20 @@ Versions follow:
 - [Vite](https://vite.dev) dev server and bundler, with `vite-plugin-pwa` for the service worker and manifest
 - [React](https://react.dev) + TypeScript
 - [Vitest](https://vitest.dev) unit tests and [Playwright](https://playwright.dev) UI tests
-- Hash routing (`#budget`, `#accounts`, …), so a static host serves every page from one file
+- Hash routing (`#budget`, `#accounts`, …), so a static host serves every app page from one file
+- A plain HTML home page (`/`) and guide (`/guide/`) beside the app (`/app/`)
 - Supabase: email sign-in, Postgres with Row Level Security (`supabase/migrations/`)
 
 ## Folder structure (MVC)
 
 ```text
+index.html         Home page (/); guide/index.html is the guide; app/index.html the app (/app/)
+src/site/          Home page and guide styles and scripts (no React)
 src/models/        Types, pure functions (budgetMath.ts holds all budget math) and data stores; no React
 src/controllers/   React hooks that load data and handle user actions
 src/views/         React components; display only
 public/icons/      App icons
+public/guide/      Guide screenshots, taken by `npm run guide:screenshots` from the test database
 e2e/               Playwright UI tests (run against the in-memory store)
 integration/       Tests of the Supabase store and its security rules against the test project
 supabase/          Database migrations
@@ -50,6 +54,7 @@ npm test             # unit tests (Vitest)
 npm run test:ui      # UI tests (Playwright; first run `npx playwright install chromium`)
 npm run test:integration  # Supabase store vs. the test project (needs .env.test, below)
 npm run test:ui:db   # UI tests against the test project
+npm run guide:screenshots  # retake the guide's pictures from the test project
 npm run db:seed:test # recreate the test users and their households
 ```
 
@@ -60,7 +65,7 @@ npm run db:seed:test # recreate the test users and their households
 2. In Supabase → Authentication → URL Configuration, add
    `http://localhost:5173/` as a redirect URL (and as the Site URL
    while developing) so email confirmation links come back to the app.
-3. `npm run dev`, open <http://localhost:5173/>, create an account,
+3. `npm run dev`, open <http://localhost:5173/app/> (the home page is at `/`), create an account,
    confirm the email, sign in and name your household.
 
 ### Data stores
@@ -98,8 +103,8 @@ One-time setup:
 - **Cloudflare → enoughmoney.app:** leave off anything that injects scripts into pages
   (Web Analytics auto-inject, Rocket Loader, Email Address Obfuscation); the Content
   Security Policy would block it.
-- **Supabase → Authentication → URL Configuration:** `https://enoughmoney.app` as the
-  Site URL and as a redirect URL.
+- **Supabase → Authentication → URL Configuration:** `https://enoughmoney.app/app/` (where
+  the app lives since v0.39.0) as the Site URL and as a redirect URL.
 
 ## The Budget page
 

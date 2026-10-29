@@ -15,14 +15,15 @@ local Supabase.
 
 ## Which command uses what
 
-| Command                    | Data                         | Needs                                 |
-| -------------------------- | ---------------------------- | ------------------------------------- |
-| `npm run dev`, `build`     | production (`.env.local`)    |                                       |
-| `npm test` / `test:unit`   | none (pure functions)        | nothing                               |
-| `npm run test:ui`          | in-memory store              | nothing                               |
-| `npm run db:seed:test`     | test project (writes)        | `.env.test` with the service-role key |
-| `npm run test:integration` | test project (reseeds first) | `.env.test`                           |
-| `npm run test:ui:db`       | test project, as user A      | `.env.test`, seeded data              |
+| Command                     | Data                                    | Needs                                 |
+| --------------------------- | --------------------------------------- | ------------------------------------- |
+| `npm run dev`, `build`      | production (`.env.local`)               |                                       |
+| `npm test` / `test:unit`    | none (pure functions)                   | nothing                               |
+| `npm run test:ui`           | in-memory store                         | nothing                               |
+| `npm run db:seed:test`      | test project (writes)                   | `.env.test` with the service-role key |
+| `npm run test:integration`  | test project (reseeds first)            | `.env.test`                           |
+| `npm run test:ui:db`        | test project, as user A                 | `.env.test`, seeded data              |
+| `npm run guide:screenshots` | test project (reseeds first), as user A | `.env.test`                           |
 
 If `.env.test` is missing or incomplete, the integration and `test:ui:db`
 tests are skipped with a message saying what is missing. Unit tests never
