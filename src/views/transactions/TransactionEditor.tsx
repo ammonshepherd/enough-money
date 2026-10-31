@@ -25,8 +25,6 @@ export function TransactionEditor({
   onNeedsCover,
   onCancel,
   onDelete,
-  layout,
-  fixedAccount = false,
 }: {
   entry: Entry;
   heading: string;
@@ -38,9 +36,6 @@ export function TransactionEditor({
   onNeedsCover: (plan: CoverPlan) => void;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
-  layout: "stack" | "row";
-  /** Adding in the desktop row inside an open account: show its name instead of the Account picker. */
-  fixedAccount?: boolean;
 }) {
   const save = useAsyncAction(entry.prepare);
   const remove = useAsyncAction(async () => onDelete?.());
@@ -65,10 +60,6 @@ export function TransactionEditor({
   const updateLine = (index: number, change: Partial<SplitLine>) =>
     update({ split: form.split.map((line, i) => (i === index ? { ...line, ...change } : line)) });
   const left = entry.leftToSplit(form);
-  // Only an open account can be fixed; otherwise the picker shows.
-  const fixed = fixedAccount
-    ? entry.openAccounts.find((account) => account.id === form.accountId)
-    : undefined;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,11 +70,7 @@ export function TransactionEditor({
   };
 
   return (
-    <form
-      className={layout === "row" ? "form transaction-form row-layout" : "form transaction-form"}
-      onSubmit={submit}
-      aria-label={heading}
-    >
+    <form className="form transaction-form" onSubmit={submit} aria-label={heading}>
       <div className="section-heading">
         <h2>{heading}</h2>
       </div>
@@ -187,22 +174,16 @@ export function TransactionEditor({
           )}
         </fieldset>
       )}
-      {fixed ? (
-        <p className="field field-account fixed-account">
-          Account <strong>{fixed.name}</strong>
-        </p>
-      ) : (
-        <label className="field field-account">
-          Account
-          <select value={form.accountId} onChange={(e) => update({ accountId: e.target.value })}>
-            {entry.accountChoices(form).map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      <label className="field field-account">
+        Account
+        <select value={form.accountId} onChange={(e) => update({ accountId: e.target.value })}>
+          {entry.accountChoices(form).map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name}
+            </option>
+          ))}
+        </select>
+      </label>
       {transfer && (
         <>
           <label className="field field-transfer">
@@ -248,7 +229,6 @@ export function TransactionEditor({
         {tracking ? "Notes" : "Memo"}
         <input value={form.memo} onChange={(e) => update({ memo: e.target.value })} />
       </label>
-      {/* A box only in the row layout; otherwise the buttons stack like fields. */}
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={save.pending}>
           {form.id ? "Save changes" : "Save"}

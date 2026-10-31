@@ -13,11 +13,8 @@ import {
 // Activity in the desktop layout (this project runs at 1280×800).
 
 const panel = (page: Page) => page.locator("aside.side-panel");
-const newRow = (page: Page) => page.getByRole("form", { name: "New transaction" });
-const addButton = (page: Page) =>
-  page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", {
-    name: "Add transaction",
-  });
+const newRow = (page: Page) => panel(page).getByRole("form", { name: "Add a transaction" });
+const addButton = (page: Page) => panel(page).getByRole("button", { name: "Add transaction" });
 
 const newAccount = (page: Page, name: string, balance: string) =>
   addAccount(page, { name, balance });
@@ -30,11 +27,21 @@ async function setUp(page: Page) {
   await openAllAccounts(page);
 }
 
-test("Add transaction opens a new row at the top of the list", async ({ page }) => {
+test("Add transaction opens the form in the panel, not in the list", async ({ page }) => {
   await setUp(page);
+  // Not in the left sidebar any more.
+  await expect(
+    page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", {
+      name: "Add transaction",
+    }),
+  ).toHaveCount(0);
   await addButton(page).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(newRow(page)).toBeVisible();
+  await expect(panel(page)).toHaveAccessibleName("Add a transaction");
+  await expect(page.locator(".activity-table form")).toHaveCount(0);
+  // The button hides while its form is open.
+  await expect(addButton(page)).toHaveCount(0);
   await expect(newRow(page).getByLabel("Payee")).toBeFocused();
 
   await newRow(page).getByLabel("Payee").fill("Corner Market");
@@ -44,6 +51,7 @@ test("Add transaction opens a new row at the top of the list", async ({ page }) 
   await newRow(page).getByRole("button", { name: "Save", exact: true }).click();
 
   await expect(newRow(page)).toHaveCount(0);
+  await expect(panel(page)).toHaveAccessibleName("To review");
   const row = activityRow(page, "Corner Market");
   await expect(row).toContainText("Groceries");
   await expect(row.locator(".activity-memo")).toHaveText("milk and eggs");
@@ -60,21 +68,22 @@ test("Add transaction opens a new row at the top of the list", async ({ page }) 
   await expect(activityRow(page, "Never mind")).toHaveCount(0);
 });
 
-test("the new row starts in the open account and runs the cover prompt", async ({ page }) => {
+test("the panel form starts in the open account and runs the cover prompt", async ({ page }) => {
   await setUp(page);
   await newAccount(page, "Savings", "500");
   await openAccount(page, "Savings");
 
   await addButton(page).click();
-  // No Account picker inside an account: the row shows its name.
-  await expect(newRow(page).getByRole("combobox", { name: "Account" })).toHaveCount(0);
-  await expect(newRow(page).locator(".fixed-account")).toHaveText("Account Savings");
+  // It starts in Savings; any open account can still be picked.
+  const accountPicker = newRow(page).getByRole("combobox", { name: "Account" });
+  await expect(accountPicker.locator("option:checked")).toHaveText("Savings");
+  await expect(accountPicker.locator("option")).toHaveText(["Checking", "Savings"]);
   await newRow(page).getByLabel("Payee").fill("Big Shop");
   await newRow(page).getByLabel("Amount").fill("150");
   await chooseEnvelope(newRow(page).getByLabel("Envelope"), "Groceries");
   await newRow(page).getByRole("button", { name: "Save", exact: true }).click();
 
-  // Groceries has $100: the cover prompt shows in the row.
+  // Groceries has $100: the cover prompt shows in the panel.
   const cover = page.getByRole("alertdialog");
   await expect(cover).toContainText("Groceries would be $50.00 short");
   await chooseEnvelope(cover.getByRole("combobox"), "Available to Assign");

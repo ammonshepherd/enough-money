@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.38.0.
+Version described: 0.38.1.
 
 ## 1. Purpose
 
@@ -271,8 +271,7 @@ live by `useDesktop`), App adds `.desktop` to the shell; below that, or
 signed out, everything is as above.
 
 - No header or bottom bar. A sidebar on the left (`aside` "Sidebar",
-  16rem): the logo, "Enough Money" and the version; "+ Add transaction"
-  (not on Settings; opens the same dialog); the pages ("Primary
+  16rem): the logo, "Enough Money" and the version; the pages ("Primary
   navigation"), with every open account listed under Accounts (since
   v0.35.1, `sidebarAccounts` in `src/models/accounts.ts`): All accounts and
   the budget accounts (Checking, then Credit cards, each by name), then,
@@ -286,8 +285,17 @@ signed out, everything is as above.
 - Collapsed sidebars are remembered per device and user in localStorage
   (`bb.layout.navCollapsed.<userId>`, `bb.layout.panelCollapsed.<userId>`,
   "1" or "0"; unreadable means expanded), never in Supabase.
-- "+ Add transaction" opens the dialog on Budget and the Accounts list; with
-  All accounts or an account open it opens the new transaction row instead.
+- Transactions are added from the right-hand panel (since v0.38.1), not the
+  sidebar or the list: "+ Add transaction" heads the panel on Budget and
+  Accounts (the list only once there is an open account), beside its
+  toggle; on the collapsed rail it is a round + under the toggle, which
+  opens the panel. It opens "Add a transaction" in the panel
+  (`PanelAddTransaction`): the usual form, stacked, starting in the open
+  account (its Account picker offers every open account), with Payee
+  focused. Save (after any cover prompt, shown in the panel), Cancel or
+  Escape closes it, and the panel goes back to what it held; choosing an
+  envelope, a transaction or a tool closes it too. The button hides while
+  its form is open. There is no floating + button.
 - Every page uses the width up to 1600px, centred.
 - A right-hand panel (`SidePanel`, an `aside` named for what it shows) sits
   beside a page's list, sticky under its band. Its top-right button ("Hide
@@ -672,12 +680,8 @@ picker it shows is gone).
   focus returns to the pencil after), or Import CSV ("Import CSV into
   ⟨name⟩"). "‹ Back to To review", Save, Cancel and Delete return to To
   review; closing the account returns to the list.
-- Add transaction opens "New transaction" at the top of the list: the
-  transaction form with its fields side by side in their usual order
-  (wrapping as needed; splits, transfer notes and errors on lines of their
-  own), in the open account (its name shown, no Account picker), with Payee
-  focused. Save (after any
-  cover prompt, shown in the row), Cancel or Escape closes it.
+- Add transaction opens the form in the panel (see above), starting in the
+  open account.
 
 ### Transaction dialog (add and edit)
 
@@ -688,8 +692,7 @@ then tracking ones; choosing a tracking account drops the envelope), and a
 new transaction starts in the open account, else the first open budget
 account. Editing, it lists only tracking accounts for a tracking account's
 transaction and only budget accounts otherwise, so a saved transaction never
-moves between the two. (Only the desktop's new row inside an account shows
-that account's name instead of a picker.) Then Save (adding) / Save
+moves between the two. Then Save (adding) / Save
 changes, Cancel, and (editing) Delete transaction / Delete transfer.
 
 Envelopes are chosen with the envelope picker (`EnvelopePicker`, used for the

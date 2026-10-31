@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Budget } from "../controllers/useBudget";
 import {
   blankTransactionForm,
@@ -25,8 +25,6 @@ export function TransactionEntry({
   onDone,
   onCancel,
   onDelete,
-  layout = "stack",
-  fixedAccount = false,
 }: {
   budget: Budget;
   data: BudgetData;
@@ -36,10 +34,6 @@ export function TransactionEntry({
   onCancel: () => void;
   /** Set when editing: shows a Delete button. */
   onDelete?: () => Promise<void>;
-  /** "row": the fields side by side, as the new transaction row on Accounts on a desktop. */
-  layout?: "stack" | "row";
-  /** Adding in the desktop row inside an open account: the form shows its name, not the Account picker. */
-  fixedAccount?: boolean;
 }) {
   const entry = useTransactionEntry(budget, data);
   const [form, setForm] = useState(initial);
@@ -77,8 +71,6 @@ export function TransactionEntry({
       onNeedsCover={setPlan}
       onCancel={onCancel}
       onDelete={onDelete}
-      layout={layout}
-      fixedAccount={fixedAccount}
     />
   );
 }
@@ -128,39 +120,34 @@ export function TransactionDialog({
 }
 
 /**
- * The round + button in the bottom-right corner (Budget and Accounts), or on
- * a desktop "+ Add transaction" at the top of the sidebar. It opens the
- * transaction form in a modal dialog, starting in the account open on
- * Accounts; its Account picker offers every open account. `onAdd` takes over
- * on a desktop with an account or All accounts open (a new row opens instead).
+ * The round + button in the bottom-right corner (Budget and Accounts, on a
+ * phone). It opens the transaction form in a modal dialog, starting in the
+ * account open on Accounts; its Account picker offers every open account.
+ * On a desktop, Add transaction sits in the panel on the right instead
+ * (SidePanel's onAdd, then PanelAddTransaction).
  */
 export function AddTransactionButton({
   budget,
   data,
-  desktop = false,
   accountId = null,
-  onAdd,
 }: {
   budget: Budget;
   data: BudgetData;
-  desktop?: boolean;
   /** The account open on Accounts: a new transaction starts in it. */
   accountId?: string | null;
-  onAdd?: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
-        className={desktop ? "sidebar-add" : "fab"}
+        className="fab"
         type="button"
         aria-label="Add transaction"
         title="Add transaction"
-        onClick={() => (onAdd ? onAdd() : setOpen(true))}
+        onClick={() => setOpen(true)}
       >
         <PlusIcon />
-        {desktop && <span className="nav-label">Add transaction</span>}
       </button>
       <TransactionDialog
         budget={budget}
@@ -171,5 +158,52 @@ export function AddTransactionButton({
         onClose={() => setOpen(false)}
       />
     </>
+  );
+}
+
+/**
+ * Adding a transaction in the desktop panel on the right: the form, starting
+ * in the open account (any open account can be picked). Saving, Cancel and
+ * Escape close it; Payee has the focus to start.
+ */
+export function PanelAddTransaction({
+  budget,
+  data,
+  accountId,
+  onClose,
+}: {
+  budget: Budget;
+  data: BudgetData;
+  /** The account open on Accounts; null elsewhere. */
+  accountId: string | null;
+  onClose: () => void;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+  const [initial] = useState(() => blankTransactionForm(data, accountId));
+
+  useEffect(() => {
+    box.current?.querySelector<HTMLInputElement>(".field-payee input")?.focus();
+  }, []);
+
+  return (
+    <div
+      ref={box}
+      className="panel-edit"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+    >
+      <TransactionEntry
+        budget={budget}
+        data={data}
+        initial={initial}
+        heading="Add a transaction"
+        onDone={onClose}
+        onCancel={onClose}
+      />
+    </div>
   );
 }

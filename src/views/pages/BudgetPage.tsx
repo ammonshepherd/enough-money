@@ -15,7 +15,7 @@ import { EnvelopeSheet } from "../EnvelopeSheet";
 import { MoveFromEnvelope } from "../MoveFromEnvelope";
 import { MenuItem, PageMenu } from "../PageMenu";
 import { SidePanel } from "../SidePanel";
-import { TransactionDialog, TransactionEntry } from "../TransactionEntry";
+import { PanelAddTransaction, TransactionDialog, TransactionEntry } from "../TransactionEntry";
 import { GroupSection } from "../budget/GroupSection";
 import { MonthSummary } from "../budget/MonthSummary";
 import { PlanStart } from "../budget/PlanStart";
@@ -57,6 +57,8 @@ export function BudgetPage({
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = editingId ? page.transaction(editingId) : undefined;
   const panel = useSidebar("panel", userId);
+  // Desktop: the panel holds the new transaction form (its Add transaction).
+  const [adding, setAdding] = useState(false);
   // Phone only: rows down to name, Saved and what is left (desktop rows are one line).
   const rows = useCompactRows(userId);
   const compact = !desktop && rows.compact;
@@ -66,6 +68,7 @@ export function BudgetPage({
   const openEnvelope = (id: string) => {
     setOpenId(id);
     setEditingId(null);
+    setAdding(false);
     if (desktop) panel.expand();
   };
   const closeEnvelope = () => {
@@ -204,11 +207,29 @@ export function BudgetPage({
             {unusedToggle}
           </div>
           <SidePanel
-            label={detail ? `${detail.row.name} envelope` : `${page.monthLabel} summary`}
+            label={
+              adding
+                ? "Add a transaction"
+                : detail
+                  ? `${detail.row.name} envelope`
+                  : `${page.monthLabel} summary`
+            }
             collapsed={panel.collapsed}
             onToggle={panel.toggle}
+            adding={adding}
+            onAdd={() => {
+              setAdding(true);
+              panel.expand();
+            }}
           >
-            {editing ? (
+            {adding ? (
+              <PanelAddTransaction
+                budget={budget}
+                data={data}
+                accountId={null}
+                onClose={() => setAdding(false)}
+              />
+            ) : editing ? (
               <div className="panel-edit">
                 <button className="text-button panel-back" type="button" onClick={stopEditing}>
                   ‹ Back to {detail ? detail.row.name : "the summary"}

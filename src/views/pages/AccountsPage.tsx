@@ -12,6 +12,7 @@ import { CardDebt } from "../CardDebt";
 import { Sheet } from "../components";
 import { MenuItem, PageMenu } from "../PageMenu";
 import { SidePanel } from "../SidePanel";
+import { PanelAddTransaction } from "../TransactionEntry";
 
 type Page = ReturnType<typeof useAccountsPage>;
 
@@ -28,7 +29,6 @@ export function AccountsPage({
   open,
   userId,
   desktop = false,
-  addRequest = 0,
 }: {
   budget: Budget;
   data: BudgetData;
@@ -36,7 +36,6 @@ export function AccountsPage({
   open: AccountsView;
   userId: string;
   desktop?: boolean;
-  addRequest?: number;
 }) {
   const page = useAccountsPage(budget, data, month);
 
@@ -63,7 +62,14 @@ export function AccountsPage({
         Accounts
       </h1>
       {open === null ? (
-        <AccountList page={page} data={data} month={month} userId={userId} desktop={desktop} />
+        <AccountList
+          budget={budget}
+          page={page}
+          data={data}
+          month={month}
+          userId={userId}
+          desktop={desktop}
+        />
       ) : (
         <AccountView
           // A different account (or All accounts in another month) starts fresh:
@@ -77,7 +83,6 @@ export function AccountsPage({
           accountId={open === "all" ? null : open}
           userId={userId}
           desktop={desktop}
-          addRequest={addRequest}
         />
       )}
     </section>
@@ -92,12 +97,14 @@ export function AccountsPage({
  * on the right.
  */
 function AccountList({
+  budget,
   page,
   data,
   month,
   userId,
   desktop,
 }: {
+  budget: Budget;
   page: Page;
   data: BudgetData;
   month: Month;
@@ -105,6 +112,8 @@ function AccountList({
   desktop: boolean;
 }) {
   const [adding, setAdding] = useState(false);
+  // Desktop: the transaction form in the panel, in place of Add an account.
+  const [addingTransaction, setAddingTransaction] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const panel = useSidebar("panel", userId);
   const { monthTotals } = page;
@@ -188,8 +197,30 @@ function AccountList({
         <CardDebt data={data} />
         <div className="activity-work">
           <div className="activity-table">{list}</div>
-          <SidePanel label="Add an account" collapsed={panel.collapsed} onToggle={panel.toggle}>
-            <AddAccount page={page} />
+          <SidePanel
+            label={addingTransaction ? "Add a transaction" : "Add an account"}
+            collapsed={panel.collapsed}
+            onToggle={panel.toggle}
+            adding={addingTransaction}
+            onAdd={
+              page.openAccounts.length > 0
+                ? () => {
+                    setAddingTransaction(true);
+                    panel.expand();
+                  }
+                : undefined
+            }
+          >
+            {addingTransaction ? (
+              <PanelAddTransaction
+                budget={budget}
+                data={data}
+                accountId={null}
+                onClose={() => setAddingTransaction(false)}
+              />
+            ) : (
+              <AddAccount page={page} />
+            )}
           </SidePanel>
         </div>
       </>

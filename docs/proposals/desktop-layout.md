@@ -83,7 +83,8 @@ Making the mockups:
 - **Add transaction** (decision 8): a "+ Add transaction" button at the top
   of the left sidebar (a + icon when collapsed). On Budget and Accounts it
   opens the centred dialog; on Activity it opens a new transaction row at the
-  top of the list.
+  top of the list. _Changed in v0.38.1:_ the button heads the right-hand
+  panel instead, and the form opens there on every page.
 - Content is capped at **1600px** wide, centred (decision 7).
 
 ## Budget
