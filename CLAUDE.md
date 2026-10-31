@@ -238,9 +238,11 @@ non-card budget balances − all envelope money (P included)`.
   month summary, the chosen envelope, or a transaction being edited.
   Accounts with an account (or All accounts) open edits transactions, the
   account and its CSV import in the panel (the info pane stays above the
-  list) and adds through a new row at the top of its list; Budget and the
-  accounts list add through the dialog, and the list adds accounts in the
-  panel. Settings shows its sections in two columns.
+  list), and the list adds accounts in the panel. Transactions are added
+  from the panel too (v0.38.1): "Add transaction" heads it on Budget and
+  Accounts (a round + on the collapsed rail) and opens the form in the
+  panel, starting in the open account; never in the list or the left
+  sidebar. Settings shows its sections in two columns.
   Below 1000px nothing changes.
 - Page menu (decided in v0.36.0, phone only, `src/views/PageMenu.tsx`):
   the header's top right holds a three-bar menu button instead of the
@@ -259,7 +261,8 @@ non-card budget balances − all envelope money (P included)`.
   Settings. Its background is one of 30 reds picked once per
   page load (`src/models/cardDebtShades.ts`), with readable text on each.
 - Transactions are added with the floating round + button (bottom right of
-  Budget and Accounts; not Settings), which opens the transaction form in a
+  Budget and Accounts; not Settings; on a desktop, the panel's Add
+  transaction instead), which opens the transaction form in a
   modal `<dialog>` (`TransactionDialog`), starting in the open account; its
   Account picker offers every open account (v0.37.2).
 - Accounts (Accounts and Activity merged in v0.29.0; the Activity layout

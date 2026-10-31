@@ -14,16 +14,16 @@ import {
 
 const panel = (page: Page) => page.locator("aside.side-panel");
 
-/** Adds an outflow through the sidebar's Add transaction (the dialog, on Budget). */
+/** Adds an outflow through the panel's Add transaction, on Budget. */
 async function addTransaction(page: Page, tx: { amount: string; payee: string; envelope: string }) {
   await goTo(page, "Budget");
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Add a transaction" });
-  await dialog.getByLabel("Amount").fill(tx.amount);
-  await dialog.getByLabel("Payee").fill(tx.payee);
-  await chooseEnvelope(dialog.getByLabel("Envelope"), tx.envelope);
-  await dialog.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(dialog).toBeHidden();
+  await panel(page).getByRole("button", { name: "Add transaction" }).click();
+  const form = panel(page).getByRole("form", { name: "Add a transaction" });
+  await form.getByLabel("Amount").fill(tx.amount);
+  await form.getByLabel("Payee").fill(tx.payee);
+  await chooseEnvelope(form.getByLabel("Envelope"), tx.envelope);
+  await form.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(form).toHaveCount(0);
 }
 
 async function setUp(page: Page) {
@@ -47,11 +47,15 @@ test("a sidebar takes the place of the header and the bottom bar", async ({ page
     await goTo(page, name);
     await expect(page.getByRole("heading", { level: 1, name })).toBeAttached();
   }
-  // No Add transaction on Settings.
-  await goTo(page, "Settings");
-  await expect(sidebar.getByRole("button", { name: "Add transaction" })).toHaveCount(0);
+  // Add transaction is in the panel on the right, not the sidebar; none on Settings.
+  for (const name of ["Budget", "Accounts", "Settings"] as const) {
+    await goTo(page, name);
+    await expect(sidebar.getByRole("button", { name: "Add transaction" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Add transaction" })).toHaveCount(
+      name === "Settings" ? 0 : 1,
+    );
+  }
   await goTo(page, "Budget");
-  await expect(sidebar.getByRole("button", { name: "Add transaction" })).toBeVisible();
 
   // Collapsed to icons: the pages keep their names, and it is remembered.
   await sidebar.getByRole("button", { name: "Collapse sidebar" }).click();
@@ -199,8 +203,22 @@ test("the panel collapses to a rail and opens when an envelope is chosen", async
   await expect(panel(page)).toHaveAccessibleName("Gas envelope");
 });
 
-test("the dialog still adds transactions from the sidebar on Budget", async ({ page }) => {
+test("Add transaction opens its form in the panel on Budget", async ({ page }) => {
   await setUp(page);
-  await page.getByRole("button", { name: "Add transaction", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Add a transaction" })).toBeVisible();
+  await panel(page).getByRole("button", { name: "Add transaction" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const form = panel(page).getByRole("form", { name: "Add a transaction" });
+  await expect(form.getByLabel("Payee")).toBeFocused();
+  // Cancel goes back to what the panel held.
+  await form.getByRole("button", { name: "Cancel" }).click();
+  await expect(form).toHaveCount(0);
+  await expect(panel(page).getByRole("button", { name: "Add transaction" })).toBeVisible();
+
+  // On the collapsed rail it is a round +, which opens the panel with the form.
+  await panel(page).getByRole("button", { name: "Hide panel" }).click();
+  await panel(page).getByRole("button", { name: "Add transaction" }).click();
+  await expect(panel(page)).not.toHaveClass(/collapsed/);
+  await expect(form).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(form).toHaveCount(0);
 });

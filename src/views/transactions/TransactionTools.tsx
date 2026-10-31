@@ -1,12 +1,8 @@
-import { useEffect, useRef, useState } from "react";
 import { useAsyncAction } from "../../controllers/useAsyncAction";
 import type { useAccountView } from "../../controllers/useAccountView";
-import type { Budget } from "../../controllers/useBudget";
-import { blankTransactionForm } from "../../controllers/useTransactionEntry";
 import { formatSignedCents } from "../../models/money";
-import type { BudgetData, Transaction } from "../../models/types";
+import type { Transaction } from "../../models/types";
 import { ErrorMessage, Money } from "../components";
-import { TransactionEntry } from "../TransactionEntry";
 
 type View = ReturnType<typeof useAccountView>;
 
@@ -146,54 +142,5 @@ export function ReviewCard({ view, onEdit }: { view: View; onEdit: (tx: Transact
       )}
       <ErrorMessage error={mark.error} />
     </section>
-  );
-}
-
-/**
- * The new transaction row (desktop): the transaction form with its fields
- * side by side, at the top of the list. It starts in the open account, and
- * Escape closes it.
- */
-export function NewTransactionRow({
-  budget,
-  data,
-  accountId,
-  onClose,
-}: {
-  budget: Budget;
-  data: BudgetData;
-  accountId: string | null;
-  onClose: () => void;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  const [initial] = useState(() => blankTransactionForm(data, accountId));
-
-  // Start typing in Payee.
-  useEffect(() => {
-    box.current?.querySelector<HTMLInputElement>(".field-payee input")?.focus();
-  }, []);
-
-  return (
-    <div
-      ref={box}
-      className="activity-new-row"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onClose();
-        }
-      }}
-    >
-      <TransactionEntry
-        budget={budget}
-        data={data}
-        initial={initial}
-        heading="New transaction"
-        layout="row"
-        fixedAccount={accountId !== null}
-        onDone={onClose}
-        onCancel={onClose}
-      />
-    </div>
   );
 }

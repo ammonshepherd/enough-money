@@ -126,24 +126,19 @@ function SignedInApp({
   // it. (Updating state while rendering is React's way to follow a prop.)
   const [lastMonth, setLastMonth] = useState<Month | null>(null);
   if (location.month && location.month !== lastMonth) setLastMonth(location.month);
-  // Counts Add transaction clicks with an account (or All accounts) open on a
-  // desktop: each opens its new row.
-  const [listAdds, setListAdds] = useState(0);
   const month = location.month ?? lastMonth ?? currentMonth();
   const data = state.status === "ready" ? state.data : null;
   /** What Accounts has open: All accounts, an account, or nothing (also on other pages). */
   const opened = location.route === "accounts" ? location.account : null;
 
-  // The Add transaction button: round and floating on a phone, at the top of
-  // the sidebar on a desktop. Not on Settings.
+  // The Add transaction button: round and floating on a phone. Not on
+  // Settings. On a desktop it heads the panel on the right (each page's own).
   const add =
-    data && QUICK_ADD.includes(location.route) ? (
+    !desktop && data && QUICK_ADD.includes(location.route) ? (
       <AddTransactionButton
         budget={budget}
         data={data}
-        desktop={desktop}
         accountId={opened === "all" ? null : opened}
-        onAdd={desktop && opened !== null ? () => setListAdds((n) => n + 1) : undefined}
       />
     ) : null;
   const nav = (
@@ -155,7 +150,6 @@ function SignedInApp({
       data={data}
       opened={opened}
     >
-      {desktop && add}
       {desktop && (
         <SidebarFoot
           install={install}
@@ -171,7 +165,7 @@ function SignedInApp({
       <main className="page-content" aria-live="polite">
         {content}
       </main>
-      {!desktop && add}
+      {add}
       {/* The bottom bar only once there is a budget to move around in. */}
       {!desktop && data && nav}
     </>
@@ -203,7 +197,6 @@ function SignedInApp({
         open={opened}
         userId={session.userId}
         desktop={desktop}
-        addRequest={listAdds}
       />
     ),
     settings: (
@@ -242,7 +235,7 @@ function Navigation({
   /** Desktop only: the accounts listed under Accounts (none before there is a budget), and which one is open. */
   data: BudgetData | null;
   opened: AccountsView;
-  /** Desktop only: the Add transaction button and the sidebar's foot. */
+  /** Desktop only: the sidebar's foot. */
   children?: ReactNode;
 }) {
   const sidebar = useSidebar("nav", userId);

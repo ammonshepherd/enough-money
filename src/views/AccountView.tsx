@@ -14,11 +14,11 @@ import { Sheet } from "./components";
 import { ArrowLeftIcon, PencilIcon } from "./icons";
 import { MenuGroup, MenuItem, PageMenu } from "./PageMenu";
 import { SidePanel } from "./SidePanel";
-import { TransactionDialog, TransactionEntry } from "./TransactionEntry";
+import { PanelAddTransaction, TransactionDialog, TransactionEntry } from "./TransactionEntry";
 import { TransactionImport } from "./TransactionImport";
 import { TransactionList } from "./transactions/TransactionList";
 import { TransactionSearch } from "./transactions/TransactionSearch";
-import { NewTransactionRow, ReviewCard, SelectionBar } from "./transactions/TransactionTools";
+import { ReviewCard, SelectionBar } from "./transactions/TransactionTools";
 
 type Page = ReturnType<typeof useAccountsPage>;
 
@@ -33,9 +33,9 @@ type Tool = "review" | "edit" | "import";
  * An open account adds a search field and sort menu, pinned between the
  * pane and the ticked-rows bar; while a search is on, To review steps
  * aside so only the matches show.
- * On a desktop, editing (a transaction or the account), importing and To
- * review sit in the panel on the right, and Add transaction opens a new row
- * at the top of the list.
+ * On a desktop, editing (a transaction or the account), importing, adding
+ * a transaction (the panel's Add transaction, starting in the open account)
+ * and To review sit in the panel on the right.
  * On a phone the page menu folds every day to its heading (each day heading
  * also folds its own day), collapses the info pane to the balance, and for
  * an open account sorts the list.
@@ -48,7 +48,6 @@ export function AccountView({
   accountId,
   userId,
   desktop,
-  addRequest,
 }: {
   budget: Budget;
   data: BudgetData;
@@ -58,8 +57,6 @@ export function AccountView({
   accountId: string | null;
   userId: string;
   desktop: boolean;
-  /** Goes up each time the sidebar's Add transaction is clicked (desktop). */
-  addRequest: number;
 }) {
   const view = useAccountView(budget, data, month, accountId);
   const account = view.account;
@@ -72,14 +69,23 @@ export function AccountView({
   /** The transaction open in the edit dialog (in the panel on a desktop). */
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [tool, setTool] = useState<Tool>("review");
+  /** Desktop: the panel holds the new transaction form. */
+  const [adding, setAdding] = useState(false);
   const edit = (tx: Transaction) => {
     setEditing(tx);
+    setAdding(false);
     if (desktop) panel.expand();
   };
   const openTool = (next: Tool) => {
     setEditing(null);
+    setAdding(false);
     setTool(next);
     if (desktop) panel.expand();
+  };
+  const startAdding = () => {
+    setEditing(null);
+    setAdding(true);
+    panel.expand();
   };
   /** Back to To review; focus returns to the pencil (a <dialog> does that by itself). */
   const closeTool = () => {
@@ -87,15 +93,6 @@ export function AccountView({
     setTool("review");
     if (desktop && wasEdit) pencil.current?.focus();
   };
-
-  // The new transaction row (desktop): opened by Add transaction, closed by
-  // adding, Cancel or Escape. (A click seen while rendering, like lastMonth in App.)
-  const [adding, setAdding] = useState(false);
-  const [addsSeen, setAddsSeen] = useState(addRequest);
-  if (addRequest !== addsSeen) {
-    setAddsSeen(addRequest);
-    setAdding(true);
-  }
 
   // Folded days: all of them after "Collapse all dates", except those tapped
   // open (or, with none folded, just those tapped shut). Not remembered.
@@ -305,7 +302,7 @@ export function AccountView({
   const tracking = account?.onBudget === false;
   const backLabel = tracking ? "‹ Back" : "‹ Back to To review";
 
-  /** The desktop panel: a transaction being edited, the account form, import, or To review. */
+  /** The desktop panel: a new or edited transaction, the account form, import, or To review. */
   let panelLabel = tracking ? "Tracking account" : "To review";
   let panelBody: ReactNode = tracking ? (
     <div className="month-summary">
@@ -328,7 +325,17 @@ export function AccountView({
       <p className="panel-hint">Choose a transaction to edit it here.</p>
     </div>
   );
-  if (editing) {
+  if (adding && view.hasOpenAccounts) {
+    panelLabel = "Add a transaction";
+    panelBody = (
+      <PanelAddTransaction
+        budget={budget}
+        data={data}
+        accountId={editable?.id ?? null}
+        onClose={() => setAdding(false)}
+      />
+    );
+  } else if (editing) {
     panelLabel = "Edit transaction";
     panelBody = (
       <PanelBack label={backLabel} onBack={() => setEditing(null)}>
@@ -377,17 +384,15 @@ export function AccountView({
                 {search}
                 <SelectionBar view={view} />
               </div>
-              {adding && view.hasOpenAccounts && (
-                <NewTransactionRow
-                  budget={budget}
-                  data={data}
-                  accountId={editable?.id ?? null}
-                  onClose={() => setAdding(false)}
-                />
-              )}
               {list}
             </div>
-            <SidePanel label={panelLabel} collapsed={panel.collapsed} onToggle={panel.toggle}>
+            <SidePanel
+              label={panelLabel}
+              collapsed={panel.collapsed}
+              onToggle={panel.toggle}
+              adding={adding}
+              onAdd={view.hasOpenAccounts ? startAdding : undefined}
+            >
               {panelBody}
             </SidePanel>
           </div>
