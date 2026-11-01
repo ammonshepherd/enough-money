@@ -8,6 +8,7 @@ import { formatShortDay } from "../models/month";
 import { PadAmount } from "./AssignPad";
 import { EditableTitle, ErrorMessage, Money, SingleFieldForm, SpentAmount } from "./components";
 import { AmountInput } from "./AmountInput";
+import { TagChips } from "./Tags";
 
 type Detail = NonNullable<ReturnType<Page["detail"]>>;
 
@@ -216,6 +217,7 @@ export function EnvelopeSheet({
                             </>
                           )}
                         </small>
+                        <TagChips tags={item.tags} className="activity-tags" />
                       </span>
                       <strong>
                         <Money cents={item.amount} />

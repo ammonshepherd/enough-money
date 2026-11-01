@@ -3,19 +3,20 @@
  * One search field: typed words match payee and memo (or an amount), and
  * choices from its drop-down (chips) keep only the transactions matching all
  * of them: at most one of what a row is (an envelope, or a kind such as
- * Income) and one status (Not reconciled). Pure and display only: no
- * budget math here.
+ * Income), one status (Not reconciled) and any number of tags. Pure and
+ * display only: no budget math here.
  */
 import type { ActivityDay, ActivityRow } from "./activity";
 import type { Cents } from "./money";
 import type { PickerOption } from "./envelopeSearch";
+import { sortTags } from "./tags";
 import type { BudgetData, IsoDate } from "./types";
 
 /** Kinds of transaction the drop-down offers besides envelopes. */
 export type SearchKind = "uncategorized" | "income" | "transfer" | "card-credit" | "not-reconciled";
 
-/** A drop-down choice: one envelope, or one kind. */
-export type SearchFilter = { envelopeId: string } | { kind: SearchKind };
+/** A drop-down choice: one envelope, one kind, or one tag. */
+export type SearchFilter = { envelopeId: string } | { kind: SearchKind } | { tagId: string };
 
 /** What the rows are sorted by. "kind" is Income/expense: money in, then money out. */
 export type SortKey = "date" | "name" | "amount" | "envelope" | "kind";
@@ -55,11 +56,15 @@ const KINDS: { kind: SearchKind; label: string }[] = [
 
 /**
  * Chips stack only across groups: what a row is (an envelope or a kind like
- * Income; a row is only ever one) and its status. A new choice replaces the
- * chip of its own group.
+ * Income; a row is only ever one), its status, and each tag (a row can have
+ * several). A new choice replaces the chip of its own group.
  */
 const groupOf = (filter: SearchFilter) =>
-  "kind" in filter && filter.kind === "not-reconciled" ? "status" : "what";
+  "tagId" in filter
+    ? `tag:${filter.tagId}`
+    : "kind" in filter && filter.kind === "not-reconciled"
+      ? "status"
+      : "what";
 
 /** The chips with this choice added, replacing one of its group; "what" chips first. */
 export function addFilter(filters: SearchFilter[], filter: SearchFilter): SearchFilter[] {
@@ -78,8 +83,9 @@ export interface FoundRow {
   amount: Cents;
 }
 
-/** The drop-down value of a choice ("envelope:<id>" or "kind:<kind>"). */
+/** The drop-down value of a choice ("envelope:<id>", "kind:<kind>" or "tag:<id>"). */
 export function filterValue(filter: SearchFilter): string {
+  if ("tagId" in filter) return `tag:${filter.tagId}`;
   return "envelopeId" in filter ? `envelope:${filter.envelopeId}` : `kind:${filter.kind}`;
 }
 
@@ -87,12 +93,16 @@ export function filterValue(filter: SearchFilter): string {
 export function filterFromValue(value: string): SearchFilter | null {
   const [type, id] = [value.slice(0, value.indexOf(":")), value.slice(value.indexOf(":") + 1)];
   if (type === "envelope" && id) return { envelopeId: id };
+  if (type === "tag" && id) return { tagId: id };
   const kind = KINDS.find((k) => k.kind === id);
   return type === "kind" && kind ? { kind: kind.kind } : null;
 }
 
 /** What a chip for the choice says. */
 export function filterLabel(filter: SearchFilter, data: BudgetData): string {
+  if ("tagId" in filter) {
+    return `Tag: ${data.tags.find((t) => t.id === filter.tagId)?.name ?? "deleted"}`;
+  }
   if ("envelopeId" in filter)
     return data.envelopes.find((e) => e.id === filter.envelopeId)?.name ?? "Unknown envelope";
   return KINDS.find((k) => k.kind === filter.kind)!.label;
@@ -115,6 +125,7 @@ function isKind(row: ActivityRow, kind: SearchKind): boolean {
 
 /** The row's amount that the choice keeps, or null when the choice leaves it out. */
 function chosenAmount(row: ActivityRow, filter: SearchFilter): Cents | null {
+  if ("tagId" in filter) return row.tags.some((t) => t.id === filter.tagId) ? row.amount : null;
   if ("kind" in filter) return isKind(row, filter.kind) ? row.amount : null;
   if (row.kind === "transfer") return null;
   const part = row.tx.allocations.find((a) => a.envelopeId === filter.envelopeId);
@@ -149,12 +160,16 @@ export function amountQuery(text: string): ((cents: Cents) => boolean) | null {
   return (amount) => Math.floor(Math.abs(amount) / 100) === whole;
 }
 
-/** Whether the typed text matches the row: every word in payee, memo or transfer line, or its amount. */
+/**
+ * Whether the typed text matches the row: every word in payee, memo,
+ * transfer line or tag names, or its amount.
+ */
 function textMatches(row: ActivityRow, text: string): boolean {
   const words = fold(text).split(" ").filter(Boolean);
   if (words.length === 0) return true;
   const transferLine = row.kind === "transfer" ? row.accountLine : "";
-  const haystack = fold(`${row.tx.payee} ${row.tx.memo} ${transferLine}`);
+  const tagNames = row.tags.map((t) => t.name).join(" ");
+  const haystack = fold(`${row.tx.payee} ${row.tx.memo} ${transferLine} ${tagNames}`);
   if (words.every((word) => haystack.includes(word))) return true;
   const amount = amountQuery(text);
   return (
@@ -236,8 +251,8 @@ export function foundTotal(found: FoundRow[]): Cents {
 const countLabel = (n: number) => `${n} transaction${n === 1 ? "" : "s"}`;
 
 /**
- * The drop-down's choices for an account's rows: the kinds, then envelopes
- * by group, each with how many rows it would keep alongside the chip of the
+ * The drop-down's choices for an account's rows: the kinds, then tags,
+ * then envelopes by group, each with how many rows it would keep alongside the chip of the
  * other group (if any). Chosen ones and ones that would keep nothing are
  * left out.
  */
@@ -258,6 +273,13 @@ export function searchChoices(
     group: undefined as string | undefined,
   }));
 
+  const tagIds = new Set(rows.flatMap((row) => row.tags.map((t) => t.id)));
+  const tags = sortTags(data.tags.filter((t) => tagIds.has(t.id))).map((t) => ({
+    filter: { tagId: t.id } as SearchFilter,
+    label: t.name,
+    group: "Tags" as string | undefined,
+  }));
+
   const used = new Set<string>();
   for (const row of rows)
     if (row.kind !== "transfer") for (const part of row.tx.allocations) used.add(part.envelopeId);
@@ -275,7 +297,7 @@ export function searchChoices(
       group: groups.get(e.groupId)?.name ?? "Envelopes",
     }));
 
-  return [...kinds, ...envelopes].flatMap(({ filter, label, group }) => {
+  return [...kinds, ...tags, ...envelopes].flatMap(({ filter, label, group }) => {
     const value = filterValue(filter);
     const n = chosen.has(value) ? 0 : count(filter);
     if (n === 0) return [];

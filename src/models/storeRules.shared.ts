@@ -73,7 +73,7 @@ async function setUp(makeStore: StoreFactory) {
     payee: tag,
     memo: "",
   });
-  return { store, householdId, ids, save, side };
+  return { store, householdId, ids, save, side, prefix: tag };
 }
 
 /** The promise fails with a message the user can be shown, matching `message`. */
@@ -264,5 +264,127 @@ export function storeRuleTests(makeStore: StoreFactory) {
     const { store, ids } = await setUp(makeStore);
     await rejects(store.reorderEnvelopes(ids.group, [ids.a]), /have changed/);
     await store.reorderEnvelopes(ids.group, [ids.b, ids.a]);
+  });
+
+  it("keeps tag names unique per household, ignoring case, with a known colour", async () => {
+    const { store, householdId, prefix } = await setUp(makeStore);
+    const trip = await store.addTag(householdId, { name: `  ${prefix}   T1 `, color: "blue" });
+    const work = await store.addTag(householdId, { name: `${prefix} T2`, color: "grey" });
+    let data = (await store.load())!;
+    expect(data.tags.find((t) => t.id === trip)).toEqual({
+      id: trip,
+      name: `${prefix} T1`,
+      color: "blue",
+    });
+    await rejects(
+      store.addTag(householdId, { name: `${prefix} t1`.toUpperCase(), color: "red" }),
+      /already a tag/,
+    );
+    await rejects(store.updateTag(work, { name: `${prefix} T1`, color: "red" }), /already a tag/);
+    await rejects(store.addTag(householdId, { name: "   ", color: "red" }), /name/);
+    await rejects(store.addTag(householdId, { name: "x".repeat(31), color: "red" }), /at most/);
+    await rejects(
+      store.addTag(householdId, { name: `${prefix} T3`, color: "mauve" as "red" }),
+      /colour/,
+    );
+    await store.updateTag(work, { name: `${prefix} T2b`, color: "green" });
+    data = (await store.load())!;
+    expect(data.tags.find((t) => t.id === work)).toMatchObject({ color: "green" });
+  });
+
+  it("saves, keeps and replaces a transaction's tags", async () => {
+    const { store, householdId, ids, prefix } = await setUp(makeStore);
+    const t1 = await store.addTag(householdId, { name: `${prefix} A`, color: "blue" });
+    const t2 = await store.addTag(householdId, { name: `${prefix} B`, color: "red" });
+    const input = {
+      accountId: ids.checking,
+      date: "2026-10-05",
+      amount: -1_000,
+      payee: `${prefix} tagged`,
+      memo: "",
+      isIncome: false,
+      allocations: [{ envelopeId: ids.a, amount: -1_000 }],
+    } satisfies TransactionInput;
+    await store.saveTransaction(householdId, { ...input, tagIds: [t1, t2, t1] });
+    const find = async () =>
+      (await store.load())!.transactions.find((t) => t.payee === input.payee)!;
+    let tx = await find();
+    expect([...tx.tagIds].sort()).toEqual([t1, t2].sort());
+    // Left out = kept.
+    await store.saveTransaction(householdId, { ...input, id: tx.id, amount: -1_000 });
+    expect((await find()).tagIds).toHaveLength(2);
+    await store.saveTransaction(householdId, { ...input, id: tx.id, tagIds: [t2] });
+    tx = await find();
+    expect(tx.tagIds).toEqual([t2]);
+    await rejects(
+      store.saveTransaction(householdId, { ...input, id: tx.id, tagIds: [crypto.randomUUID()] }),
+      /Tag not found/,
+    );
+    // Deleting a tag takes it off its transactions.
+    await store.deleteTag(t2);
+    expect((await find()).tagIds).toEqual([]);
+  });
+
+  it("keeps each side of a transfer's own tags", async () => {
+    const { store, householdId, ids, side, prefix } = await setUp(makeStore);
+    const t1 = await store.addTag(householdId, { name: `${prefix} A`, color: "blue" });
+    await store.saveTransfer({
+      transferId: null,
+      sides: [{ ...side(ids.checking, -3_000), tagIds: [t1] }, side(ids.savings, 3_000)],
+    });
+    const sides = async () =>
+      (await store.load())!.transactions.filter(
+        (t) =>
+          t.payee === prefix && t.isTransfer && [ids.checking, ids.savings].includes(t.accountId),
+      );
+    let [out, into] = [...(await sides())].sort((a, b) => a.amount - b.amount);
+    expect(out!.tagIds).toEqual([t1]);
+    expect(into!.tagIds).toEqual([]);
+    // An edit that leaves a side's tags out keeps them.
+    await store.saveTransfer({
+      transferId: out!.transferId,
+      sides: [
+        { ...side(ids.checking, -4_000), id: out!.id },
+        { ...side(ids.savings, 4_000), id: into!.id, tagIds: [t1] },
+      ],
+    });
+    [out, into] = [...(await sides())].sort((a, b) => a.amount - b.amount);
+    expect(out!.tagIds).toEqual([t1]);
+    expect(into!.tagIds).toEqual([t1]);
+  });
+
+  it("tags and untags ticked transactions in one step", async () => {
+    const { store, householdId, ids, save, prefix } = await setUp(makeStore);
+    const t1 = await store.addTag(householdId, { name: `${prefix} A`, color: "blue" });
+    await save(ids.checking, -1_000, []);
+    await save(ids.tracking, -2_000, []);
+    const mine = (await store.load())!.transactions
+      .filter((t) => t.payee === prefix)
+      .map((t) => t.id);
+    expect(await store.tagTransactions(mine, t1, true)).toBe(2);
+    expect(await store.tagTransactions(mine, t1, true)).toBe(0);
+    expect(await store.tagTransactions(mine.slice(0, 1), t1, false)).toBe(1);
+    await rejects(store.tagTransactions(mine, crypto.randomUUID(), true), /Tag not found/);
+  });
+
+  it("allows at most 20 tags on a transaction", async () => {
+    const { store, householdId, ids, prefix } = await setUp(makeStore);
+    const tagIds: string[] = [];
+    for (let n = 0; n < 21; n++) {
+      tagIds.push(await store.addTag(householdId, { name: `${prefix} ${n}`, color: "grey" }));
+    }
+    await rejects(
+      store.saveTransaction(householdId, {
+        accountId: ids.checking,
+        date: "2026-10-05",
+        amount: -1_000,
+        payee: prefix,
+        memo: "",
+        isIncome: false,
+        allocations: [],
+        tagIds,
+      }),
+      /at most 20 tags/,
+    );
   });
 }

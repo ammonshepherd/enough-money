@@ -9,6 +9,7 @@
 import { accountBalance, cardExtraPaid, isCardCredit, isToReview } from "./budgetMath";
 import type { Cents } from "./money";
 import { monthOf, type Month } from "./month";
+import { tagsOf, type Tag } from "./tags";
 import { transferPartner } from "./transfers";
 import type { BudgetData, IsoDate, Transaction } from "./types";
 
@@ -50,6 +51,8 @@ export interface ActivityRow {
   sideAmount: Cents;
   /** Every side is marked reconciled with the bank. */
   reconciled: boolean;
+  /** The tags of those sides (each side of a transfer keeps its own), alphabetical. */
+  tags: Tag[];
 }
 
 export interface ActivityDay {
@@ -112,6 +115,7 @@ function rowSides(data: BudgetData, tx: Transaction, accountId: string | null) {
     sideIds: sides.map((t) => t.id),
     sideAmount: sides.reduce((sum, t) => sum + t.amount, 0),
     reconciled: sides.every((t) => t.reconciled),
+    tags: tagsOf({ tagIds: [...new Set(sides.flatMap((t) => t.tagIds))] }, data.tags),
   };
 }
 

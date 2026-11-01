@@ -9,6 +9,7 @@ import type { Cents } from "./money";
 import type { Month } from "./month";
 import type { ImportedTransaction, ImportFormat } from "./transactionImport";
 import type { NewIncomeRule } from "./incomeRules";
+import type { TagDetails } from "./tags";
 import type { TransferInput } from "./transfers";
 import type { AccountType, Allocation, BudgetData, IsoDate } from "./types";
 
@@ -51,6 +52,8 @@ export interface TransactionInput {
    * Transfers are saved with saveTransfer.
    */
   allocations: Allocation[];
+  /** Its tags, replacing those it had. Omit to keep them (none for a new one). */
+  tagIds?: string[];
 }
 
 export interface DataStore {
@@ -121,6 +124,19 @@ export interface DataStore {
    * Resolves to how many changed.
    */
   setReconciled(transactionIds: string[], reconciled: boolean): Promise<number>;
+
+  /** Adds a tag (name unique ignoring case); resolves to its id. */
+  addTag(householdId: string, tag: TagDetails): Promise<string>;
+  /** Renames a tag or changes its colour. */
+  updateTag(tagId: string, tag: TagDetails): Promise<void>;
+  /** Deletes a tag and takes it off every transaction. */
+  deleteTag(tagId: string): Promise<void>;
+  /**
+   * Adds a tag to (`on`) or takes it off several transactions in one step.
+   * Transactions already in that state, or already at the most tags, are
+   * left alone. Resolves to how many changed.
+   */
+  tagTransactions(transactionIds: string[], tagId: string, on: boolean): Promise<number>;
 
   addIncomeRule(householdId: string, rule: NewIncomeRule): Promise<void>;
   deleteIncomeRule(ruleId: string): Promise<void>;

@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.38.1.
+Version described: 0.39.0.
 
 ## 1. Purpose
 
@@ -141,6 +141,8 @@ visitors get nothing.
 | `transactions`            | account, date, amount (≠ 0), payee (≤ 200), memo (≤ 500), `is_transfer`, `transfer_id`, `is_income`, `voided`, `source` (`manual`/`csv`), `import_key` (unique per account), `reconciled` (a mark only).                                                                |
 | `transaction_allocations` | transaction, envelope, amount. One row per envelope (several = a split), each envelope at most once, each with the transaction's sign. Must sum to the transaction amount (checked at commit). None for transfers, income or card credits; never to a payment envelope. |
 | `income_rules`            | `pattern` (2–100 chars), `account_id` (null = any account).                                                                                                                                                                                                             |
+| `tags`                    | name (1–30 chars, trimmed; unique per household ignoring case), `color` (grey, red, orange, yellow, green, teal, blue, purple or pink). Deleting one takes it off its transactions.                                                                                     |
+| `transaction_tags`        | (transaction, tag), each pair once; at most 20 tags per transaction (checked by the save functions). Cascades when either is deleted.                                                                                                                                   |
 
 Database checks (constraint triggers, deferred to commit where noted):
 `is_transfer = (transfer_id is not null)`; a transfer is exactly two rows in
@@ -153,21 +155,22 @@ a whole household cascades but deleting a used account/envelope/group fails.
 
 SQL functions (all `security invoker` except `create_household`):
 
-| Function                                                         | Does                                                                                                                                                                                                                                                                                                                                            |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `create_household(name)`                                         | Creates a household and makes the caller its owner (refuses a second one).                                                                                                                                                                                                                                                                      |
-| `adjust_category_month(envelope, month, Δassigned, Δreleased)`   | Adds to (never overwrites) a month's Assigned/Released, creating the row.                                                                                                                                                                                                                                                                       |
-| `move_between_envelopes(from, to, month, amount)`                | Moves Assigned between envelopes in one step.                                                                                                                                                                                                                                                                                                   |
-| `save_transaction(…, is_transfer=false, is_income, allocations)` | Creates/updates one non-transfer transaction and its allocations (≤ 50 lines of `{category_id, amount}`; empty = Uncategorized); turning a transfer side into an ordinary transaction releases the other side.                                                                                                                                  |
-| `save_transfer(transfer_id, legs)`                               | Saves both sides of a transfer (new rows or existing ones, e.g. an imported row being linked); sides the transfer no longer has are released.                                                                                                                                                                                                   |
-| `import_transactions(account, format, rows)`                     | Inserts imported rows (≤ 2000) as `source='csv'`, skipping existing `import_key`s, applies `is_income` (never on cards or tracking accounts); a row with `match_id` gives that typed-in transaction its `import_key` (and `source='csv'`) instead, all or nothing; saves the account's `import_format`, returns how many were added or matched. |
-| `import_envelope_plan(household, month, rows)`                   | Creates missing groups/envelopes (names match ignoring case) and sets Planned for the month (≤ 500 rows).                                                                                                                                                                                                                                       |
-| `mark_income(ids)`                                               | Marks plain Uncategorized inflows (not on cards or tracking accounts) as Income; returns the count.                                                                                                                                                                                                                                             |
-| `set_reconciled(ids, reconciled)`                                | Marks (or unmarks) up to 2000 transactions reconciled with the bank; rows already so are left alone; returns how many changed.                                                                                                                                                                                                                  |
-| `reorder_category_groups(household, ids)`                        | Saves the order of the household's groups; the list must name every group once.                                                                                                                                                                                                                                                                 |
-| `reorder_categories(group, ids)`                                 | Saves the order of a group's envelopes; the list must name every envelope of the group once.                                                                                                                                                                                                                                                    |
-| `export_backup(household)`                                       | Returns the whole household as one backup JSON object (one statement, so a consistent snapshot); see "Backup" under Settings.                                                                                                                                                                                                                   |
-| `restore_backup(household, backup)`                              | Loads a backup into an empty household, all or nothing (cards inserted closed so the trigger-made payment envelopes can be swapped for the exported ones); renames the household.                                                                                                                                                               |
+| Function                                                       | Does                                                                                                                                                                                                                                                                                                                                            |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create_household(name)`                                       | Creates a household and makes the caller its owner (refuses a second one).                                                                                                                                                                                                                                                                      |
+| `adjust_category_month(envelope, month, Δassigned, Δreleased)` | Adds to (never overwrites) a month's Assigned/Released, creating the row.                                                                                                                                                                                                                                                                       |
+| `move_between_envelopes(from, to, month, amount)`              | Moves Assigned between envelopes in one step.                                                                                                                                                                                                                                                                                                   |
+| `save_transaction(…, is_income, allocations, tag_ids)`         | Creates/updates one non-transfer transaction and its allocations (≤ 50 lines of `{category_id, amount}`; empty = Uncategorized); turning a transfer side into an ordinary transaction releases the other side. `tag_ids` replaces its tags (null = keep).                                                                                       |
+| `save_transfer(transfer_id, legs)`                             | Saves both sides of a transfer (new rows or existing ones, e.g. an imported row being linked); sides the transfer no longer has are released. A side with `tag_ids` gets those tags; a side without keeps its own.                                                                                                                              |
+| `import_transactions(account, format, rows)`                   | Inserts imported rows (≤ 2000) as `source='csv'`, skipping existing `import_key`s, applies `is_income` (never on cards or tracking accounts); a row with `match_id` gives that typed-in transaction its `import_key` (and `source='csv'`) instead, all or nothing; saves the account's `import_format`, returns how many were added or matched. |
+| `import_envelope_plan(household, month, rows)`                 | Creates missing groups/envelopes (names match ignoring case) and sets Planned for the month (≤ 500 rows).                                                                                                                                                                                                                                       |
+| `mark_income(ids)`                                             | Marks plain Uncategorized inflows (not on cards or tracking accounts) as Income; returns the count.                                                                                                                                                                                                                                             |
+| `tag_transactions(ids, tag, on)`                               | Adds a tag to (or takes it off) up to 2000 transactions; rows already so, or already at 20 tags, are left alone; returns how many changed.                                                                                                                                                                                                      |
+| `set_reconciled(ids, reconciled)`                              | Marks (or unmarks) up to 2000 transactions reconciled with the bank; rows already so are left alone; returns how many changed.                                                                                                                                                                                                                  |
+| `reorder_category_groups(household, ids)`                      | Saves the order of the household's groups; the list must name every group once.                                                                                                                                                                                                                                                                 |
+| `reorder_categories(group, ids)`                               | Saves the order of a group's envelopes; the list must name every envelope of the group once.                                                                                                                                                                                                                                                    |
+| `export_backup(household)`                                     | Returns the whole household as one backup JSON object (one statement, so a consistent snapshot); see "Backup" under Settings.                                                                                                                                                                                                                   |
+| `restore_backup(household, backup)`                            | Loads a backup into an empty household, all or nothing (cards inserted closed so the trigger-made payment envelopes can be swapped for the exported ones); renames the household.                                                                                                                                                               |
 
 Triggers also: keep an account's `type` and `on_budget` as added;
 create/rename/protect each card's payment envelope (in the
@@ -415,7 +418,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
     to move into Remaining" + Move, i.e. Release from Saved); at $0.00 a quiet
     "Nothing saved yet" panel;
   - "This month's transactions": date, payee, account, this envelope's amount
-    (a split shows "part of a $X split"); each is a button ("Edit ⟨payee⟩,
+    (a split shows "part of a $X split"), its tags as pills (v0.39.0); each is a button ("Edit ⟨payee⟩,
     ⟨amount⟩, ⟨date⟩") that opens the transaction edit dialog over the sheet,
     which stays open and updates after a save or delete;
   - Delete envelope (confirm: money assigned returns to Available to Assign).
@@ -553,17 +556,20 @@ $0.00 balance.
   a transfer's "From → To" accounts, or an amount in or out ("45" is
   $45.00–$45.99, "45.2" is $45.20–$45.29, "45.20" or "$45" exactly; a
   split's parts count). It also drops down, like the envelope picker, the
-  kinds (Uncategorized, Income, Transfer, Card credit, Not reconciled) and
+  kinds (Uncategorized, Income, Transfer, Card credit, Not reconciled),
+  the tags this account's rows carry (under "Tags", v0.39.0) and
   then envelopes by group that this account has, each with "N
   transactions" (counted alongside the other chip; only choices that keep
-  a row and are not chosen), and last "Search “…” in payee and memo".
+  a row and are not chosen), and last "Search “…” in payee, memo and tags"
+  (typed words also match tag names).
   Enter takes the highlighted line: an envelope whose full name was typed,
   else the text search. Choosing makes a purple chip ("Remove ⟨name⟩
   filter"; Backspace in the empty field removes the last one) and keeps
   only transactions matching every chip; typing then searches within them.
-  Chips stack across two groups (`addFilter`): what a row is (one envelope,
+  Chips stack across groups (`addFilter`): what a row is (one envelope,
   or Uncategorized, Income, Transfer or Card credit; a new one replaces the
-  old) and Not reconciled (`ActivityRow.reconciled` false). Chips wrap
+  old), Not reconciled (`ActivityRow.reconciled` false) and any number of
+  tags ("Tag: ⟨name⟩"; a row must carry every one). Chips wrap
   inside the field when they do not fit. While searching,
   "N matches · ±$X" shows under the field (a split counts only the chosen
   envelope's part, which is highlighted in its open split), the To review
@@ -636,8 +642,10 @@ picker it shows is gone).
 - Row (grid 22px | 16px | payee | envelope | 84px): a checkbox ("Select
   ⟨payee⟩, ⟨amount⟩"); a bank icon (`role="img"`): grey outline "Not
   reconciled", green and filled "Reconciled" (imported or typed makes no
-  difference); payee over account (a button, "Edit ⟨payee⟩, ⟨amount⟩,
-  ⟨account⟩", that opens the edit dialog; the payee is regular weight, bold
+  difference); payee over account and the row's tags (small coloured pills, alphabetical;
+  a transfer shows its side's tags, both sides' on All accounts; v0.39.0)
+  (a button, "Edit ⟨payee⟩, ⟨amount⟩, ⟨account⟩, tagged ⟨tags⟩", that
+  opens the edit dialog; the payee is regular weight, bold
   only while the row is to review; the amount is always bold); the envelope,
   Income, Transfer, Card credit, or Uncategorized (amber label); the amount
   ("−$X" red, "+$X" green, a transfer the same by its side in the open
@@ -646,8 +654,13 @@ picker it shows is gone).
 - Ticking rows (reconciling): a ticked row is highlighted. While any is
   ticked, a purple toolbar ("Selected transactions") sits under the info
   pane: "N selected", their total (signed), "Mark reconciled" (when one is
-  not), "Mark unreconciled" (when one is), and × to clear; the count is
-  announced (`aria-live`). Marking saves in one step (`setReconciled`) and
+  not), "Mark unreconciled" (when one is), Tags, and × to clear; the count is
+  announced (`aria-live`). Tags (v0.39.0, `tagSelected` in
+  `useAccountView`) opens a row of every tag under the bar, each marked ✓
+  (every ticked row has it), – (some do) or + (none do); tapping one adds it
+  to every ticked row, or takes it off them all when every row has it
+  (`tag_transactions`), and the rows stay ticked. "New tag" + Add creates a
+  tag and puts it on them. Marking saves in one step (`setReconciled`) and
   clears the ticks. A split is ticked as a whole. A transfer stands for its
   side in the open account, or both sides (adding $0.00) on All accounts; it
   shows reconciled when every side it stands for is. Opening something else
@@ -686,7 +699,7 @@ picker it shows is gone).
 ### Transaction dialog (add and edit)
 
 Fields: Outflow/Inflow, Amount (> 0), Payee, Envelope, Account, Date (default
-today), Memo; in a tracking account there is no Envelope and Memo is called
+today), Memo, Tags; in a tracking account there is no Envelope and Memo is called
 Notes. Adding, the Account picker lists every open account (budget accounts,
 then tracking ones; choosing a tracking account drops the envelope), and a
 new transaction starts in the open account, else the first open budget
@@ -724,6 +737,17 @@ amount above $0.00, and no envelope twice (`src/models/splits.ts`). Picking a
 single envelope (or anything else) again undoes the split. Editing a split
 loads all its lines.
 
+Tags (v0.39.0, `TagPicker` in `src/views/Tags.tsx`): the chosen tags as
+pills with × ("Remove tag ⟨name⟩"), and a field (a combobox) whose matches
+(tags whose name contains the text, alphabetical, chosen ones left out)
+drop down under it. Tap one, or use the arrows and Enter; Enter on a name a
+tag has picks it. Typing a name no tag has offers "Add tag “⟨name⟩”", which
+saves the tag at once (in the first colour no tag uses yet, grey last;
+`nextTagColor`) and adds it. The list closes after each pick; Backspace in
+the empty field takes the last tag off. At most 20 tags; the field hides
+at 20. A transfer's tags are the edited side's only: the other side keeps
+its own (`planTransfer` never copies them).
+
 Transfer adds "To account" (outflow) / "From account" (inflow), an "Other side"
 choice when there are candidates (bank rows up to 31 days away, "Keep …", "Add a
 new transaction instead"), and a note saying what will happen ("Links to the
@@ -735,7 +759,7 @@ the matching inflow in ⟨account⟩.", "Also updates the ⟨account⟩ side.").
 In order: household name and "Signed in as ⟨email⟩"; About (version); Sign out
 (a desktop only; on a phone it is in the page menu since v0.36.0);
 Envelope groups; Import transactions; Income rules; Import envelope plan;
-Backup.
+Tags; Backup.
 
 - **Envelope groups:** list with envelope counts, a six-dot drag handle on the
   left of each row (mouse, touch, or keyboard: Space, arrows, Space) to reorder
@@ -753,6 +777,13 @@ Backup.
   "N inflows waiting for review match your rules. Mark them as Income".
 - **Import envelope plan:** month (default current), CSV file, preview with
   new groups/envelopes and Planned changes, invalid rows by line, then Import.
+- **Tags** (v0.39.0, `useTags`, `TagSettings`): a short explanation; the
+  tags alphabetically, each a pill with "N transactions" (or "Not used
+  yet"), Edit (in place: Name, Colour swatches, Save, Cancel; Escape
+  cancels) and Delete (confirm, saying how many transactions it comes off;
+  they stay); then "New tag" + Colour (preset to the next free colour) +
+  Add tag. Names are trimmed (inner spaces squeezed), 1–30 characters and
+  unique ignoring case ("There is already a tag called “⟨name⟩”.").
 - **Backup** (`src/models/backup.ts`, `useBackup`, `BackupSection`): "Export
   all data" saves `enough-money-backup-YYYY-MM-DD.json` (format
   `budget-buddy-backup`, its name from before the rename; version 1) and
@@ -761,10 +792,13 @@ Backup.
   mirrors the tables without `household_id`: household name, accounts (closed
   ones, `import_format`), groups, envelopes (`card_account_id`), envelope
   months, transactions (`reconciled`, `voided`, `import_key`, `source`,
-  `transfer_id`, `is_income`, `created_at`), allocations and income rules.
+  `transfer_id`, `is_income`, `created_at`), allocations, income rules,
+  tags and transaction tags (files from before v0.39.0 have no tag lists
+  and restore with none; still version 1).
   "Restore from a backup" reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
-  envelopes/import keys per account, links, one payment envelope per card and
+  envelopes/import keys per account, tag names ignoring case, tags per
+  transaction (≤ 20), links, one payment envelope per card and
   none allocated to, transfer pairs, split sums and signs, Income and card
   credits) and shows what it holds. Restore only works while the household
   has no budget data (otherwise the file can still be checked); every row
@@ -866,7 +900,10 @@ Decided or wanted, but not in the app:
   credit). Options: void instead of delete (`transactions.voided` exists but
   nothing sets it), or a per-row skip in the preview
   (`docs/proposals/bulk-actions.md`, problem 1).
-- Bulk actions on ticked rows on Accounts beyond Mark reconciled: Delete, Mark
+- Tags: tags per split line (a split shares the transaction's), totals or
+  reports by tag, tags set by import or income-style rules, tags in the CSV
+  import preview, merging two tags.
+- Bulk actions on ticked rows on Accounts beyond Mark reconciled and Tags: Delete, Mark
   as Income, Assign to an envelope, Move to account, and ticking rows in To
   review. Open decisions are in `docs/proposals/bulk-actions.md`.
 - Reconciliation beyond the mark: entering a statement balance and

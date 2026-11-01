@@ -21,6 +21,7 @@ function tx(partial: Partial<Transaction> & Pick<Transaction, "id" | "amount">):
     allocations: [],
     importKey: null,
     reconciled: false,
+    tagIds: [],
     ...partial,
   };
 }
@@ -39,6 +40,7 @@ function budget(transactions: Transaction[]): BudgetData {
   return {
     household: { id: "h", name: "Home" },
     incomeRules: [],
+    tags: [],
     accounts: [account("checking"), account("visa")],
     groups: [],
     envelopes: [],

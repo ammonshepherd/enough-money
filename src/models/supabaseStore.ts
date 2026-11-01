@@ -8,6 +8,7 @@ import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
 import { fetchAll } from "./fetchAll";
+import { asTagColor, cleanTagDetails, duplicateTagMessage } from "./tags";
 import { asImportFormat } from "./transactionImport";
 
 type Client = SupabaseClient<Database>;
@@ -77,7 +78,7 @@ export function createSupabaseStore(
       // Each query is paged, so each ends its order on a unique key: rows
       // tied on the earlier columns then keep their place between pages.
       const exact = { count: "exact" } as const;
-      const [accounts, groups, envelopes, months, transactions, rules] = await Promise.all([
+      const [accounts, groups, envelopes, months, transactions, rules, tags] = await Promise.all([
         fetchAll(
           (from, to) =>
             db()
@@ -110,7 +111,10 @@ export function createSupabaseStore(
           (from, to) =>
             db()
               .from("transactions")
-              .select("*, transaction_allocations(category_id, amount)", exact)
+              .select(
+                "*, transaction_allocations(category_id, amount), transaction_tags(tag_id)",
+                exact,
+              )
               .order("date", { ascending: false })
               .order("created_at", { ascending: false })
               .order("id", { ascending: false })
@@ -125,6 +129,11 @@ export function createSupabaseStore(
               .order("created_at")
               .order("id")
               .range(from, to),
+          check,
+        ),
+        fetchAll(
+          (from, to) =>
+            db().from("tags").select("id, name, color", exact).order("id").range(from, to),
           check,
         ),
       ]);
@@ -178,7 +187,9 @@ export function createSupabaseStore(
           })),
           importKey: t.import_key,
           reconciled: t.reconciled,
+          tagIds: t.transaction_tags.map((x) => x.tag_id),
         })),
+        tags: tags.map((g) => ({ id: g.id, name: g.name, color: asTagColor(g.color) })),
       };
     },
 
@@ -363,8 +374,48 @@ export function createSupabaseStore(
         p_memo: input.memo,
         p_is_transfer: false,
         p_is_income: input.isIncome,
+        // Omitted (undefined) = keep the transaction's tags.
+        p_tag_ids: input.tagIds,
       });
       check(error);
+    },
+
+    async addTag(householdId, tag) {
+      const { name, color } = cleanTagDetails(tag);
+      const { data, error } = await db()
+        .from("tags")
+        .insert({ household_id: householdId, name, color })
+        .select("id")
+        .single();
+      if (error?.code === "23505") throw new UserFacingError(duplicateTagMessage(name));
+      check(error);
+      return data!.id;
+    },
+
+    async updateTag(tagId, tag) {
+      const { name, color } = cleanTagDetails(tag);
+      const { data, error } = await db()
+        .from("tags")
+        .update({ name, color })
+        .eq("id", tagId)
+        .select("id");
+      if (error?.code === "23505") throw new UserFacingError(duplicateTagMessage(name));
+      check(error);
+      if (!data?.length) throw new UserFacingError("Tag not found");
+    },
+
+    async deleteTag(tagId) {
+      check((await db().from("tags").delete().eq("id", tagId)).error);
+    },
+
+    async tagTransactions(transactionIds, tagId, on) {
+      const { data, error } = await db().rpc("tag_transactions", {
+        p_ids: transactionIds,
+        p_tag_id: tagId,
+        p_on: on,
+      });
+      check(error);
+      return data ?? 0;
     },
 
     async addIncomeRule(householdId, rule) {
@@ -404,6 +455,8 @@ export function createSupabaseStore(
           amount: side.amount,
           payee: side.payee,
           memo: side.memo,
+          // Left out = keep this side's tags.
+          ...(side.tagIds ? { tag_ids: side.tagIds } : {}),
         })),
       });
       check(error);

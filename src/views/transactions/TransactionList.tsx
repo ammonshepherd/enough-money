@@ -4,6 +4,7 @@ import { formatSignedCents } from "../../models/money";
 import { formatDay, formatMonth, todayIso, type Month } from "../../models/month";
 import type { Transaction } from "../../models/types";
 import { BankIcon, ChevronDownIcon } from "../icons";
+import { TagChips } from "../Tags";
 
 /**
  * Transactions under day headings (newest first), and for an open account
@@ -210,13 +211,16 @@ function TransactionItem({
         <button
           className="activity-who"
           type="button"
-          aria-label={`Edit ${payee}, ${amount}${accountLine ? `, ${accountLine}` : ""}`}
+          aria-label={`Edit ${payee}, ${amount}${accountLine ? `, ${accountLine}` : ""}${
+            row.tags.length ? `, tagged ${row.tags.map((t) => t.name).join(", ")}` : ""
+          }`}
           onClick={onEdit}
         >
           <span className={row.toReview ? "activity-payee to-review" : "activity-payee"}>
             {payee}
           </span>
           {accountLine && <span className="activity-account">{accountLine}</span>}
+          <TagChips tags={row.tags} className="activity-tags" />
         </button>
         {isSplit ? (
           <button

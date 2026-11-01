@@ -44,6 +44,7 @@ const tx = (partial: Partial<Transaction>): Transaction => ({
   allocations: [],
   importKey: null,
   reconciled: false,
+  tagIds: [],
   ...partial,
 });
 
@@ -73,6 +74,7 @@ const budget = (transactions: Transaction[]): BudgetData => ({
   envelopeMonths: [],
   transactions,
   incomeRules: [],
+  tags: [],
 });
 
 const to = (envelopeId: string, amount: number) => [{ envelopeId, amount }];
@@ -353,4 +355,74 @@ describe("filter values and labels", () => {
     expect(filterLabel({ envelopeId: "dining" }, data)).toBe("Dining out");
     expect(filterLabel({ kind: "income" }, data)).toBe("Income");
   });
+});
+
+describe("tags", () => {
+  /** The sample with Kroger tagged Trip and Work, Costco Trip, and the transfer's card side Work. */
+  const taggedSample = () => {
+    const { data } = sample();
+    const tagsFor: Record<string, string[]> = { kroger: ["trip", "work"], costco: ["trip"] };
+    const transactions = data.transactions.map((t) =>
+      t.isTransfer && t.accountId === "card"
+        ? { ...t, tagIds: ["work"] }
+        : { ...t, tagIds: tagsFor[t.id] ?? [] },
+    );
+    const next: BudgetData = {
+      ...data,
+      transactions,
+      tags: [
+        { id: "trip", name: "Beach trip", color: "blue" },
+        { id: "work", name: "Work", color: "grey" },
+        { id: "unused", name: "Unused", color: "red" },
+      ],
+    };
+    return { data: next, days: accountHistory(next, "checking") };
+  };
+
+  it("a tag keeps rows with it, and several tags keep rows with all of them", () => {
+    const { days } = taggedSample();
+    expect(ids(findRows(days, [{ tagId: "trip" }], "")).sort()).toEqual(["costco", "kroger"]);
+    expect(ids(findRows(days, [{ tagId: "trip" }, { tagId: "work" }], ""))).toEqual(["kroger"]);
+    // A tag stacks with an envelope: the split counts only that part.
+    const dining = findRows(days, [{ envelopeId: "dining" }, { tagId: "trip" }], "");
+    expect(foundTotal(dining)).toBe(-2_000);
+  });
+
+  it("each side of a transfer keeps its own tags", () => {
+    const { data, days } = taggedSample();
+    // In checking the transfer's own side has no tag; on the card it has Work.
+    expect(ids(findRows(days, [{ tagId: "work" }], ""))).toEqual(["kroger"]);
+    const card = accountHistory(data, "card");
+    expect(findRows(card, [{ tagId: "work" }], "")).toHaveLength(1);
+  });
+
+  it("typed words match tag names", () => {
+    const { days } = taggedSample();
+    expect(ids(findRows(days, [], "beach")).sort()).toEqual(["costco", "kroger"]);
+  });
+
+  it("chips stack: a tag never replaces another tag or an envelope", () => {
+    const trip = { tagId: "trip" };
+    const work = { tagId: "work" };
+    const groceries = { envelopeId: "groceries" };
+    expect(addFilter([groceries, trip], work)).toEqual([groceries, trip, work]);
+    expect(addFilter([trip, work], trip)).toEqual([work, trip]);
+  });
+
+  it("offers the tags the rows use, after the kinds, with counts", () => {
+    const { data, days } = taggedSample();
+    const choices = searchChoices(days, data);
+    const tags = choices.filter((c) => c.group === "Tags");
+    expect(tags.map((c) => `${c.label}: ${c.detail}`)).toEqual([
+      "Beach trip: 2 transactions",
+      "Work: 1 transaction",
+    ]);
+    expect(choices.indexOf(tags[0]!)).toBeGreaterThan(
+      choices.findIndex((c) => c.label === "Income"),
+    );
+    expect(filterFromValue(filterValue(work()))).toEqual(work());
+    expect(filterLabel(work(), data)).toBe("Tag: Work");
+  });
+
+  const work = () => ({ tagId: "work" });
 });

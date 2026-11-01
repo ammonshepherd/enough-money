@@ -26,6 +26,7 @@ function tx(
     allocations: [],
     importKey: null,
     reconciled: false,
+    tagIds: [],
     ...partial,
   };
 }
@@ -35,6 +36,7 @@ function household(): BudgetData {
   return {
     household: { id: "h", name: "Home" },
     incomeRules: [],
+    tags: [],
     accounts: [
       {
         id: "checking",

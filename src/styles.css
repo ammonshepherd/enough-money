@@ -4165,3 +4165,271 @@ body:has(.app-shell.desktop) {
   color: var(--bb-purple);
   font-weight: 700;
 }
+
+/* ---- v0.39.0: transaction tags ---- */
+
+/* Each colour: a light fill and dark text that reads on it. */
+.tag-grey {
+  --tag-bg: #ebe7ef;
+  --tag-fg: #4a4152;
+}
+.tag-red {
+  --tag-bg: #fde0e0;
+  --tag-fg: #9b1c1c;
+}
+.tag-orange {
+  --tag-bg: #fde6d2;
+  --tag-fg: #8a3d0a;
+}
+.tag-yellow {
+  --tag-bg: #fbf0c4;
+  --tag-fg: #6b5104;
+}
+.tag-green {
+  --tag-bg: #daf2df;
+  --tag-fg: #1d6430;
+}
+.tag-teal {
+  --tag-bg: #d4f0ee;
+  --tag-fg: #135e5a;
+}
+.tag-blue {
+  --tag-bg: #dde8fb;
+  --tag-fg: #1e4c97;
+}
+.tag-purple {
+  --tag-bg: #ece1f7;
+  --tag-fg: #5a2d82;
+}
+.tag-pink {
+  --tag-bg: #fbe0ee;
+  --tag-fg: #8f1f5b;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  max-inline-size: 100%;
+  min-block-size: 1.3rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  color: var(--tag-fg);
+  background: var(--tag-bg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tag-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-remove {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  margin-inline-end: -0.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tag-remove:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-inline-size: 0;
+}
+
+.activity-tags {
+  margin-block-start: 0.2rem;
+}
+
+/* The form's Tags field: chosen chips and the typing field share one box. */
+.tag-picker {
+  position: relative;
+}
+
+.tag-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  min-block-size: 2.6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  cursor: text;
+}
+
+.tag-box:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.tag-box .tag-chip {
+  min-block-size: 1.8rem;
+  font-size: 0.82rem;
+}
+
+.field .tag-box input {
+  flex: 1 1 8rem;
+  inline-size: auto;
+  min-inline-size: 6rem;
+  min-block-size: 1.8rem;
+  padding: 0.2rem;
+  border: 0;
+  background: transparent;
+}
+
+.field .tag-box input:focus-visible {
+  outline: none;
+}
+
+.tag-picker .picker-option .tag-chip {
+  font-size: 0.85rem;
+}
+
+/* Settings → Tags. */
+.tag-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tag-edit {
+  display: block;
+}
+
+.tag-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tag-colors legend {
+  margin-block-end: 0.35rem;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tag-swatch {
+  position: relative;
+  display: inline-block;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 2px solid var(--tag-fg);
+  border-radius: 50%;
+  background: var(--tag-bg);
+  cursor: pointer;
+}
+
+.tag-swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tag-swatch:has(input:checked) {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--brand);
+}
+
+.tag-swatch:has(input:checked)::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--tag-fg);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.tag-swatch:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* Ticked rows → Tags: one button per tag, then a new tag. */
+.selection-tags {
+  display: grid;
+  flex-basis: 100%;
+  gap: 0.5rem;
+  padding-block: 0.25rem 0.35rem;
+}
+
+.selection-tags ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.selection-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-block-size: 2.25rem;
+  padding: 0 0.6rem 0 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.selection-tag.all {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.selection-tag:disabled {
+  opacity: 0.6;
+}
+
+.selection-tag-mark {
+  inline-size: 1rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.selection-tag-new {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.selection-tag-new input {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 2.25rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+}

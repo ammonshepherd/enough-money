@@ -5,6 +5,7 @@
  */
 import type { Cents } from "./money";
 import type { IncomeRule } from "./incomeRules";
+import type { Tag } from "./tags";
 import type { ImportFormat } from "./transactionImport";
 
 /** "YYYY-MM-DD" in the household's local calendar. */
@@ -93,6 +94,8 @@ export interface Transaction {
    * it changes no budget math and does not lock the transaction.
    */
   reconciled: boolean;
+  /** The household tags it carries (see tags.ts); only labels, no budget math. */
+  tagIds: string[];
 }
 
 /** Everything one household's budget needs, loaded at once. */
@@ -105,4 +108,6 @@ export interface BudgetData {
   transactions: Transaction[];
   /** Rules that mark matching inflows as Income (see incomeRules.ts). */
   incomeRules: IncomeRule[];
+  /** The household's transaction tags (see tags.ts). */
+  tags: Tag[];
 }

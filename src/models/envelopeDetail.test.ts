@@ -44,6 +44,7 @@ describe("remainingParts", () => {
     const data: BudgetData = {
       household: { id: "h", name: "Home" },
       incomeRules: [],
+      tags: [],
       accounts: [
         {
           id: "checking",
@@ -85,6 +86,7 @@ function tx(id: string, date: string, amount: number, partial: Partial<Transacti
     allocations: [{ envelopeId: "food", amount }],
     importKey: null,
     reconciled: false,
+    tagIds: [],
     ...partial,
   } satisfies Transaction;
 }
@@ -93,9 +95,10 @@ describe("envelopeActivity", () => {
   it("lists this envelope's part of the month's transactions, newest first", () => {
     const data = {
       accounts: [{ id: "checking", name: "Checking" }],
+      tags: [{ id: "trip", name: "Trip", color: "blue" }],
       transactions: [
         tx("sept", "2026-09-30", -100),
-        tx("first", "2026-10-02", -200),
+        tx("first", "2026-10-02", -200, { tagIds: ["trip"] }),
         tx("split", "2026-10-09", -5_000, {
           allocations: [
             { envelopeId: "food", amount: -1_500 },
@@ -114,6 +117,7 @@ describe("envelopeActivity", () => {
         accountName: "Checking",
         amount: -1_500,
         splitTotal: -5_000,
+        tags: [],
       },
       {
         id: "first",
@@ -122,6 +126,7 @@ describe("envelopeActivity", () => {
         accountName: "Checking",
         amount: -200,
         splitTotal: null,
+        tags: [{ id: "trip", name: "Trip", color: "blue" }],
       },
     ]);
   });

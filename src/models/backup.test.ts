@@ -87,6 +87,14 @@ function sample(): Backup {
       { transaction_id: "split", category_id: "fun", amount: -2_000 },
     ],
     income_rules: [{ pattern: "payroll", account_id: "chk", created_at: null }],
+    tags: [
+      { id: "trip", name: "Trip", color: "blue", created_at: null },
+      { id: "work", name: "Work", color: "grey", created_at: null },
+    ],
+    transaction_tags: [
+      { transaction_id: "split", tag_id: "trip" },
+      { transaction_id: "out", tag_id: "work" },
+    ],
   };
 }
 
@@ -220,12 +228,45 @@ describe("validateBackup", () => {
   });
 });
 
+describe("validateBackup with tags", () => {
+  it("reads a file made before tags as having none", () => {
+    const old: Partial<Backup> = sample();
+    delete old.tags;
+    delete old.transaction_tags;
+    expect(() => validateBackup(old)).not.toThrow();
+    expect(withFreshIds(old as Backup).tags).toEqual([]);
+  });
+
+  it("checks tags like the database", () => {
+    refuses((b) => (b.tags![0]!.name = " Trip"), "bad name");
+    refuses((b) => (b.tags![0]!.name = "x".repeat(31)), "bad name");
+    refuses((b) => (b.tags![0]!.color = "mauve" as "blue"), "bad color");
+    refuses((b) => (b.tags![1]!.name = "TRIP"), "a tag name appears twice");
+    refuses((b) => b.transaction_tags!.push({ transaction_id: "split", tag_id: "trip" }), "twice");
+    refuses((b) => (b.transaction_tags![0]!.tag_id = "gone"), "missing tag");
+    refuses((b) => (b.transaction_tags![0]!.transaction_id = "gone"), "missing transaction");
+    refuses((b) => ((b as unknown as Record<string, unknown>).tags = "no"), "tags list");
+  });
+});
+
 describe("withFreshIds", () => {
   it("replaces every id and keeps every link", () => {
     let n = 0;
     const fresh = withFreshIds(sample(), () => `new-${++n}`);
     const text = JSON.stringify(fresh);
-    for (const old of ["chk", "visa", "g1", "g2", "food", "fun", "pay", "split", "t1"]) {
+    for (const old of [
+      "chk",
+      "visa",
+      "g1",
+      "g2",
+      "food",
+      "fun",
+      "pay",
+      "split",
+      "t1",
+      "trip",
+      "work",
+    ]) {
       expect(text).not.toContain(`"${old}"`);
     }
     expect(() => validateBackup(fresh)).not.toThrow();
@@ -234,6 +275,10 @@ describe("withFreshIds", () => {
     expect(fresh.transactions[3]!.account_id).toBe(visa);
     expect(fresh.transactions[2]!.transfer_id).toBe(fresh.transactions[3]!.transfer_id);
     expect(fresh.income_rules[0]!.account_id).toBe(fresh.accounts[0]!.id);
+    expect(fresh.transaction_tags![0]).toEqual({
+      transaction_id: fresh.transactions[1]!.id,
+      tag_id: fresh.tags![0]!.id,
+    });
     // Everything else is kept.
     expect(fresh.transactions[1]).toMatchObject({
       reconciled: true,
@@ -278,9 +323,13 @@ describe("helpers", () => {
       envelopeMonths: [],
       transactions: [],
       incomeRules: [],
+      tags: [],
     };
     expect(isEmptyHousehold(empty)).toBe(true);
     expect(isEmptyHousehold({ ...empty, groups: [{ id: "g", name: "G", position: 0 }] })).toBe(
+      false,
+    );
+    expect(isEmptyHousehold({ ...empty, tags: [{ id: "t", name: "T", color: "red" }] })).toBe(
       false,
     );
   });

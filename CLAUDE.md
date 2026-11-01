@@ -357,10 +357,22 @@ non-card budget balances − all envelope money (P included)`.
 - Backup (decided in v0.28.0, `src/models/backup.ts`): Settings exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings and income rules) and restores such a file only into an empty
+  CSV mappings, income rules and tags) and restores such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).
+- Tags (decided in v0.39.0, `src/models/tags.ts`): the household's own
+  labels (`tags`: a name, 1–30 characters, unique ignoring case, and one of
+  nine colours) on whole transactions (`transaction_tags`, at most 20 each;
+  a split shares them). Only labels for showing and searching: they change
+  no budget math. Each side of a transfer keeps its own tags (`planTransfer`
+  never copies them to the other side). Made in Settings → Tags (rename,
+  recolour, delete; deleting takes it off its transactions) or by typing in
+  the transaction form (`TagPicker`, "Add tag “…”"); shown as pills on
+  Accounts rows and in the envelope sheet; searched as chips (any number,
+  all must match) and by typed words; added to or taken off ticked rows
+  with the bar's Tags (`tag_transactions`). Saving with tags left out
+  keeps them (`TransactionInput.tagIds`, `TransferSide.tagIds`).
 - A card payment the cover prompt cannot cover is never suggested as Uncategorized
   (that would hide the cash it spent): assign or add income first.
 
@@ -377,7 +389,7 @@ spending.
 Later: matching a transaction typed after its bank row was imported (import
 already matches typed transactions, and transfers link to bank rows),
 statement reconciliation (v0.27.0 added only the reconciled mark),
-bulk actions on ticked rows beyond reconciling
+bulk actions on ticked rows beyond reconciling and tagging
 (`docs/proposals/bulk-actions.md`), tithing/fast-offering rules. See
 `docs/SPEC.md` §9 for everything not built yet.
 
@@ -387,11 +399,11 @@ The PR #4 prototype was replaced in v0.2.0 by the migrations in
 `supabase/migrations/` (applied to the dev project; file names match the
 project's migration history). Tables: households, household_members, accounts,
 category_groups, categories (= envelopes), category_months, transactions,
-transaction_allocations, income_rules. Every table has household-scoped RLS; multi-row
+transaction_allocations, income_rules, tags, transaction_tags. Every table has household-scoped RLS; multi-row
 writes go through SQL functions (`create_household`, `save_transaction`,
 `adjust_category_month`, `move_between_envelopes`,
 `import_envelope_plan`, `import_transactions`, `save_transfer`, `mark_income`,
-`set_reconciled`, `reorder_category_groups`, `reorder_categories`,
+`set_reconciled`, `tag_transactions`, `reorder_category_groups`, `reorder_categories`,
 `export_backup`, `restore_backup`). Triggers create, rename and protect
 each credit card's payment envelope and reject allocations to it. Imported transactions carry an
 `import_key` (unique per account) for duplicate prevention; each account keeps

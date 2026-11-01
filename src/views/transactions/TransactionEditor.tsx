@@ -13,6 +13,7 @@ import { MAX_SPLIT_LINES, type SplitLine } from "../../models/splits";
 import { ErrorMessage, Money } from "../components";
 import { EnvelopePicker, type PickerOption } from "../EnvelopePicker";
 import { AmountInput } from "../AmountInput";
+import { TagPicker } from "../Tags";
 
 /** The transaction form itself (TransactionEntry adds the cover prompt). */
 export function TransactionEditor({
@@ -229,6 +230,12 @@ export function TransactionEditor({
         {tracking ? "Notes" : "Memo"}
         <input value={form.memo} onChange={(e) => update({ memo: e.target.value })} />
       </label>
+      <TagPicker
+        tags={entry.tags}
+        value={form.tagIds}
+        onChange={(tagIds) => update({ tagIds })}
+        onCreate={entry.createTag}
+      />
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={save.pending}>
           {form.id ? "Save changes" : "Save"}
