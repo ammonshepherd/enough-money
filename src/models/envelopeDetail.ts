@@ -1,6 +1,7 @@
 import type { BudgetMonthView, EnvelopeRow } from "./budgetMath";
 import type { Cents } from "./money";
 import { monthOf, type Month } from "./month";
+import { tagsOf, type Tag } from "./tags";
 import type { BudgetData, IsoDate } from "./types";
 
 /**
@@ -53,6 +54,8 @@ export interface EnvelopeActivity {
   amount: Cents;
   /** Total of the whole transaction, when it is a split. */
   splitTotal: Cents | null;
+  /** Its tags, alphabetical. */
+  tags: Tag[];
 }
 
 /** The envelope's transactions in `month`, newest first. */
@@ -74,6 +77,7 @@ export function envelopeActivity(
       accountName: accountNames.get(tx.accountId) ?? "Unknown account",
       amount: line.amount,
       splitTotal: tx.allocations.length > 1 ? tx.amount : null,
+      tags: tagsOf(tx, data.tags),
     });
   }
   return rows.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));

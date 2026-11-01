@@ -39,6 +39,7 @@ const tx = (partial: Partial<Transaction>): Transaction => ({
   allocations: [],
   importKey: null,
   reconciled: false,
+  tagIds: [],
   ...partial,
 });
 
@@ -65,6 +66,7 @@ const budget = (transactions: Transaction[], accounts?: Account[]): BudgetData =
   envelopeMonths: [],
   transactions,
   incomeRules: [],
+  tags: [],
 });
 
 const groceries = (amount: number) => [{ envelopeId: "groceries", amount }];
@@ -313,6 +315,7 @@ describe("a tracking account", () => {
         payee: "Dividend",
         memo: "Q3",
         reconciled: true,
+        tagIds: [],
       }),
       tx({ accountId: "brokerage", amount: -1_000, payee: "Fee", date: "2026-10-16" }),
       tx({ amount: -2_000, payee: "Grocer" }),
@@ -563,6 +566,7 @@ describe("firstRows", () => {
       sideIds: [],
       sideAmount: -100,
       reconciled: false,
+      tags: [],
     })),
   });
   const days = [day("2026-10-03", 60), day("2026-10-02", 60), day("2026-10-01", 120)];

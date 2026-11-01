@@ -31,6 +31,7 @@ import { isTracking } from "../models/accounts";
 import type { Account, BudgetData, Transaction } from "../models/types";
 import { requireCents } from "./input";
 import type { Budget } from "./useBudget";
+import { addNamedTag } from "./useTags";
 
 /** The category choice for a transfer: it is neither spending nor income. */
 export const TRANSFER = "transfer";
@@ -56,6 +57,8 @@ export interface TransactionForm {
   transferAccountId: string;
   /** For a transfer: which transaction is the other side (see OtherSideChoice). */
   transferMatch: OtherSideChoice;
+  /** Its tags (for a transfer, this side's only). */
+  tagIds: string[];
 }
 
 /** What saving will do: one transaction, or both sides of a transfer. */
@@ -116,6 +119,7 @@ export function formFromTransaction(tx: Transaction, data: BudgetData): Transact
     split: tx.allocations.length > 1 ? linesFromAllocations(tx.allocations) : [],
     transferAccountId: transferPartner(data, tx)?.accountId ?? "",
     transferMatch: "auto",
+    tagIds: [...tx.tagIds],
   };
 }
 
@@ -138,6 +142,7 @@ export function blankTransactionForm(data: BudgetData, accountId?: string | null
     split: [],
     transferAccountId: "",
     transferMatch: "auto",
+    tagIds: [],
   };
 }
 
@@ -236,6 +241,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
       payee: form.payee.trim(),
       memo: form.memo.trim(),
       isIncome,
+      tagIds: form.tagIds,
       allocations:
         envelopeId === SPLIT
           ? splitAllocations(amount, form.split)
@@ -247,8 +253,8 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
 
   /** Both sides of the transfer the form describes, and where the other side comes from. */
   const toTransfer = (form: TransactionForm): { input: TransferInput; other: OtherSide } => {
-    const { id, accountId, date, amount, payee, memo } = toInput(form);
-    const side = { id, accountId, date, amount, payee, memo };
+    const { id, accountId, date, amount, payee, memo, tagIds } = toInput(form);
+    const side = { id, accountId, date, amount, payee, memo, tagIds };
     const otherAccountId = transferAccountOf(form);
     if (!otherAccountId) throw new UserFacingError("Add another account to transfer to or from.");
     const existing = data.transactions.find((t) => t.id === form.id);
@@ -306,6 +312,10 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
 
   return {
     openAccounts,
+    /** Every household tag, for the form's Tags field. */
+    tags: data.tags,
+    /** Adds a tag typed in the form (in the next free colour); resolves to its id. */
+    createTag: (name: string): Promise<string> => addNamedTag(budget, data, name),
     isCardCredit,
     isTrackingForm,
     /**

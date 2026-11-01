@@ -37,7 +37,7 @@ export function TransactionSearch({
   const matches: PickerOption[] = open ? matchOptions(search.choices, typed) : [];
   const options: PickerOption[] =
     open && typed.trim()
-      ? [...matches, { value: TEXT, label: `Search “${typed.trim()}” in payee and memo` }]
+      ? [...matches, { value: TEXT, label: `Search “${typed.trim()}” in payee, memo and tags` }]
       : matches;
   const activeOption = options[active];
 

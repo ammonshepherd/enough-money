@@ -10,6 +10,7 @@ import { CardDebt } from "../CardDebt";
 import { EnvelopeGroups } from "../EnvelopeGroups";
 import { EnvelopePlanImport } from "../EnvelopePlanImport";
 import { IncomeRules } from "../IncomeRules";
+import { TagSettings } from "../TagSettings";
 import { TransactionImport } from "../TransactionImport";
 import { ActivityIcon, SettingsIcon } from "../icons";
 import { MenuItem, PageMenu } from "../PageMenu";
@@ -91,6 +92,7 @@ export function SettingsPage({
       </div>
       <IncomeRules budget={budget} data={data} />
       <EnvelopePlanImport budget={budget} data={data} />
+      <TagSettings budget={budget} data={data} />
       <BackupSection budget={budget} data={data} />
     </section>
   );

@@ -76,7 +76,7 @@ test("choosing an envelope shows only its transactions, a split by its part", as
   const list = page.getByRole("listbox", { name: "Matches" });
   await expect(list.getByRole("option")).toHaveText([
     /^Groceries\s+3 transactions$/,
-    "Search “gro” in payee and memo",
+    "Search “gro” in payee, memo and tags",
   ]);
   await list.getByRole("option", { name: /Groceries/ }).click();
 

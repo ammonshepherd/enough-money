@@ -26,6 +26,8 @@ export interface TransferSide {
   amount: Cents;
   payee: string;
   memo: string;
+  /** This side's tags, replacing those it had. Omit to keep them (none for a new one). */
+  tagIds?: string[];
 }
 
 export interface TransferInput {
@@ -152,6 +154,8 @@ export function planTransfer(
     id,
     accountId: otherAccountId,
     amount,
+    // Each side keeps its own tags: the other side's are left as they are.
+    tagIds: undefined,
   });
   const fromBank = (tx: Transaction): TransferSide => ({
     id: tx.id,

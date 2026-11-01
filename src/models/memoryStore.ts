@@ -16,6 +16,12 @@ import {
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { nameKey } from "./envelopePlan";
 import { MAX_SPLIT_LINES } from "./splits";
+import {
+  MAX_TAGS_PER_TRANSACTION,
+  checkTagNameFree,
+  cleanTagDetails,
+  type TagDetails,
+} from "./tags";
 import { asImportFormat } from "./transactionImport";
 import type { BudgetData, Transaction } from "./types";
 
@@ -66,6 +72,24 @@ export function createMemoryStore(): DataStore {
     tx.isTransfer = false;
     others.forEach(release);
   };
+  /** Like the SQL set_transaction_tags: undefined keeps `current`; else at most 20 known tags. */
+  const tagIdsFor = (wanted: string[] | undefined, current: string[]): string[] => {
+    if (wanted === undefined) return [...current];
+    const unique = [...new Set(wanted)];
+    if (unique.length > MAX_TAGS_PER_TRANSACTION) {
+      throw new UserFacingError(`A transaction can have at most ${MAX_TAGS_PER_TRANSACTION} tags`);
+    }
+    if (unique.some((tagId) => !budget().tags.some((t) => t.id === tagId))) {
+      throw new UserFacingError("Tag not found");
+    }
+    return unique;
+  };
+  /** Like the database checks on the tags table. */
+  const checkTag = (tag: TagDetails, exceptId?: string): TagDetails => {
+    const clean = cleanTagDetails(tag);
+    checkTagNameFree(budget().tags, clean.name, exceptId);
+    return clean;
+  };
   const envelopeMonth = (envelopeId: string, month: string) => {
     const b = budget();
     if (!b.envelopes.some((e) => e.id === envelopeId)) {
@@ -109,6 +133,7 @@ export function createMemoryStore(): DataStore {
         envelopeMonths: [],
         transactions: [],
         incomeRules: [],
+        tags: [],
       };
     },
 
@@ -311,8 +336,9 @@ export function createMemoryStore(): DataStore {
           `Allocations (${sum}) must sum to the transaction amount (${input.amount})`,
         );
       }
-      if (input.id) releaseTransfer(input.id);
       const previous = b.transactions.find((t) => t.id === input.id);
+      const tagIds = tagIdsFor(input.tagIds, previous?.tagIds ?? []);
+      if (input.id) releaseTransfer(input.id);
       const tx = {
         id: input.id ?? id(),
         accountId: input.accountId,
@@ -327,6 +353,7 @@ export function createMemoryStore(): DataStore {
         allocations: lines.map((a) => ({ ...a })),
         importKey: previous?.importKey ?? null,
         reconciled: previous?.reconciled ?? false,
+        tagIds,
       };
       const index = b.transactions.findIndex((t) => t.id === tx.id);
       if (index >= 0) b.transactions[index] = tx;
@@ -380,6 +407,7 @@ export function createMemoryStore(): DataStore {
           allocations: [],
           importKey: row.importKey,
           reconciled: false,
+          tagIds: [],
         });
         added++;
       }
@@ -387,6 +415,36 @@ export function createMemoryStore(): DataStore {
       account.importFormat = structuredClone(format);
       return added;
     },
+    async addTag(_householdId, tag) {
+      const tagId = id();
+      budget().tags.push({ id: tagId, ...checkTag(tag) });
+      return tagId;
+    },
+    async updateTag(tagId, tag) {
+      const existing = budget().tags.find((t) => t.id === tagId);
+      if (!existing) throw new UserFacingError("Tag not found");
+      Object.assign(existing, checkTag(tag, tagId));
+    },
+    async deleteTag(tagId) {
+      const b = budget();
+      b.tags = b.tags.filter((t) => t.id !== tagId);
+      for (const tx of b.transactions) tx.tagIds = tx.tagIds.filter((t) => t !== tagId);
+    },
+    async tagTransactions(transactionIds, tagId, on) {
+      if (transactionIds.length > 2000) {
+        throw new UserFacingError("Tag at most 2000 transactions at once");
+      }
+      if (!budget().tags.some((t) => t.id === tagId)) throw new UserFacingError("Tag not found");
+      let changed = 0;
+      for (const tx of budget().transactions) {
+        if (!transactionIds.includes(tx.id) || tx.tagIds.includes(tagId) === on) continue;
+        if (on && tx.tagIds.length >= MAX_TAGS_PER_TRANSACTION) continue;
+        tx.tagIds = on ? [...tx.tagIds, tagId] : tx.tagIds.filter((t) => t !== tagId);
+        changed++;
+      }
+      return changed;
+    },
+
     async addIncomeRule(_householdId, rule) {
       budget().incomeRules.push({ id: id(), ...rule });
     },
@@ -444,6 +502,9 @@ export function createMemoryStore(): DataStore {
           "A transfer needs two sides in different accounts that cancel out",
         );
       }
+      const sideTags = input.sides.map((side) =>
+        tagIdsFor(side.tagIds, b.transactions.find((t) => t.id === side.id)?.tagIds ?? []),
+      );
       const transferId = input.transferId ?? id();
       const ids = input.sides.map((side) => side.id).filter(Boolean);
       if (
@@ -459,7 +520,7 @@ export function createMemoryStore(): DataStore {
       )) {
         release(old);
       }
-      for (const side of input.sides) {
+      for (const [index, side] of input.sides.entries()) {
         const existing = side.id ? b.transactions.find((t) => t.id === side.id) : undefined;
         if (side.id && !existing) throw new UserFacingError("Transaction not found");
         const tx = {
@@ -476,6 +537,7 @@ export function createMemoryStore(): DataStore {
           allocations: [],
           importKey: existing?.importKey ?? null,
           reconciled: existing?.reconciled ?? false,
+          tagIds: sideTags[index]!,
         };
         if (existing) Object.assign(existing, tx);
         else b.transactions.push(tx);
@@ -553,6 +615,10 @@ export function createMemoryStore(): DataStore {
           account_id: r.accountId,
           created_at: null,
         })),
+        tags: b.tags.map((t) => ({ id: t.id, name: t.name, color: t.color, created_at: null })),
+        transaction_tags: b.transactions.flatMap((t) =>
+          t.tagIds.map((tagId) => ({ transaction_id: t.id, tag_id: tagId })),
+        ),
       };
     },
     async restoreBackup(_householdId, backup) {
@@ -563,6 +629,10 @@ export function createMemoryStore(): DataStore {
         file.transaction_allocations
           .filter((x) => x.transaction_id === transactionId)
           .map((x) => ({ envelopeId: x.category_id, amount: x.amount }));
+      const tagsOf = (transactionId: string) =>
+        (file.transaction_tags ?? [])
+          .filter((x) => x.transaction_id === transactionId)
+          .map((x) => x.tag_id);
       data = {
         household: { id: b.household.id, name: file.household.name.trim() },
         accounts: file.accounts.map((a) => ({
@@ -605,6 +675,7 @@ export function createMemoryStore(): DataStore {
             allocations: linesOf(t.id),
             importKey: t.import_key,
             reconciled: t.reconciled,
+            tagIds: tagsOf(t.id),
           }))
           .sort((x, y) => y.date.localeCompare(x.date)),
         incomeRules: file.income_rules.map((r) => ({
@@ -612,6 +683,7 @@ export function createMemoryStore(): DataStore {
           pattern: r.pattern,
           accountId: r.account_id,
         })),
+        tags: (file.tags ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color })),
       };
     },
   };

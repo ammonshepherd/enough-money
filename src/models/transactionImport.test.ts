@@ -62,6 +62,7 @@ function budget(transactions: BudgetData["transactions"] = []): BudgetData {
   return {
     household: { id: "h", name: "Home" },
     incomeRules: [],
+    tags: [],
     accounts: [account()],
     groups: [],
     envelopes: [],
@@ -83,6 +84,7 @@ function typed(partial: Partial<Transaction> & Pick<Transaction, "id" | "date" |
     allocations: [],
     importKey: null,
     reconciled: false,
+    tagIds: [],
     ...partial,
   };
 }
@@ -284,6 +286,7 @@ describe("previewTransactionImport", () => {
         allocations: [],
         importKey: "id:20261011:2",
         reconciled: false,
+        tagIds: [],
       },
     ]);
     const preview = previewTransactionImport(data, account(), t, detectFormat(t));
@@ -325,6 +328,7 @@ describe("previewTransactionImport", () => {
       allocations: [],
       importKey: r.importKey,
       reconciled: false,
+      tagIds: [],
     }));
     const t2 = table(`${text}\n10/05/2026,Coffee,-4.50`);
     const again = previewTransactionImport(budget(imported), account(), t2, detectFormat(t2));

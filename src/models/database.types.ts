@@ -268,6 +268,38 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          color: string
+          created_at: string
+          household_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          household_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_allocations: {
         Row: {
           amount: number
@@ -300,6 +332,39 @@ export type Database = {
           },
           {
             foreignKeyName: "transaction_allocations_household_id_transaction_id_fkey"
+            columns: ["household_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["household_id", "id"]
+          },
+        ]
+      }
+      transaction_tags: {
+        Row: {
+          household_id: string
+          tag_id: string
+          transaction_id: string
+        }
+        Insert: {
+          household_id: string
+          tag_id: string
+          transaction_id: string
+        }
+        Update: {
+          household_id?: string
+          tag_id?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_tags_household_id_tag_id_fkey"
+            columns: ["household_id", "tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "transaction_tags_household_id_transaction_id_fkey"
             columns: ["household_id", "transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
@@ -433,6 +498,7 @@ export type Database = {
           p_is_transfer: boolean
           p_memo: string
           p_payee: string
+          p_tag_ids?: string[]
         }
         Returns: string
       }
@@ -442,6 +508,10 @@ export type Database = {
       }
       set_reconciled: {
         Args: { p_ids: string[]; p_reconciled: boolean }
+        Returns: number
+      }
+      tag_transactions: {
+        Args: { p_ids: string[]; p_on: boolean; p_tag_id: string }
         Returns: number
       }
     }

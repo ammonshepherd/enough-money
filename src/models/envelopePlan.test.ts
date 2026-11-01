@@ -8,6 +8,7 @@ function household(): BudgetData {
   return {
     household: { id: "h", name: "Home" },
     incomeRules: [],
+    tags: [],
     accounts: [],
     groups: [{ id: "bills", name: "Bills", position: 0 }],
     envelopes: [{ id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null }],
@@ -137,6 +138,7 @@ describe("copying a month's plan", () => {
     allocations: [{ envelopeId, amount }],
     importKey: null,
     reconciled: false,
+    tagIds: [],
   });
 
   function twoMonths(): BudgetData {

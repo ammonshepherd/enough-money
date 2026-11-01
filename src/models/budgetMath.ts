@@ -780,6 +780,7 @@ export function budgetWith(
     allocations: [...p.allocations],
     importKey: null,
     reconciled: false,
+    tagIds: [],
   }));
   return {
     ...data,

@@ -7,7 +7,7 @@
  * would lose: reconciled and voided marks, import keys (so later bank CSV
  * imports still skip rows already imported), where a row came from (`source`),
  * transfer links, splits, closed accounts, each card's payment envelope, the
- * saved CSV column mappings and when rows were created (ties in a day keep
+ * saved CSV column mappings, tags and when rows were created (ties in a day keep
  * their order). The SQL functions export_backup / restore_backup read and
  * write it; see supabase/migrations/20261020105751_backup_restore.sql.
  *
@@ -17,6 +17,7 @@
  */
 import { UserFacingError } from "./dataStore";
 import { isMonth, monthOf, type Month } from "./month";
+import { MAX_TAGS_PER_TRANSACTION, MAX_TAG_NAME, TAG_COLORS, tagKey, type TagColor } from "./tags";
 import type { BudgetData } from "./types";
 
 // The app was called Budget Buddy until v0.37.0. The format name stays, so
@@ -90,6 +91,19 @@ export interface BackupIncomeRule {
   created_at: string | null;
 }
 
+export interface BackupTag {
+  id: string;
+  name: string;
+  color: TagColor;
+  created_at: string | null;
+}
+
+/** One tag on one transaction. */
+export interface BackupTransactionTag {
+  transaction_id: string;
+  tag_id: string;
+}
+
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: typeof BACKUP_VERSION;
@@ -105,6 +119,9 @@ export interface Backup {
   transactions: BackupTransaction[];
   transaction_allocations: BackupAllocation[];
   income_rules: BackupIncomeRule[];
+  /** Missing in files made before v0.39.0 (no tags then). */
+  tags?: BackupTag[];
+  transaction_tags?: BackupTransactionTag[];
 }
 
 /** Largest amount the database accepts (its bigint checks). */
@@ -119,6 +136,15 @@ const fail = (message: string): never => {
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Like rows, for a list older files do not have: missing = empty. */
+function optionalRows<T>(
+  file: Record<string, unknown>,
+  key: string,
+  fields: Record<string, (value: unknown) => boolean>,
+): T[] {
+  return file[key] === undefined ? [] : rows<T>(file, key, fields);
+}
 
 /** Reads one list of rows, checking each field's type. */
 function rows<T>(
@@ -226,6 +252,18 @@ export function validateBackup(value: unknown): Backup {
     created_at: timestamp,
   });
 
+  const tags = optionalRows<BackupTag>(value, "tags", {
+    id,
+    name: (v) =>
+      typeof v === "string" && v === v.trim() && v.length >= 1 && v.length <= MAX_TAG_NAME,
+    color: (v) => (TAG_COLORS as readonly unknown[]).includes(v),
+    created_at: timestamp,
+  });
+  const tagLinks = optionalRows<BackupTransactionTag>(value, "transaction_tags", {
+    transaction_id: id,
+    tag_id: id,
+  });
+
   const unique = <T>(list: T[], key: (row: T) => string, what: string) => {
     const seen = new Set<string>();
     for (const row of list) {
@@ -240,6 +278,9 @@ export function validateBackup(value: unknown): Backup {
   unique(transactions, (t) => t.id, "a transaction id");
   unique(months, (m) => `${m.category_id} ${m.month}`, "an envelope month");
   unique(allocations, (a) => `${a.transaction_id} ${a.category_id}`, "an envelope in one split");
+  unique(tags, (t) => t.id, "a tag id");
+  unique(tags, (t) => tagKey(t.name), "a tag name");
+  unique(tagLinks, (x) => `${x.transaction_id} ${x.tag_id}`, "a tag on one transaction");
   unique(
     transactions.filter((t) => t.import_key !== null),
     (t) => `${t.account_id} ${t.import_key}`,
@@ -331,6 +372,18 @@ export function validateBackup(value: unknown): Backup {
     }
   }
 
+  // Tags on transactions.
+  const tagIds = new Set(tags.map((t) => t.id));
+  const tagCount = new Map<string, number>();
+  for (const link of tagLinks) {
+    const t = transactionById.get(link.transaction_id);
+    if (!t) return fail("a tag belongs to a missing transaction.");
+    if (!tagIds.has(link.tag_id)) fail(`a transaction on ${t.date} has a missing tag.`);
+    const count = (tagCount.get(t.id) ?? 0) + 1;
+    if (count > MAX_TAGS_PER_TRANSACTION) fail(`a transaction on ${t.date} has too many tags.`);
+    tagCount.set(t.id, count);
+  }
+
   return value as unknown as Backup;
 }
 
@@ -390,6 +443,11 @@ export function withFreshIds(
       category_id: fresh(x.category_id),
     })),
     income_rules: backup.income_rules.map((r) => ({ ...r, account_id: maybe(r.account_id) })),
+    tags: (backup.tags ?? []).map((t) => ({ ...t, id: fresh(t.id) })),
+    transaction_tags: (backup.transaction_tags ?? []).map((x) => ({
+      transaction_id: fresh(x.transaction_id),
+      tag_id: fresh(x.tag_id),
+    })),
   };
 }
 
@@ -428,7 +486,8 @@ export function isEmptyHousehold(data: BudgetData): boolean {
     data.envelopes.length === 0 &&
     data.envelopeMonths.length === 0 &&
     data.transactions.length === 0 &&
-    data.incomeRules.length === 0
+    data.incomeRules.length === 0 &&
+    data.tags.length === 0
   );
 }
 

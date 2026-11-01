@@ -69,6 +69,7 @@ const tx = (accountId: string, amount: number, date = "2026-10-01"): Transaction
   allocations: [],
   importKey: null,
   reconciled: false,
+  tagIds: [],
 });
 
 describe("card debt", () => {

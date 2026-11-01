@@ -12,6 +12,7 @@ import { isToReview, transactionsToReview } from "../models/budgetMath";
 import { inflowsMatchingRules } from "../models/incomeRules";
 import { addMonths, formatMonth, todayIso, type Month } from "../models/month";
 import { accountsHref } from "../models/routes";
+import { sortTags } from "../models/tags";
 import {
   addFilter,
   filterFromValue,
@@ -33,6 +34,7 @@ import {
 } from "../models/transactionSearch";
 import type { BudgetData, Transaction } from "../models/types";
 import type { Budget } from "./useBudget";
+import { addNamedTag } from "./useTags";
 
 const NOTHING: ReadonlySet<string> = new Set();
 
@@ -228,6 +230,45 @@ export function useAccountView(
         }),
       );
       clearSelection();
+    },
+
+    /**
+     * Each tag, and whether all, some or none of the ticked rows carry it
+     * (a transfer's ticked sides count apart).
+     */
+    selectionTags: (() => {
+      const sides = selectedRows.flatMap((r) => r.sideIds);
+      const tagIdsOf = new Map(data.transactions.map((t) => [t.id, t.tagIds]));
+      return sortTags(data.tags).map((tag) => {
+        const n = sides.filter((id) => tagIdsOf.get(id)?.includes(tag.id)).length;
+        const state = n === 0 ? "none" : n === sides.length ? "all" : "some";
+        return { tag, state: state as "all" | "some" | "none" };
+      });
+    })(),
+    /** Adds a tag to every ticked row, or takes it off them; they stay ticked. */
+    tagSelected: async (tagId: string, on: boolean) => {
+      const ids = selectedRows.flatMap((r) => r.sideIds);
+      const marked = new Set(ids);
+      await budget.change(
+        async (store) => {
+          await store.tagTransactions(ids, tagId, on);
+        },
+        (d) => ({
+          ...d,
+          transactions: d.transactions.map((t) =>
+            !marked.has(t.id) || t.tagIds.includes(tagId) === on
+              ? t
+              : { ...t, tagIds: on ? [...t.tagIds, tagId] : t.tagIds.filter((x) => x !== tagId) },
+          ),
+        }),
+      );
+    },
+    /** Adds a new tag by name and puts it on every ticked row. */
+    tagSelectedWithNew: async (name: string) => {
+      const ids = selectedRows.flatMap((r) => r.sideIds);
+      await addNamedTag(budget, data, name, (store, tagId) =>
+        store.tagTransactions(ids, tagId, true),
+      );
     },
 
     deleteTransaction: async (id: string) => {
