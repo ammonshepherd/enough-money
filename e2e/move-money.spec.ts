@@ -5,11 +5,12 @@ import {
   available,
   editCell,
   envelope,
+  expectAssigned,
   goTo,
+  openEnvelope,
   signInWithHousehold,
 } from "./helpers";
 
-const assignedCell = (page: Page, name: string) => envelope(page, name).locator(".cell.assigned");
 const moveButton = (page: Page, name: string) =>
   envelope(page, name).getByRole("button", { name: `Move money from ${name}`, exact: false });
 
@@ -42,8 +43,8 @@ test("tapping what is left moves money to another envelope", async ({ page }) =>
   await expect(dialog).toBeHidden();
 
   // Both Assigned amounts change; Available to Assign does not.
-  await expect(assignedCell(page, "Groceries")).toContainText("$70.00");
-  await expect(assignedCell(page, "Gas")).toContainText("$30.00");
+  await expectAssigned(page, "Groceries", "$70.00");
+  await expectAssigned(page, "Gas", "$30.00");
   await expect(envelope(page, "Gas").locator(".envelope-remaining")).toHaveText("$30.00");
   await expect(available(page)).toContainText("$900.00");
 });
@@ -60,8 +61,45 @@ test("money can go back to Available to Assign", async ({ page }) => {
   await dialog.getByRole("button", { name: "Move", exact: true }).click();
   await expect(dialog).toBeHidden();
 
-  await expect(assignedCell(page, "Groceries")).toContainText("$60.00");
+  await expectAssigned(page, "Groceries", "$60.00");
   await expect(available(page)).toContainText("$940.00");
+});
+
+test("money released from Saved can move to another envelope", async ({ page }) => {
+  // Next month, last month's $100 in Groceries is Saved and nothing is left yet.
+  await page.getByRole("link", { name: "Next month" }).click();
+  await expect(moveButton(page, "Groceries")).toHaveCount(0);
+
+  const sheet = await openEnvelope(page, "Groceries");
+  const saved = sheet.getByRole("region", { name: "Saved" });
+  await saved.getByRole("button", { name: "Move some into Remaining…" }).click();
+  await saved.getByLabel("Amount to move into Remaining").fill("40");
+  await saved.getByRole("button", { name: "Move", exact: true }).click();
+  await expect(sheet.locator(".sheet-hero-amount")).toHaveText("$40.00");
+  await sheet.getByRole("button", { name: "Close" }).click();
+
+  await moveButton(page, "Groceries").click();
+  const dialog = page.getByRole("dialog", { name: "Move money" });
+  await expect(dialog).toContainText("$40.00 can be moved");
+  await dialog.getByLabel("Move to").fill("Gas");
+  await dialog.getByLabel("Move to").press("Enter");
+  await dialog.getByRole("button", { name: "Move", exact: true }).click();
+  await expect(dialog).toBeHidden();
+
+  // Gas gets the money; Available to Assign stays.
+  await expect(envelope(page, "Groceries").locator(".envelope-remaining")).toHaveText("$0.00");
+  await expect(envelope(page, "Gas").locator(".envelope-remaining")).toHaveText("$40.00");
+  await expect(available(page)).toContainText("$900.00");
+  // The sheet's money flow shows it went out (recorded in Assigned, below $0.00).
+  const after = await openEnvelope(page, "Groceries");
+  await expect(
+    after.getByRole("region", { name: "Money flow this month" }).locator(".money-flow-line"),
+  ).toHaveText([
+    "Assigned & moved−$40.00",
+    "Released from Saved+$40.00",
+    "Spent$0.00",
+    "Remaining$0.00",
+  ]);
 });
 
 test("past months and card payment envelopes cannot move money out", async ({ page }) => {

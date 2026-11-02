@@ -3,7 +3,6 @@ import { messageOf } from "../../controllers/errors";
 import type { BudgetPageState as Page } from "../../controllers/useBudgetPage";
 import { envelopeLeft, type EnvelopeRow } from "../../models/budgetMath";
 import { formatCents } from "../../models/money";
-import { PadAmount } from "../AssignPad";
 import { ErrorMessage, Money, SpentAmount } from "../components";
 import { EnvelopeIcon } from "../icons";
 import { EditableCell } from "./EditableCell";
@@ -11,7 +10,7 @@ import { SavedChip } from "./SavedChip";
 
 /**
  * One envelope: name, Saved and what is left; then Planned (tap to edit in
- * place), Assigned (tap for the number pad) and Spent. Tapping the top line opens its sheet.
+ * place) and Spent. Tapping the top line opens its sheet.
  * On a desktop it is one table row (name and Saved, Planned, Assigned,
  * Spent, Remaining) and the name shows the envelope in the panel.
  * Tapping what is left opens the move dialog (when some can be moved).
@@ -104,7 +103,9 @@ export function EnvelopeItem({
           </span>
         </div>
       ) : (
-        <div className="envelope-cells">
+        // A phone shows Planned and Spent only (assigning is done from the
+        // Available to Assign banner or the sheet); a desktop adds Assigned.
+        <div className={desktop ? "envelope-cells" : "envelope-cells two"}>
           <EditableCell
             className="cell planned"
             label="Planned"
@@ -113,7 +114,7 @@ export function EnvelopeItem({
             cents={envelope.planned}
             onSave={save(page.setPlanned)}
           />
-          {desktop ? (
+          {desktop && (
             // Typed in place; "+50" or "120 + 50" adds to what is there.
             <EditableCell
               className="cell assigned"
@@ -122,16 +123,6 @@ export function EnvelopeItem({
               envelopeName={envelope.name}
               cents={envelope.assigned}
               onSave={save(page.setAssigned)}
-            />
-          ) : (
-            // A phone: the number pad, with + and − to add to or take from it.
-            <PadAmount
-              className="cell assigned"
-              labelClassName="cell-label"
-              label="Assigned"
-              envelopeName={envelope.name}
-              cents={envelope.assigned}
-              onSave={(text) => page.setAssigned(envelope.id, text)}
             />
           )}
           <span className={envelope.overPlan ? "cell spent over" : "cell spent"}>

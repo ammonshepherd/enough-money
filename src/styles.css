@@ -1577,6 +1577,54 @@ button.cell::after {
   font-size: 0.8125rem;
 }
 
+/* "Money flow this month": the amounts that add up to Remaining (v0.40.0). */
+.money-flow {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+}
+
+.money-flow h3 {
+  margin: 0 0 0.375rem;
+  color: var(--bb-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.money-flow dl {
+  margin: 0;
+}
+
+.money-flow-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.1875rem 0;
+  font-size: 0.875rem;
+}
+
+.money-flow-line dt {
+  color: #4b4256;
+}
+
+.money-flow-line dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.money-flow-total {
+  margin-top: 0.25rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+}
+
+.money-flow-total dt {
+  color: inherit;
+}
+
 .sheet-short {
   margin: -0.5rem 0 0;
   font-size: 0.875rem;

@@ -6,6 +6,7 @@ import {
   envelope,
   editActivityRow,
   editCell,
+  expectAssigned,
   goTo,
   openAddTransaction,
   signInWithHousehold,
@@ -53,7 +54,7 @@ test("giving envelopes, covering and refunds move Available to Assign as expecte
   await chooseEnvelope(cover.getByLabel(/cover .* from/i), "Available to Assign");
   await cover.getByRole("button", { name: "Cover and save" }).click();
   await expect(available(page)).toContainText("$320.00");
-  await expect(groceries).toContainText("Assigned $180.00");
+  await expectAssigned(page, "Groceries", "$180.00");
   await expect(groceries.locator(".envelope-remaining")).toHaveText("$0.00");
 
   // Issue 2: a refund into an envelope adds to it, with no prompt, and leaves
@@ -71,7 +72,7 @@ test("giving envelopes, covering and refunds move Available to Assign as expecte
   // Nothing was planned, so Spent is over plan. No refund beyond this month's
   // spending, so no Refunded line.
   await expect(groceries.locator(".envelope-cells")).toHaveText(
-    "Planned $0.00Assigned $180.00Spent (over Planned) −$170.00",
+    "Planned $0.00Spent (over Planned) −$170.00",
   );
   await expect(groceries.locator(".envelope-extra")).toHaveCount(0);
 });

@@ -16,7 +16,7 @@ export const available = (page: Page) => page.getByRole("region", { name: "Avail
 export const envelope = (page: Page, name: string) =>
   page.locator("div.envelope").filter({ has: page.locator(".envelope-name", { hasText: name }) });
 
-/** True in the phone-width test project (where Assigned uses the number pad). */
+/** True in the phone-width test project (where Assigned is in the sheet, on the number pad). */
 export const onPhone = () => test.info().project.name.startsWith("mobile");
 
 /**
@@ -29,7 +29,8 @@ export const padKeys = (value: string) =>
 
 /**
  * Types a new amount into an envelope's Planned or Assigned cell and presses
- * Enter. On a phone Assigned opens the number pad, which takes typed keys too.
+ * Enter. On a phone Assigned is set in the envelope sheet with the number pad,
+ * which takes typed keys too; the sheet is closed afterwards.
  */
 export async function editCell(
   page: Page,
@@ -38,14 +39,22 @@ export async function editCell(
   value: string,
 ) {
   const row = envelope(page, name);
-  await row.getByRole("button", { name: new RegExp(`^Edit ${cell} amount`) }).click();
   if (cell === "assigned" && onPhone()) {
+    // Phone rows have no Assigned cell (v0.40.0): use the sheet's number pad.
+    const sheet = await openEnvelope(page, name);
+    await sheet.getByRole("button", { name: /^Edit assigned amount/ }).click();
     const pad = page.getByRole("dialog", { name: `Assigned for ${name}` });
     await pad.waitFor();
     await page.keyboard.type(padKeys(value));
     await page.keyboard.press("Enter");
+    // Refused: the pad stays open with the reason (see expectAssignedError).
+    await Promise.race([pad.waitFor({ state: "hidden" }), pad.getByRole("alert").waitFor()]);
+    if (await pad.isVisible()) return;
+    await sheet.getByRole("button", { name: "Close" }).click();
+    await sheet.waitFor({ state: "hidden" });
     return;
   }
+  await row.getByRole("button", { name: new RegExp(`^Edit ${cell} amount`) }).click();
   const input = row.getByRole("textbox", { name: new RegExp(`^${cell} amount`, "i") });
   await input.fill(value);
   await input.press("Enter");
@@ -53,7 +62,8 @@ export async function editCell(
 
 /**
  * Checks the error after editCell(…, "assigned", …): on a phone it shows in
- * the number pad, which stays open until cancelled (closed here); on a
+ * the sheet's number pad, which stays open until cancelled (closed here,
+ * with the sheet); on a
  * desktop it shows in the row.
  */
 export async function expectAssignedError(page: Page, name: string, message: string | RegExp) {
@@ -65,6 +75,25 @@ export async function expectAssignedError(page: Page, name: string, message: str
   await expect(pad.getByRole("alert")).toHaveText(message);
   await pad.getByRole("button", { name: "Cancel" }).click();
   await expect(pad).toBeHidden();
+  // The pad was opened from the envelope sheet: close that too.
+  const sheet = page.getByRole("dialog", { name: `${name} envelope` });
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toBeHidden();
+}
+
+/**
+ * Checks an envelope's Assigned: in its row on a desktop; on a phone, whose
+ * rows show only Planned and Spent, in its sheet (opened and closed here).
+ */
+export async function expectAssigned(page: Page, name: string, text: string) {
+  if (!onPhone()) {
+    await expect(envelope(page, name).locator(".cell.assigned")).toContainText(text);
+    return;
+  }
+  const sheet = await openEnvelope(page, name);
+  await expect(sheet.getByRole("button", { name: /^Edit assigned amount/ })).toContainText(text);
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toBeHidden();
 }
 
 /** Opens the page menu (phone header, top right) and returns its list. */
