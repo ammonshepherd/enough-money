@@ -5,13 +5,17 @@ import {
   available,
   editAccount,
   editCell,
-  envelope,
+  expectAssigned,
   goTo,
+  openEnvelope,
   signInWithHousehold,
 } from "./helpers";
 
+/** The Assigned field in an open envelope sheet (phone rows have none). */
 const assignedCell = (page: Page, name: string) =>
-  envelope(page, name).getByRole("button", { name: /^Edit assigned amount/ });
+  page
+    .getByRole("dialog", { name: `${name} envelope` })
+    .getByRole("button", { name: /^Edit assigned amount/ });
 
 test.beforeEach(async ({ page }) => {
   await signInWithHousehold(page);
@@ -46,7 +50,7 @@ test("the banner opens a dialog that adds to an envelope's Assigned", async ({ p
   await expect(dialog).toBeHidden();
 
   // Added on top of the $100 already there.
-  await expect(assignedCell(page, "Groceries")).toContainText("$150.00");
+  await expectAssigned(page, "Groceries", "$150.00");
   await expect(available(page)).toContainText("$850.00");
 
   // Typing the full name works too; more than is available is refused.
@@ -88,12 +92,14 @@ test("when over assigned the banner is red and takes money back", async ({ page 
   await dialog.getByRole("button", { name: "Take back" }).click();
   await expect(dialog).toBeHidden();
 
-  await expect(assignedCell(page, "Groceries")).toContainText("$60.00");
+  await expectAssigned(page, "Groceries", "$60.00");
   // Exactly $0.00 left to assign: the banner hides.
   await expect(banner).toHaveCount(0);
 });
 
-test("the number pad adds and takes away, showing the equation in the cell", async ({ page }) => {
+test("the number pad adds and takes away, showing the equation in the field", async ({ page }) => {
+  // On a phone, Assigned is in the envelope sheet.
+  await openEnvelope(page, "Gas");
   await assignedCell(page, "Gas").click();
   const pad = page.getByRole("dialog", { name: "Assigned for Gas" });
   const press = async (...keys: string[]) => {

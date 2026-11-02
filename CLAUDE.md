@@ -189,12 +189,13 @@ non-card budget balances − all envelope money (P included)`.
   decorative), name and a Saved pill ("Saved $X": solid purple with a star,
   six sparkles and a glow once above $0.00, quiet at $0.00), and what is left
   on the right (muted at $0.00; no visible caption, screen readers hear
-  "remaining"). Line 2: Planned, Assigned and Spent
-  cells (Spent with a minus, "−$45.20", as everywhere Spent shows; "Compact
+  "remaining"). Line 2: Planned and Spent cells (decided in v0.40.0:
+  phone rows show no Assigned, which is set from the Available to Assign
+  banner or the sheet; a desktop row keeps a typed Assigned column) (Spent with a minus, "−$45.20", as everywhere Spent shows; "Compact
   rows" in the page menu, phone only, hides line 2 and below, remembered per
   device and user in localStorage, `src/models/layoutPrefs.ts`). Planned is edited in place (tap; blur or Enter saves,
   Escape cancels; amounts rounded to the cent by `roundMoney`; never
-  negative). Assigned (decided in v0.30.0): on a phone, in the row and the
+  negative). Assigned (decided in v0.30.0): on a phone, in the
   sheet, tapping opens a number pad along the bottom (digits, decimal
   point, delete, −, + and Assign; `PadAmount` in `src/views/AssignPad.tsx`).
   Digits first set a new total; + or − builds an equation on the current
@@ -210,13 +211,16 @@ non-card budget balances − all envelope money (P included)`.
   Refunded (only when above $0.00) and Short (if overspent) sit on a line
   below. Tapping what is left (decided in v0.31.0) opens "Move money": an
   amount goes to another envelope's Assigned or back to Available to
-  Assign, lowering this envelope's Assigned; at most the smaller of
-  Remaining and Assigned + Refunded (`movableFrom`; refunds can be passed
-  on even below $0.00 Assigned, v0.38.0; released Saved stays put), only in
+  Assign, lowering this envelope's Assigned; at most Remaining
+  (`movableFrom`; refunds, v0.38.0, and money released from Saved, v0.40.0,
+  can be passed on even below $0.00 Assigned), only in
   this month and later (`canMoveIn`), never from a card's payment envelope
   (`MoveFromEnvelope`). Tapping line 1 opens the envelope sheet (`EnvelopeSheet`, a bottom
   sheet): group (a picker that moves the envelope to another group) and
-  name (renamed with its pencil button), Remaining this month with how it adds up, the plan
+  name (renamed with its pencil button), Remaining this month with "Money flow this month" (v0.40.0: Assigned &
+  moved, Released from Saved, Refunded when above $0.00, Spent, then
+  Remaining, each signed; "Assigned & moved" because moves are stored in
+  Assigned), the plan
   line (under/on/over Planned), Planned and Assigned fields (same rules as the
   cells), Spent, the purple Saved panel with "Move some into Remaining…"
   (Release from Saved), this month's transactions in the envelope (tapping

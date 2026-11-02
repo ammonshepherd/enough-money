@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.39.0.
+Version described: 0.40.0.
 
 ## 1. Purpose
 
@@ -361,22 +361,24 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   opens a collapsed group.
 - "Compact rows" (phone only; in the page menu since v0.36.0, a
   `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved and what is
-  left); Planned, Assigned, Spent, Refunded and Short are hidden until it is
+  left); Planned, Spent (and Assigned on a desktop), Refunded and Short are hidden until it is
   switched off (the sheet still shows them). Kept in localStorage under
   `bb.budget.compactRows.<userId>` ("1" or "0"; unreadable means off).
 - Envelope rows as in CLAUDE.md. Spent shows with a minus ("−$45.20", a true
   minus sign; "$0.00" when nothing is spent), in the cell's usual colour;
   so does every other Spent amount (the sheet's Spent field and plan line,
   the desktop month summary; `SpentAmount` in `src/views/components.tsx`).
-  Envelope names are regular weight (not bold). Planned and Assigned cells are buttons ("Edit
+  Envelope names are regular weight (not bold). A phone row's line 2 has
+  only Planned and Spent (v0.40.0); a desktop row adds an Assigned column.
+  Planned and Assigned cells are buttons ("Edit
   planned amount for Groceries, currently $300.00"). Planned turns into a text
-  field in place. On a phone Assigned opens the number pad (`PadAmount`,
+  field in place. On a phone Assigned (in the envelope sheet) opens the number pad (`PadAmount`,
   `src/views/AssignPad.tsx`): a dialog along the bottom ("Assigned for
   ⟨name⟩") with 0–9, a decimal point, delete, − and + and a green Assign key;
   the field is scrolled clear of it. Digits first type a new total, filled
   in cents first (see "Typing amounts" below); + or −
   builds an equation on the current amount ("120.00 + 50.00", "120.00 − 20.00",
-  several terms allowed), shown in the Assigned cell as it is typed and in the
+  several terms allowed), shown in the Assigned field as it is typed and in the
   pad with its result ("= $170.00"). Assign saves the result (minus returns
   money to Available to Assign); × or tapping outside cancels; a refused
   amount keeps the pad open with the reason. A keyboard works in the pad too
@@ -406,9 +408,14 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
     name, with a pencil button to rename it
     ("Envelope name"; blur or Enter saves, Escape puts the name back; not on
     a card's payment envelope, which is named after its card);
-  - "Remaining this month" (large) and how it adds up ("$300.00 assigned +
-    $20.00 released − $187.06 spent"; released and refunded only when used),
-    plus Short if overspent;
+  - "Remaining this month" (large), plus Short if overspent;
+  - "Money flow this month" (v0.40.0, a bordered list): Assigned & moved,
+    Released from Saved, Refunded, Spent, then Remaining in bold under a
+    line; each amount signed ("+$300.00", "−$187.06") in the text colour,
+    so money moved out does not look like an error; released and refunded
+    only when used. "Assigned & moved" because moves between envelopes are
+    stored in Assigned (so it can be below $0.00 after moving released or
+    refunded money out);
   - the plan line: "Spent −$X of $Y planned" with "$Z under", "On plan" or
     "$Z over" (orange), or "nothing planned this month";
   - Planned and Assigned fields (blur or Enter saves, Escape undoes the typing
@@ -434,11 +441,11 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   included, each with "has $X") and "Amount to move" (starting at all that
   can be moved). Moving lowers this envelope's Assigned and raises the other
   envelope's (`move_between_envelopes`), or returns the money to Available to
-  Assign. At most `movableFrom` (`budgetMath.ts`): the smaller of Remaining
-  and Assigned + Refunded, so Remaining stays at $0.00 or more and money
-  released from Saved stays in the envelope ("You can move at most $X.").
-  Refunds can move like Assigned money (v0.38.0), so an envelope that only
-  collects reimbursements can pass them on even if Assigned goes below $0.00. Only in this month
+  Assign. At most `movableFrom` (`budgetMath.ts`): Remaining, so it stays
+  at $0.00 or more ("You can move at most $X."). Refunds (v0.38.0) and
+  money released from Saved (v0.40.0) move like Assigned money, so an
+  envelope can pass them on even if Assigned goes below $0.00: in a new
+  month, release last month's leftovers from Saved, then move them. Only in this month
   and later (`canMoveIn`; a past move would change the Saved carried into
   later months) and never out of a card's payment envelope; there, and at
   $0.00, the amount is not a button.
@@ -908,7 +915,9 @@ Decided or wanted, but not in the app:
   review. Open decisions are in `docs/proposals/bulk-actions.md`.
 - Reconciliation beyond the mark: entering a statement balance and
   finishing only when the ticked rows match it, locking reconciled rows,
-  a separate cleared status, "Select all" for a day or month.
+  a separate cleared status, "Select all" for a day or month. Statement
+  reconciliation is chosen as the next step, with its decisions in
+  `docs/proposals/statement-reconciliation.md`.
 - Tithing/fast-offering rules.
 - Security: Supabase leaked-password protection (a paid plan).
 - Maintenance: dependency updates (minor releases of React, supabase-js,

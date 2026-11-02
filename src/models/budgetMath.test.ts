@@ -265,10 +265,10 @@ describe("envelopeLeft and groupLeft", () => {
     expect(envelopeLeft(row("pay", { remaining: 2_500, envelopeMoney: 8_000, card }))).toBe(8_000);
   });
 
-  it("moves out no more than is left or assigned, and nothing from a card's envelope", () => {
+  it("moves out no more than is left, and nothing from a card's envelope", () => {
     expect(movableFrom(row("food", { assigned: 10_000, remaining: 4_000 }))).toBe(4_000);
-    // $10 assigned + $50 released from Saved: only the $10 assigned can move.
-    expect(movableFrom(row("gift", { assigned: 1_000, remaining: 6_000 }))).toBe(1_000);
+    // $10 assigned + $50 released from Saved: all $60 can move.
+    expect(movableFrom(row("gift", { assigned: 1_000, remaining: 6_000 }))).toBe(6_000);
     expect(movableFrom(row("short", { assigned: 1_000, remaining: -500 }))).toBe(0);
     expect(movableFrom(row("pay", { assigned: 5_000, remaining: 5_000, card }))).toBe(0);
   });
@@ -282,8 +282,12 @@ describe("envelopeLeft and groupLeft", () => {
     expect(movableFrom(row("reimbursed", reimbursed))).toBe(2_272);
     // Only refunds, nothing assigned: all of them can move.
     expect(movableFrom(row("refund", month(0, 0, -3_000)))).toBe(3_000);
-    // Refunds plus money released from Saved: the released part stays put.
-    expect(movableFrom(row("mixed", month(0, 5_000, -1_000, 5_000)))).toBe(1_000);
+    // Refunds plus money released from Saved: both can move.
+    expect(movableFrom(row("mixed", month(0, 5_000, -1_000, 5_000)))).toBe(6_000);
+    // Only money released from Saved (a new month, nothing assigned yet).
+    const released = month(0, 4_000, 1_500, 4_000);
+    expect(released.remaining).toBe(2_500);
+    expect(movableFrom(row("released", released))).toBe(2_500);
     // Spending that refunds only partly cancel leaves nothing refunded.
     expect(movableFrom(row("partial", month(2_000, 0, 500)))).toBe(1_500);
   });

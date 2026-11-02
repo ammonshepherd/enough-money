@@ -3,7 +3,7 @@ import { messageOf } from "../controllers/errors";
 import { useAsyncAction } from "../controllers/useAsyncAction";
 import type { BudgetPageState as Page } from "../controllers/useBudgetPage";
 import type { RemainingPart } from "../models/envelopeDetail";
-import { centsToInput, formatCents } from "../models/money";
+import { centsToInput, formatCents, formatSignedCents } from "../models/money";
 import { formatShortDay } from "../models/month";
 import { PadAmount } from "./AssignPad";
 import { EditableTitle, ErrorMessage, Money, SingleFieldForm, SpentAmount } from "./components";
@@ -16,7 +16,7 @@ const STAR = "M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z";
 
 /**
  * Everything about one envelope this month, in a sheet at the bottom of the
- * screen: its group (to move it) and name (to rename), what is left and how it adds up, the plan, Planned and Assigned to
+ * screen: its group (to move it) and name (to rename), what is left and its money flow, the plan, Planned and Assigned to
  * edit, Saved with "Move some into Remaining…", and its transactions (tap one
  * to edit it).
  */
@@ -140,15 +140,14 @@ export function EnvelopeSheet({
             >
               <Money cents={row.remaining} />
             </strong>
-            <span className="sheet-hero-parts">
-              <RemainingParts parts={detail.parts} />
-            </span>
           </div>
           {row.shortfall > 0 && (
             <p className="short sheet-short">
               Short <Money cents={row.shortfall} />
             </p>
           )}
+
+          <MoneyFlow parts={detail.parts} remaining={row.remaining} />
 
           <PlanLine plan={detail.plan} />
 
@@ -252,16 +251,39 @@ export function EnvelopeSheet({
 }
 
 /** "$300.00 assigned + $20.00 released − $187.06 spent" */
-function RemainingParts({ parts }: { parts: RemainingPart[] }) {
+const FLOW_LABELS: Record<RemainingPart["label"], string> = {
+  // Moves between envelopes are stored in Assigned too, so the name says both.
+  assigned: "Assigned & moved",
+  released: "Released from Saved",
+  refunded: "Refunded",
+  spent: "Spent",
+};
+
+/** "Money flow this month": the amounts that add up to Remaining, one per line. */
+function MoneyFlow({ parts, remaining }: { parts: RemainingPart[]; remaining: number }) {
   return (
-    <>
-      {parts.map((part, i) => (
-        <span key={part.label}>
-          {i > 0 && (part.subtract ? " − " : " + ")}
-          <Money cents={part.amount} /> {part.label}
-        </span>
-      ))}
-    </>
+    <section className="money-flow" aria-labelledby="money-flow-heading">
+      <h3 id="money-flow-heading">Money flow this month</h3>
+      <dl>
+        {parts.map((part) => (
+          <div key={part.label} className="money-flow-line">
+            <dt>{FLOW_LABELS[part.label]}</dt>
+            <dd>
+              {/* Signed and in the text colour: money moved out is not an error. */}
+              <span className="money">
+                {formatSignedCents(part.subtract ? -part.amount : part.amount)}
+              </span>
+            </dd>
+          </div>
+        ))}
+        <div className="money-flow-line money-flow-total">
+          <dt>Remaining</dt>
+          <dd>
+            <Money cents={remaining} />
+          </dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 

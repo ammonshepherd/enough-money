@@ -86,24 +86,19 @@ test("+ still adds to a collapsed group, which opens", async ({ page }) => {
 });
 
 test("collapsing or tapping another cell saves the open field first", async ({ page }) => {
+  await editCell(page, "Fun", "assigned", "60");
+  await expect(available(page)).toContainText("$640.00");
+
   const row = envelope(page, "Groceries");
   await row.getByRole("button", { name: /^Edit planned amount/ }).click();
   await row.getByRole("textbox", { name: "Planned amount for Groceries" }).fill("250");
-  // Another cell: the first saves, and Assigned opens the number pad.
-  await envelope(page, "Fun")
-    .getByRole("button", { name: /^Edit assigned amount/ })
-    .click();
-  await expect(row.getByRole("button", { name: /^Edit planned amount/ })).toContainText("$250.00");
-  const pad = page.getByRole("dialog", { name: "Assigned for Fun" });
-  for (const key of ["6", "0", "0", "0", "Assign"])
-    await pad.getByRole("button", { name: key }).click();
-  await expect(pad).toBeHidden();
-  await expect(available(page)).toContainText("$640.00");
-
-  // Collapsing its group saves an open field too.
+  // Another cell: the first saves.
   await envelope(page, "Fun")
     .getByRole("button", { name: /^Edit planned amount/ })
     .click();
+  await expect(row.getByRole("button", { name: /^Edit planned amount/ })).toContainText("$250.00");
+
+  // Collapsing its group saves an open field too.
   await envelope(page, "Fun").getByRole("textbox", { name: "Planned amount for Fun" }).fill("75");
   await toggle(page, "Everyday").click();
   await expect(group(page, "Everyday").locator(".group-total")).toHaveText("$360.00 remaining");

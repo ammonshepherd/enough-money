@@ -51,9 +51,7 @@ export function MoveFromEnvelope({
         <h2>Move from {from.name}</h2>
       </div>
       <p className="assign-form-note">
-        <Money cents={most} /> can be moved
-        {most < from.remaining && <> (money released from Saved stays in {from.name})</>}. Its
-        Assigned goes down by the amount.
+        <Money cents={most} /> can be moved. Its Assigned goes down by the amount.
       </p>
       <EnvelopePicker
         label="Move to"

@@ -8,6 +8,7 @@ import {
   goTo,
   signInWithHousehold,
   addAccount,
+  expectAssigned,
   expectAssignedError,
 } from "./helpers";
 
@@ -75,7 +76,7 @@ test("Assigned is edited in place and moves Available to Assign", async ({ page 
   // More than is available: blocked, and the amount stays.
   await editCell(page, "Groceries", "assigned", "1500");
   await expectAssignedError(page, "Groceries", "Only $700.00 available to assign.");
-  await expect(cell(page, "Groceries", "assigned")).toContainText("$300.00");
+  await expectAssigned(page, "Groceries", "$300.00");
 
   // Lower than what is already spent: blocked too.
   await addTransaction(page, { amount: "120", payee: "Market", envelope: "Groceries" });
@@ -98,11 +99,20 @@ test("Assigned is edited in place and moves Available to Assign", async ({ page 
 test("tapping another cell saves the one being edited", async ({ page }) => {
   await cell(page, "Groceries", "planned").click();
   await field(page, "Groceries", "Planned").fill("50");
-  await cell(page, "Fun", "assigned").click();
+  await cell(page, "Fun", "planned").click();
   await expect(cell(page, "Groceries", "planned")).toContainText("$50.00");
-  // No field is left open: Fun's Assigned opened the number pad instead.
-  await expect(page.getByRole("dialog", { name: "Assigned for Fun" })).toBeVisible();
-  await expect(page.getByRole("textbox", { name: /amount for/ })).toHaveCount(0);
+  // Only Fun's field is open now.
+  await expect(page.getByRole("textbox", { name: /amount for/ })).toHaveCount(1);
+  await expect(field(page, "Fun", "Planned")).toBeVisible();
+});
+
+test("phone rows show Planned and Spent, not Assigned", async ({ page }) => {
+  await editCell(page, "Groceries", "assigned", "200");
+  const row = envelope(page, "Groceries");
+  await expect(row.locator(".envelope-cells .cell")).toHaveCount(2);
+  await expect(row.locator(".cell.assigned")).toHaveCount(0);
+  await expect(row.locator(".envelope-cells")).toHaveText("Planned $0.00Spent $0.00");
+  await expectAssigned(page, "Groceries", "$200.00");
 });
 
 test("Spent shows whether the month kept to Planned; groups show no totals", async ({ page }) => {

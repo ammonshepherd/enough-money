@@ -32,7 +32,13 @@ test("the sheet shows what is left, the plan and the month's transactions", asyn
   await expect(sheet.locator(".sheet-eyebrow")).toHaveText("Weekly Basics");
   await expect(sheet.getByRole("heading", { name: "Groceries" })).toBeVisible();
   await expect(sheet.locator(".sheet-hero-amount")).toHaveText("$180.00");
-  await expect(sheet.locator(".sheet-hero-parts")).toHaveText("$300.00 assigned − $120.00 spent");
+  // Money flow: the amounts that add up to Remaining.
+  const flow = sheet.getByRole("region", { name: "Money flow this month" });
+  await expect(flow.locator(".money-flow-line")).toHaveText([
+    "Assigned & moved+$300.00",
+    "Spent−$120.00",
+    "Remaining$180.00",
+  ]);
   await expect(sheet.locator(".plan-line")).toHaveText(
     "Spent −$120.00 of $300.00 planned$180.00 under",
   );
@@ -162,9 +168,14 @@ test("Saved can be moved into Remaining from the sheet", async ({ page }) => {
   await saved.getByRole("button", { name: "Move", exact: true }).click();
   await expect(saved.locator(".saved-panel-amount")).toHaveText("$30.00");
   await expect(sheet.locator(".sheet-hero-amount")).toHaveText("$20.00");
-  await expect(sheet.locator(".sheet-hero-parts")).toHaveText(
-    "$0.00 assigned + $20.00 released − $0.00 spent",
-  );
+  await expect(
+    sheet.getByRole("region", { name: "Money flow this month" }).locator(".money-flow-line"),
+  ).toHaveText([
+    "Assigned & moved$0.00",
+    "Released from Saved+$20.00",
+    "Spent$0.00",
+    "Remaining$20.00",
+  ]);
   // Nothing planned this month.
   await expect(sheet.locator(".plan-line")).toHaveText("Spent $0.00 · nothing planned this month");
   // Moving Saved does not change Available to Assign.
