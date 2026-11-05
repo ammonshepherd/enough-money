@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.40.0.
+Version described: 0.40.1.
 
 ## 1. Purpose
 
@@ -188,13 +188,22 @@ These are implemented in `budgetMath.ts` and the controllers:
   Assign of M and every later month with data (`assignableIn`), never below 0.
   Message: "Only $X is available to assign in ⟨Month YYYY⟩."
 - **Take back:** a negative Assign may take back at most the envelope's current
-  Remaining.
+  Remaining (`givable`, below).
+- **Money a later month counts on** (v0.40.1, `laterReserve` / `givable` in
+  `budgetMath.ts`): Saved is not stored, so whatever a month leaves over is
+  what every later month's Saved is built from. Spending, moving or taking
+  back $X in a month lowers every later Saved by $X. A month can therefore
+  give at most the smaller of its Remaining and the smallest later
+  Saved-after-releases; taking back, lowering Assigned, Move money and cover
+  sources all use that limit, and the cover prompt asks to cover the rest
+  (from another envelope or Available to Assign; releasing this month's Saved
+  does not help), with a line saying which later month released the money.
 - **Release from Saved:** amount above 0 and at most Saved.
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
   envelope, that would make Remaining negative): title "⟨Envelope⟩ would be $X
   short in ⟨Month⟩". Step 1 releases this envelope's Saved automatically; for the
-  rest, a "Cover $X from" envelope picker offers other envelopes with enough Remaining
+  rest, a "Cover $X from" envelope picker offers other envelopes with enough to give
   this month (moved) and Available to Assign (assigned, only if `assignable`
   allows). If neither can cover it, saving is blocked with an explanation (card
   payments never suggest Uncategorized). Cover actions happen in the

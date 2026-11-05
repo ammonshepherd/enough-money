@@ -3,6 +3,7 @@ import {
   buildBudgetMonth,
   canMoveIn,
   groupLeft,
+  givable,
   movableFrom,
   visibleGroups,
   withEnvelopeMonth,
@@ -86,7 +87,7 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
         `Only ${formatCents(Math.max(0, view.assignable))} is available to assign in ${formatMonth(month)}.`,
       );
     }
-    const remaining = Math.max(0, envelope(envelopeId).remaining);
+    const remaining = givable(envelope(envelopeId));
     if (-amount > remaining) {
       throw new UserFacingError(`You can take back at most ${formatCents(remaining)}.`);
     }
@@ -281,12 +282,15 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
           `Only ${formatCents(Math.max(0, view.assignable))} available to assign.`,
         );
       }
-      // Remaining = Assigned + Released − Spent may not drop below zero.
-      if (row.remaining + change < 0) {
-        const lowest = formatCents(Math.max(0, row.assigned - row.remaining));
-        throw new UserFacingError(
-          `Some is already spent: Assigned can go no lower than ${lowest}.`,
-        );
+      // Remaining = Assigned + Released − Spent may not drop below zero, nor
+      // below what a later month already released from Saved (see givable).
+      if (row.remaining + change < 0 || -change > givable(row)) {
+        const lowest = formatCents(Math.max(0, row.assigned - givable(row)));
+        const reason =
+          row.later && givable(row) < Math.max(0, row.remaining)
+            ? `${formatMonth(row.later.month)} already released some of it from Saved`
+            : "Some is already spent";
+        throw new UserFacingError(`${reason}: Assigned can go no lower than ${lowest}.`);
       }
       await budget.change(
         (store) => store.adjustEnvelopeMonth(envelopeId, month, { assigned: change }),

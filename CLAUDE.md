@@ -154,6 +154,10 @@ non-card budget balances − all envelope money (P included)`.
   1. release from this envelope's Saved,
   2. move from another envelope,
   3. assign more from Available to Assign.
+- No later month's Saved may go negative either (v0.40.1): a change in a past
+  month (spending, moving, taking back) may use only what that month leaves
+  over beyond what later months already released (`givable` /
+  `laterReserve` in `budgetMath.ts`); the cover prompt covers the rest.
 - Assigning is blocked when Available to Assign is insufficient.
 - Each month's Budget page shows only envelopes in use that month (a stored
   month record, spending that month, or money in Saved/Remaining; never-used

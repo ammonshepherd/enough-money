@@ -44,7 +44,8 @@ export interface EnvelopeMonth {
   savedAtStart: Cents;
   /**
    * The reserve still held this month: Saved(M) − Released(M). Negative only
-   * if earlier spending was categorized after this month's release; shown
+   * if an earlier month lost money after this month's release (the checks
+   * use laterReserve to prevent it since v0.40.1); shown
    * as-is (like `shortfall`) rather than thrown, so the page still renders.
    */
   saved: Cents;
@@ -137,6 +138,31 @@ export function envelopeAsOf(history: readonly EnvelopeMonth[], month: Month): E
   return computeEnvelopeMonth({ month, assigned: 0, released: 0, spent: 0 }, savedAtStart);
 }
 
+/** A later month's reserve that money left in an earlier month carries (see laterReserve). */
+export interface LaterReserve {
+  /** The later month whose reserve is smallest. */
+  month: Month;
+  /** Its Saved after releases: Saved(K) − Released(K). */
+  saved: Cents;
+}
+
+/**
+ * The smallest reserve of any month after `month`: how much less this month
+ * can leave over before a later month would have released Saved it no
+ * longer has. Saved is not stored: every later month's Saved is built from
+ * what this month leaves, so spending, moving or taking back $X here lowers
+ * every later Saved by $X. Null when no later month has a record or
+ * spending (nothing later depends on this month yet).
+ */
+export function laterReserve(history: readonly EnvelopeMonth[], month: Month): LaterReserve | null {
+  let lowest: LaterReserve | null = null;
+  for (const row of history) {
+    if (row.month <= month) continue;
+    if (!lowest || row.saved < lowest.saved) lowest = { month: row.month, saved: row.saved };
+  }
+  return lowest;
+}
+
 /** Totals needed for Available to Assign, each counted through the end of a month. */
 export interface AvailableToAssignInput {
   /** Opening balances of all budget accounts. */
@@ -193,6 +219,12 @@ export interface SpendCheck {
   fromSaved: Cents;
   /** Left for step 2 (another envelope) or step 3 (Available to Assign). */
   stillShort: Cents;
+  /**
+   * Set when a later month already released Saved that this month's
+   * leftover carries, and that is why more must be covered: the cover then
+   * keeps that month's Saved at $0.00 or more.
+   */
+  heldBy: Month | null;
 }
 
 /**
@@ -200,13 +232,31 @@ export interface SpendCheck {
  * zero the UI prompts to cover it: first from this envelope's Saved
  * (`fromSaved`), then from another envelope or Available to Assign
  * (`stillShort`).
+ *
+ * `later` is the envelope's laterReserve for the month. Spending here lowers
+ * every later month's Saved by the same amount, so a later month that
+ * already released its Saved needs this month to keep enough over. Releasing
+ * this month's Saved does not help that (it only moves money within the
+ * envelope), so that part is always in `stillShort`.
  */
-export function checkSpend(current: EnvelopeMonth, additionalSpent: Cents): SpendCheck {
+export function checkSpend(
+  current: EnvelopeMonth,
+  additionalSpent: Cents,
+  later: LaterReserve | null = null,
+): SpendCheck {
   assertCents(additionalSpent, "additionalSpent");
   const remainingAfter = current.remaining - additionalSpent;
-  const shortfall = Math.max(0, -remainingAfter);
-  const fromSaved = Math.min(shortfall, Math.max(0, current.saved));
-  return { remainingAfter, shortfall, fromSaved, stillShort: shortfall - fromSaved };
+  const ownShort = Math.max(0, -remainingAfter);
+  const fromSaved = Math.min(ownShort, Math.max(0, current.saved));
+  const laterShort = later ? Math.max(0, additionalSpent - Math.max(0, later.saved)) : 0;
+  const stillShort = Math.max(ownShort - fromSaved, laterShort);
+  return {
+    remainingAfter,
+    shortfall: fromSaved + stillShort,
+    fromSaved,
+    stillShort,
+    heldBy: laterShort > ownShort - fromSaved ? later!.month : null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -499,6 +549,18 @@ export interface EnvelopeRow extends EnvelopeMonth {
   inUse: boolean;
   /** Set on a credit card's payment envelope. */
   card: CardPaymentInfo | null;
+  /** The smallest reserve of a later month (see laterReserve); limits givable. */
+  later: LaterReserve | null;
+}
+
+/**
+ * How much can leave an envelope this month (spent, moved out or taken back)
+ * while it stays at $0.00 or more: what is left, but no more than any later
+ * month's reserve, so no later month has released Saved it no longer has.
+ */
+export function givable(row: Pick<EnvelopeRow, "remaining" | "later">): Cents {
+  const later = row.later ? Math.max(0, row.later.saved) : Infinity;
+  return Math.max(0, Math.min(row.remaining, later));
 }
 
 /** A card's balance at the end of `month` (0 before it opened). */
@@ -586,12 +648,13 @@ export function envelopeLeft(row: EnvelopeRow): Cents {
  * Available to Assign) by lowering its Assigned: everything left, so
  * Remaining stays at $0.00 or more. Remaining is made of what was assigned,
  * refunded and released from Saved this month, and all of it can be passed
- * on (decided in v0.40.0), even taking Assigned below $0.00. A card's
+ * on (decided in v0.40.0), even taking Assigned below $0.00, as long as no
+ * later month has already released it from Saved (see givable). A card's
  * payment envelope gives nothing: its money is for the card bill.
  */
 export function movableFrom(row: EnvelopeRow): Cents {
   if (row.card) return 0;
-  return Math.max(0, row.remaining);
+  return givable(row);
 }
 
 /**
@@ -625,7 +688,8 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
   let unusedCount = 0;
 
   const rowFor = (envelope: Envelope): EnvelopeRow => {
-    const state = envelopeAsOf(histories.get(envelope.id) ?? [], month);
+    const history = histories.get(envelope.id) ?? [];
+    const state = envelopeAsOf(history, month);
     const cardId = envelope.cardAccountId;
     const card: CardPaymentInfo | null =
       cardId && cards.get(cardId) === envelope.id
@@ -656,6 +720,7 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
       overPlan: state.outflow > plannedHere,
       inUse,
       card,
+      later: laterReserve(history, month),
     };
     totals.planned += row.planned;
     totals.assigned += row.assigned;
@@ -728,9 +793,11 @@ export function transactionShortfalls(
   const payments = cardPaymentEnvelopes(data);
   const shortfalls: TransactionShortfall[] = [];
   const check = (envelopeId: string, month: Month, additionalSpent: Cents) => {
+    const history = histories.get(envelopeId) ?? [];
     const result = checkSpend(
-      envelopeAsOf(histories.get(envelopeId) ?? [], month),
+      envelopeAsOf(history, month),
       additionalSpent,
+      laterReserve(history, month),
     );
     if (result.shortfall > 0) shortfalls.push({ ...result, envelopeId, month });
   };
@@ -839,5 +906,5 @@ export function coverSources(
 ): EnvelopeRow[] {
   return view.groups
     .flatMap((g) => g.envelopes)
-    .filter((e) => e.id !== excludeId && e.remaining >= amount);
+    .filter((e) => e.id !== excludeId && givable(e) >= amount);
 }

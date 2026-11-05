@@ -3,6 +3,8 @@ import {
   availableToAssign,
   canAssign,
   checkSpend,
+  givable,
+  laterReserve,
   computeEnvelopeHistory,
   computeEnvelopeMonth,
   envelopeAsOf,
@@ -212,6 +214,7 @@ describe("checkSpend", () => {
       shortfall: 0,
       fromSaved: 0,
       stillShort: 0,
+      heldBy: null,
     });
   });
 
@@ -221,6 +224,7 @@ describe("checkSpend", () => {
       shortfall: 3_000,
       fromSaved: 3_000,
       stillShort: 0,
+      heldBy: null,
     });
   });
 
@@ -230,6 +234,53 @@ describe("checkSpend", () => {
       fromSaved: 4_000,
       stillShort: 3_000,
     });
+  });
+
+  it("keeps enough over for Saved a later month already released", () => {
+    // $20 left this month; November already released $15 of the $20 it carries.
+    const later = { month: "2026-11", saved: 500 };
+    // Spending $10 fits this month but leaves November $5 short of what it released.
+    expect(checkSpend(current, 1_000, later)).toEqual({
+      remainingAfter: 1_000,
+      shortfall: 500,
+      fromSaved: 0,
+      stillShort: 500,
+      heldBy: "2026-11",
+    });
+    // Releasing this month's Saved cannot make up for it: that part stays in stillShort.
+    expect(checkSpend(current, 5_000, later)).toMatchObject({
+      shortfall: 7_500,
+      fromSaved: 3_000,
+      stillShort: 4_500,
+      heldBy: "2026-11",
+    });
+    // When this month's own shortfall is the larger one, nothing is held for later.
+    expect(checkSpend(current, 9_000, { month: "2026-11", saved: 6_000 })).toMatchObject({
+      fromSaved: 4_000,
+      stillShort: 3_000,
+      heldBy: null,
+    });
+  });
+});
+
+describe("laterReserve and givable", () => {
+  const history = computeEnvelopeHistory([
+    { month: "2026-10", assigned: 5_000, released: 0, spent: 3_000 },
+    { month: "2026-11", assigned: 1_000, released: 1_500, spent: 2_500 },
+    { month: "2026-12", assigned: 0, released: 0, spent: 0 },
+  ]);
+
+  it("is the smallest Saved after releases of any later month", () => {
+    // October leaves $20; November releases $15 of it, so $5 is held there.
+    expect(laterReserve(history, "2026-10")).toEqual({ month: "2026-11", saved: 500 });
+    expect(laterReserve(history, "2026-12")).toBeNull();
+  });
+
+  it("lets a month give no more than what is left and what later months can lose", () => {
+    expect(givable({ remaining: 2_000, later: { month: "2026-11", saved: 500 } })).toBe(500);
+    expect(givable({ remaining: 2_000, later: null })).toBe(2_000);
+    expect(givable({ remaining: 2_000, later: { month: "2026-11", saved: -100 } })).toBe(0);
+    expect(givable({ remaining: -300, later: null })).toBe(0);
   });
 });
 
@@ -250,6 +301,7 @@ describe("envelopeLeft and groupLeft", () => {
     overPlan: false,
     inUse: true,
     card: null,
+    later: null,
     ...money,
   });
   const card = {

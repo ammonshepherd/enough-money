@@ -141,6 +141,41 @@ test("tapping a transaction in the sheet opens it to edit, over the sheet", asyn
   await expect(sheet.locator(".sheet-hero-amount")).toHaveText("$300.00");
 });
 
+test("spending a month's leftover that next month already released asks to cover it", async ({
+  page,
+}) => {
+  await newAccount(page, "Checking", "1000");
+  await addGroupWithEnvelopes(page, "Often", ["Gifts"]);
+  await editCell(page, "Gifts", "assigned", "50");
+
+  // Next month releases the whole $50 that this month leaves over.
+  await page.getByRole("link", { name: "Next month" }).click();
+  const sheet = await openEnvelope(page, "Gifts");
+  const saved = sheet.getByRole("region", { name: "Saved" });
+  await saved.getByRole("button", { name: "Move some into Remaining…" }).click();
+  await saved.getByLabel("Amount to move into Remaining").fill("50");
+  await saved.getByRole("button", { name: "Move", exact: true }).click();
+  await expect(sheet.locator(".sheet-hero-amount")).toHaveText("$50.00");
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("link", { name: "Previous month" }).click();
+
+  // $20 fits this month's $50, but that $50 is already spoken for next month.
+  await addTransaction(page, { amount: "20", payee: "Card shop", envelope: "Gifts" });
+  const cover = page.getByRole("alertdialog");
+  await expect(cover).toContainText("Gifts would be $20.00 short");
+  await expect(cover).toContainText(
+    /has already released, from Saved, the money Gifts leaves over/,
+  );
+  await expect(cover).not.toContainText("Release");
+  await chooseEnvelope(cover.getByLabel(/cover .* from/i), "Available to Assign");
+  await cover.getByRole("button", { name: "Cover and save" }).click();
+
+  // Next month's Saved stays at $0.00 rather than going negative.
+  await goTo(page, "Budget");
+  await page.getByRole("link", { name: "Next month" }).click();
+  await expect(envelope(page, "Gifts")).toContainText("Saved $0.00");
+});
+
 test("Saved can be moved into Remaining from the sheet", async ({ page }) => {
   await newAccount(page, "Checking", "1000");
   await addGroupWithEnvelopes(page, "Often", ["Gifts"]);
