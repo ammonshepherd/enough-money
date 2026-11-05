@@ -3,6 +3,7 @@ import {
   budgetWith,
   buildBudgetMonth,
   coverSources,
+  givable,
   transactionShortfalls,
   type EnvelopeMonthChange,
   type PendingTransaction,
@@ -296,7 +297,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
           ? coverSources(view, short.envelopeId, short.stillShort).map((e) => ({
               id: e.id,
               name: e.name,
-              remaining: e.remaining,
+              remaining: givable(e),
             }))
           : [],
       canUseAvailable: short.stillShort > 0 && short.stillShort <= view.assignable,

@@ -6,6 +6,7 @@ import {
   budgetWith,
   buildBudgetMonth,
   coverSources,
+  movableFrom,
   transactionShortfalls,
   visibleGroups,
   withEnvelopeMonth,
@@ -292,6 +293,7 @@ describe("transactionShortfalls", () => {
         shortfall: 5_000,
         fromSaved: 3_000,
         stillShort: 2_000,
+        heldBy: null,
       },
     ]);
   });
@@ -317,6 +319,7 @@ describe("transactionShortfalls", () => {
         shortfall: 1_000,
         fromSaved: 1_000,
         stillShort: 0,
+        heldBy: null,
       },
     ]);
     const both = transactionShortfalls(household(), [
@@ -406,11 +409,103 @@ describe("overPlan", () => {
   });
 });
 
+describe("a later month that already released Saved", () => {
+  /** Fun leaves $100 over in October, and November releases all of it from Saved. */
+  function releasedInNovember(): BudgetData {
+    const data = household();
+    data.envelopeMonths.push({
+      envelopeId: "fun",
+      month: "2026-11",
+      assigned: 0,
+      released: 10_000,
+      planned: 0,
+    });
+    data.transactions.push(
+      tx({
+        id: "nov",
+        date: "2026-11-02",
+        amount: -10_000,
+        allocations: [{ envelopeId: "fun", amount: -10_000 }],
+      }),
+    );
+    return data;
+  }
+
+  it("prompts to cover October spending that November's release counts on", () => {
+    // Giving the $20 "cash" outflow (Oct 4, to review) to Fun fits October's $100,
+    // but November already released that $100: Fun would be $20 short of it.
+    const cash = { id: "cash", accountId: "checking", date: "2026-10-04", amount: -2_000 };
+    const shortfalls = transactionShortfalls(releasedInNovember(), [
+      {
+        ...cash,
+        allocations: [{ envelopeId: "fun", amount: -2_000 }],
+        isTransfer: false,
+        isIncome: false,
+      },
+    ]);
+    expect(shortfalls).toEqual([
+      {
+        envelopeId: "fun",
+        month: "2026-10",
+        remainingAfter: 8_000,
+        shortfall: 2_000,
+        fromSaved: 0,
+        stillShort: 2_000,
+        heldBy: "2026-11",
+      },
+    ]);
+  });
+
+  it("is covered once October gets the money from elsewhere", () => {
+    const data = budgetWith(
+      releasedInNovember(),
+      [],
+      [{ envelopeId: "fun", month: "2026-10", assigned: 2_000 }],
+    );
+    const cash = {
+      id: "cash",
+      accountId: "checking",
+      date: "2026-10-04",
+      amount: -2_000,
+      allocations: [{ envelopeId: "fun", amount: -2_000 }],
+      isTransfer: false,
+      isIncome: false,
+    };
+    expect(transactionShortfalls(data, [cash])).toEqual([]);
+    const after = buildBudgetMonth(budgetWith(data, [cash]), "2026-11");
+    expect(after.groups[0]!.envelopes.find((e) => e.id === "fun")!.saved).toBe(0);
+  });
+
+  it("gives nothing October's leftover still carries for November", () => {
+    const fun = buildBudgetMonth(releasedInNovember(), "2026-10").groups[0]!.envelopes.find(
+      (e) => e.id === "fun",
+    )!;
+    expect(fun.remaining).toBe(10_000);
+    expect(fun.later).toEqual({ month: "2026-11", saved: 0 });
+    expect(movableFrom(fun)).toBe(0);
+  });
+});
+
 describe("coverSources", () => {
   it("lists other envelopes with enough Remaining", () => {
     const view = buildBudgetMonth(household(), "2026-10");
     expect(coverSources(view, "food", 2_000).map((e) => e.id)).toEqual(["fun"]);
     expect(coverSources(view, "food", 20_000)).toEqual([]);
+  });
+
+  it("leaves out money a later month already released from Saved", () => {
+    const data = household();
+    data.envelopeMonths.push({
+      envelopeId: "fun",
+      month: "2026-11",
+      assigned: 0,
+      released: 9_000,
+      planned: 0,
+    });
+    const view = buildBudgetMonth(data, "2026-10");
+    // Fun has $100 left in October, but November released $90 of it.
+    expect(coverSources(view, "food", 1_000).map((e) => e.id)).toEqual(["fun"]);
+    expect(coverSources(view, "food", 2_000)).toEqual([]);
   });
 });
 

@@ -56,6 +56,12 @@ export function CoverCard({
         {plan.envelopeName} would be <Money cents={plan.shortfall} /> short in{" "}
         {formatMonth(plan.month)}
       </h3>
+      {plan.heldBy && (
+        <p className="empty-state">
+          {formatMonth(plan.heldBy)} has already released, from Saved, the money {plan.envelopeName}{" "}
+          leaves over in {formatMonth(plan.month)}.
+        </p>
+      )}
       <p className="empty-state">Envelopes can’t go negative. Cover the difference:</p>
       <ol>
         {plan.fromSaved > 0 && (
