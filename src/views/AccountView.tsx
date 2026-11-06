@@ -60,6 +60,9 @@ export function AccountView({
 }) {
   const view = useAccountView(budget, data, month, accountId);
   const account = view.account;
+  // Checking accounts show what is available; cards and tracking accounts what it is.
+  const balanceLabel =
+    account?.type === "checking" && account.onBudget ? "Available balance" : "Current balance";
   /** The open account's row, with what the edit form needs; null when closed (read only). */
   const editable = page.openAccounts.find((a) => a.id === accountId) ?? null;
   const panel = useSidebar("panel", userId);
@@ -165,7 +168,7 @@ export function AccountView({
       {paneCollapsed ? (
         <dl className="account-figures folded" aria-label={`${title} balance`}>
           {view.figures ? (
-            <Figure label="Current balance" cents={view.figures.current} />
+            <Figure label={balanceLabel} cents={view.figures.current} />
           ) : (
             <Figure label="Balance today" cents={view.balance.today} />
           )}
@@ -174,7 +177,7 @@ export function AccountView({
         <dl className="account-figures" aria-label={`${title} figures for ${view.monthLabel}`}>
           <Figure label="Money in" cents={view.figures.moneyIn} signed tone="in" />
           <Figure label="Money out" cents={-view.figures.moneyOut} signed tone="out" />
-          <Figure label="Current balance" cents={view.figures.current} />
+          <Figure label={balanceLabel} cents={view.figures.current} />
           {view.figures.extraPaid === null ? (
             <Figure label="Opening balance" cents={view.figures.opening} />
           ) : (

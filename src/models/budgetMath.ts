@@ -229,7 +229,8 @@ export interface SpendCheck {
 
 /**
  * Checks a new spend before it is categorized. When `shortfall` is above
- * zero the UI prompts to cover it: first from this envelope's Saved
+ * zero the UI prompts to cover it: all of it from Available to Assign when
+ * that has enough; otherwise first from this envelope's Saved
  * (`fromSaved`), then from another envelope or Available to Assign
  * (`stillShort`).
  *

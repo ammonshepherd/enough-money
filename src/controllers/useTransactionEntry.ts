@@ -72,7 +72,8 @@ export interface Cover {
   month: Month;
   fromSaved: Cents;
   stillShort: Cents;
-  choice: CoverChoice;
+  /** Where stillShort came from (null when nothing was left after Saved). */
+  choice: Exclude<CoverChoice, "saved">;
 }
 
 /**
@@ -91,13 +92,22 @@ export interface CoverPlan extends TransactionShortfall {
   envelopeName: string;
   /** Step 2 choices: envelopes with enough Remaining this month. */
   sources: { id: string; name: string; remaining: number }[];
-  /** Step 3: Available to Assign can cover what is still short. */
+  /** Available to Assign can cover what is still short after releasing Saved. */
   canUseAvailable: boolean;
+  /**
+   * Available to Assign can cover the whole shortfall, so it comes first and
+   * no Saved is released when it is chosen.
+   */
+  availableCoversAll: boolean;
   available: number;
 }
 
-/** How to cover what Saved could not: another envelope, or Available to Assign. */
-export type CoverChoice = { fromEnvelopeId: string } | "available" | null;
+/**
+ * How to cover the shortfall: Available to Assign (the whole shortfall when
+ * it can, else what Saved leaves), "saved" (only Saved, when it covers it
+ * all), or another envelope (after releasing Saved).
+ */
+export type CoverChoice = { fromEnvelopeId: string } | "available" | "saved" | null;
 
 export type PrepareResult = { kind: "saved" } | { kind: "cover"; plan: CoverPlan };
 
@@ -301,6 +311,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
             }))
           : [],
       canUseAvailable: short.stillShort > 0 && short.stillShort <= view.assignable,
+      availableCoversAll: short.shortfall <= view.assignable,
       available: view.assignable,
     };
   };
@@ -448,8 +459,10 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
     },
 
     /**
-     * Covers the shortfall in CLAUDE.md order — release this envelope's Saved,
-     * then move from another envelope or assign from Available to Assign.
+     * Covers the shortfall in CLAUDE.md order: Available to Assign when it
+     * can cover it all; else (or when another choice is made) release this
+     * envelope's Saved, then move from another envelope or assign from
+     * Available to Assign.
      * Returns the prompt for the next short envelope of a split, if any;
      * after the last one, makes every cover and saves the transaction.
      */
@@ -457,8 +470,22 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
       if (plan.stillShort > 0 && !choice) {
         throw new UserFacingError("Choose where the rest of the money comes from.");
       }
-      const { envelopeId, month, fromSaved, stillShort } = plan;
-      const covered = [...plan.covered, { envelopeId, month, fromSaved, stillShort, choice }];
+      if (choice === "saved" && plan.stillShort > 0) {
+        throw new UserFacingError(
+          "Saved can’t cover all of this. Choose where the rest comes from.",
+        );
+      }
+      const { envelopeId, month } = plan;
+      // Available to Assign covering it all leaves Saved alone.
+      const allFromAvailable = choice === "available" && plan.availableCoversAll;
+      const cover: Cover = {
+        envelopeId,
+        month,
+        fromSaved: allFromAvailable ? 0 : plan.fromSaved,
+        stillShort: allFromAvailable ? plan.shortfall : plan.stillShort,
+        choice: choice === "saved" ? null : choice,
+      };
+      const covered = [...plan.covered, cover];
       const next = planFor(plan.save, covered);
       if (next) return { kind: "cover", plan: next };
       await budget.change(async (s) => {

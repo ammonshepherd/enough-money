@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.40.1.
+Version described: 0.41.0.
 
 ## 1. Purpose
 
@@ -202,10 +202,15 @@ These are implemented in `budgetMath.ts` and the controllers:
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
   envelope, that would make Remaining negative): title "⟨Envelope⟩ would be $X
-  short in ⟨Month⟩". Step 1 releases this envelope's Saved automatically; for the
-  rest, a "Cover $X from" envelope picker offers other envelopes with enough to give
-  this month (moved) and Available to Assign (assigned, only if `assignable`
-  allows). If neither can cover it, saving is blocked with an explanation (card
+  short in ⟨Month⟩". A "Cover $X from" envelope picker lists Available to
+  Assign first whenever `assignable` allows (v0.41.0), and chooses it. When
+  it can cover the whole shortfall, choosing it assigns all of it and leaves
+  Saved alone; the picker then also offers "Release from Saved" when Saved
+  alone covers it. Otherwise (or when another envelope is chosen) this
+  envelope's Saved is released first ("Release $X from ⟨Envelope⟩'s Saved"),
+  and the picker ("Then cover $X from") covers the rest from other
+  envelopes with enough to give this month (moved) or Available to Assign
+  (assigned), shown last and disabled when it cannot. If neither can cover it, saving is blocked with an explanation (card
   payments never suggest Uncategorized). Cover actions happen in the
   transaction's month.
 - **Covering a split:** each envelope the split would overdraw gets its own
@@ -541,7 +546,8 @@ $0.00 balance.
     uppercase, amount 15px 800), three columns. Row 1: MONEY IN (green) and
     MONEY OUT (red) for the month shown (the account's inflows and outflows
     dated in it, transfers (card payments too) left out, a split once at
-    its full amount, inflows to review included), CURRENT BALANCE (every
+    its full amount, inflows to review included), AVAILABLE BALANCE on a
+    checking account, CURRENT BALANCE on a card or tracking account (every
     transaction, any date). Row 2: OPENING BALANCE (as entered, signed)
     on a checking account; on a credit card EXTRA PAID instead (v0.33.6,
     `cardExtraPaid` in `budgetMath.ts`): the month's payments beyond the
@@ -558,7 +564,7 @@ $0.00 balance.
   - "Import CSV" (an open account only) opens the bank import already set to
     this account (no account picker) in a sheet with Close.
   - Collapsed (v0.36.0, phone, "Collapse info pane" in the page menu): line
-    1, then only CURRENT BALANCE on one line (BALANCE TODAY on All
+    1, then only that balance on one line (BALANCE TODAY on All
     accounts); the other figures and Import CSV are hidden. Kept in
     localStorage under `bb.accounts.paneCollapsed.<userId>` ("1" or "0";
     unreadable means open), for every account.
@@ -732,7 +738,8 @@ the envelope's name or group, in any order ("car ins"; `matchOptions` in
 `src/models/envelopeSearch.ts`). Tap a match, use the arrows and Enter, or type
 the full name (Enter or leaving the field picks it); anything else puts the
 choice back. Escape closes the list only. The chosen envelope shows its "has
-$X" in the field.
+$X" in the field, which leaves room for it so a long name ends in "…"
+(v0.41.0); split lines are too narrow, so they show it only in the list.
 
 Envelope choices: Uncategorized; Income (to Available to Assign) — disabled for
 outflows; Split across envelopes; Transfer — needs two open budget accounts

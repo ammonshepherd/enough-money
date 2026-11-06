@@ -150,10 +150,13 @@ non-card budget balances − all envelope money (P included)`.
 ## Rules
 
 - No envelope may go negative. When categorizing a transaction would push
-  Remaining below 0, prompt to cover the shortfall, in this order:
-  1. release from this envelope's Saved,
-  2. move from another envelope,
-  3. assign more from Available to Assign.
+  Remaining below 0, prompt to cover the shortfall (order decided in
+  v0.41.0):
+  1. assign from Available to Assign when it can cover the whole shortfall
+     (the first choice, chosen by default; Saved is left alone),
+  2. otherwise, or when another choice is picked: release from this
+     envelope's Saved, then move from another envelope or assign the rest
+     from Available to Assign (listed first when it can).
 - No later month's Saved may go negative either (v0.40.1): a change in a past
   month (spending, moving, taking back) may use only what that month leaves
   over beyond what later months already released (`givable` /
@@ -259,7 +262,7 @@ non-card budget balances − all envelope money (P included)`.
   Budget: Compact rows, Collapse/Expand all groups, Go to this month (in
   another month), Edit groups (`#settings/groups`). Accounts list: Add
   account. An account or All accounts open: Collapse/Expand all dates,
-  Collapse info pane (only Current balance, or Balance today, stays;
+  Collapse info pane (only the balance, or Balance today, stays;
   remembered per device and user, `layoutPrefs.ts`); an open account also
   sorts: Date, Name, Amount, Envelope, Income/expense, Ascending or
   Descending. Settings: Sign out. A desktop keeps its own controls.
@@ -282,7 +285,9 @@ non-card budget balances − all envelope money (P included)`.
   accounts" (the month's In / Out) first, then Checking, Credit cards and
   Tracking groups (`groupAccounts`), each row a link with name and balance;
   closed accounts behind "Show closed accounts". Opening one replaces the
-  list with a sticky info pane (back arrow, name, pencil; Current balance,
+  list with a sticky info pane (back arrow, name, pencil; Available
+  balance on a checking account (v0.41.0), Current balance on a card or
+  tracking account,
   Month start, Opening balance (Extra paid on a card), Money in, Money out
   and Reconciled from `accountFigures` in `src/models/activity.ts`, display
   only; transfers and

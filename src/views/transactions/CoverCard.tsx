@@ -10,12 +10,15 @@ import { formatMonth } from "../../models/month";
 import { ErrorMessage, Money } from "../components";
 import { EnvelopePicker } from "../EnvelopePicker";
 
-/** The CoverChoice a "Cover from" option stands for. */
+/** The CoverChoices "Cover from" options stand for, besides envelopes. */
 const AVAILABLE = "available";
+const SAVED = "saved";
 
 /**
- * The cover prompt: the transaction would leave its envelope short, so
- * release Saved, then move from another envelope or Available to Assign.
+ * The cover prompt: the transaction would leave its envelope short. When
+ * Available to Assign has enough, it is the first choice and Saved is left
+ * alone; otherwise release Saved, then move from another envelope or
+ * Available to Assign.
  */
 export function CoverCard({
   entry,
@@ -31,17 +34,47 @@ export function CoverCard({
   onDone: () => void;
   onBack: () => void;
 }) {
+  const availableFirst = plan.availableCoversAll || plan.canUseAvailable;
   const [choice, setChoice] = useState<CoverChoice>(() =>
-    plan.stillShort === 0
-      ? null
-      : plan.sources[0]
-        ? { fromEnvelopeId: plan.sources[0].id }
-        : plan.canUseAvailable
-          ? AVAILABLE
+    availableFirst
+      ? AVAILABLE
+      : plan.stillShort === 0
+        ? null
+        : plan.sources[0]
+          ? { fromEnvelopeId: plan.sources[0].id }
           : null,
   );
   const cover = useAsyncAction(entry.coverAndSave);
   const noWayToCover = plan.stillShort > 0 && plan.sources.length === 0 && !plan.canUseAvailable;
+  // Available to Assign covering it all, or Saved alone: one choice covers the whole shortfall.
+  const coversAll = (choice === AVAILABLE && plan.availableCoversAll) || choice === SAVED;
+  const releasesSaved = plan.fromSaved > 0 && !coversAll;
+  const showPicker = (plan.stillShort > 0 && !noWayToCover) || plan.availableCoversAll;
+  const availableOption = {
+    value: AVAILABLE,
+    label: "Available to Assign",
+    detail: `${formatCents(plan.available)} free`,
+    disabled: !availableFirst,
+  };
+  const options = [
+    ...(availableFirst ? [availableOption] : []),
+    // Saved alone covers it: offered as the other choice to Available to Assign.
+    ...(plan.stillShort === 0 && plan.fromSaved > 0
+      ? [
+          {
+            value: SAVED,
+            label: "Release from Saved",
+            detail: formatCents(plan.fromSaved),
+          },
+        ]
+      : []),
+    ...plan.sources.map((source) => ({
+      value: source.id,
+      label: source.name,
+      detail: `has ${formatCents(source.remaining)}`,
+    })),
+    ...(availableFirst ? [] : [availableOption]),
+  ];
   const step = plan.covered.length + 1;
   const steps = step + plan.moreShort;
 
@@ -64,31 +97,25 @@ export function CoverCard({
       )}
       <p className="empty-state">Envelopes can’t go negative. Cover the difference:</p>
       <ol>
-        {plan.fromSaved > 0 && (
+        {releasesSaved && (
           <li>
             Release <Money cents={plan.fromSaved} /> from {plan.envelopeName}’s Saved.
           </li>
         )}
-        {plan.stillShort > 0 && !noWayToCover && (
+        {showPicker && (
           <li>
             <EnvelopePicker
-              label={`${plan.fromSaved > 0 ? "Then cover" : "Cover"} ${formatCents(plan.stillShort)} from`}
-              value={choice === AVAILABLE ? AVAILABLE : (choice?.fromEnvelopeId ?? "")}
-              options={[
-                ...plan.sources.map((source) => ({
-                  value: source.id,
-                  label: source.name,
-                  detail: `has ${formatCents(source.remaining)}`,
-                })),
-                {
-                  value: AVAILABLE,
-                  label: "Available to Assign",
-                  detail: `${formatCents(plan.available)} free`,
-                  disabled: !plan.canUseAvailable,
-                },
-              ]}
+              label={`${releasesSaved ? "Then cover" : "Cover"} ${formatCents(
+                coversAll ? plan.shortfall : plan.stillShort,
+              )} from`}
+              value={
+                choice === AVAILABLE || choice === SAVED ? choice : (choice?.fromEnvelopeId ?? "")
+              }
+              options={options}
               onChange={(value) =>
-                setChoice(value === AVAILABLE ? AVAILABLE : { fromEnvelopeId: value })
+                setChoice(
+                  value === AVAILABLE || value === SAVED ? value : { fromEnvelopeId: value },
+                )
               }
             />
           </li>

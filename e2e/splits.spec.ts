@@ -115,12 +115,14 @@ test("a split that overdraws two envelopes covers them one at a time", async ({ 
   const cover = dialog.getByRole("alertdialog");
   await expect(cover).toContainText("Envelope 1 of 2 to cover");
   await expect(cover).toContainText("Groceries would be $30.00 short");
+  // Available to Assign has money, so it comes first and is chosen.
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue("Available to Assign");
   // Fun is spent by this same split, so it has nothing to give.
-  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(/.+/);
   let choices = await pickerChoices(cover.getByLabel(/cover .* from/i));
+  await expect(choices.first()).toContainText("Available to Assign");
   await expect(choices.filter({ hasText: "Fun" })).toHaveCount(0);
   await expect(choices.filter({ hasText: "Gifts has $200.00" })).toHaveCount(1);
-  await cover.getByLabel(/cover .* from/i).press("Escape");
+  await chooseEnvelope(cover.getByLabel(/cover .* from/i), "Gifts");
   await cover.getByRole("button", { name: "Cover and continue" }).click();
 
   await expect(cover).toContainText("Envelope 2 of 2 to cover");

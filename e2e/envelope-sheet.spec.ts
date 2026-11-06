@@ -17,6 +17,9 @@ test.beforeEach(async ({ page }) => {
   await signInWithHousehold(page);
 });
 
+const iso = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
 const newAccount = (page: Page, name: string, opening: string, card = false) =>
   addAccount(page, card ? { name, owed: opening } : { name, balance: opening });
 
@@ -174,6 +177,43 @@ test("spending a month's leftover that next month already released asks to cover
   await goTo(page, "Budget");
   await page.getByRole("link", { name: "Next month" }).click();
   await expect(envelope(page, "Gifts")).toContainText("Saved $0.00");
+});
+
+test("the cover prompt uses Available to Assign before Saved", async ({ page }) => {
+  const opened = new Date();
+  opened.setDate(1);
+  opened.setMonth(opened.getMonth() - 1);
+  await addAccount(page, { name: "Checking", balance: "1000", date: iso(opened) });
+  await goTo(page, "Budget");
+  await addGroupWithEnvelopes(page, "Often", ["Gifts"]);
+  // Last month's $50 is Saved this month (transactions are added today).
+  await page.getByRole("link", { name: "Previous month" }).click();
+  await editCell(page, "Gifts", "assigned", "50");
+  await page.getByRole("link", { name: "Next month" }).click();
+  await expect(envelope(page, "Gifts")).toContainText("Saved $50.00");
+  await expect(available(page)).toContainText("$950.00");
+
+  // Available to Assign has enough: it is chosen, and Saved is left alone.
+  await addTransaction(page, { amount: "30", payee: "Card shop", envelope: "Gifts" });
+  let cover = page.getByRole("alertdialog");
+  await expect(cover).toContainText("Gifts would be $30.00 short");
+  await expect(cover).not.toContainText("Release $30.00");
+  await expect(cover.getByLabel("Cover $30.00 from")).toHaveValue("Available to Assign");
+  await cover.getByRole("button", { name: "Cover and save" }).click();
+  await expect(cover).toBeHidden();
+  await goTo(page, "Budget");
+  await expect(envelope(page, "Gifts")).toContainText("Saved $50.00");
+  await expect(available(page)).toContainText("$920.00");
+
+  // Saved is still there to choose instead.
+  await addTransaction(page, { amount: "20", payee: "Wrapping", envelope: "Gifts" });
+  cover = page.getByRole("alertdialog");
+  await chooseEnvelope(cover.getByLabel("Cover $20.00 from"), "Release from Saved");
+  await cover.getByRole("button", { name: "Cover and save" }).click();
+  await expect(cover).toBeHidden();
+  await goTo(page, "Budget");
+  await expect(envelope(page, "Gifts")).toContainText("Saved $30.00");
+  await expect(available(page)).toContainText("$920.00");
 });
 
 test("Saved can be moved into Remaining from the sheet", async ({ page }) => {
