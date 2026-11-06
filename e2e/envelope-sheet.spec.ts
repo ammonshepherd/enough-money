@@ -10,6 +10,9 @@ import {
   openEnvelope,
   signInWithHousehold,
   chooseEnvelope,
+  editActivityRow,
+  openActivityMonth,
+  openAddTransaction,
 } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
@@ -166,7 +169,9 @@ test("spending a month's leftover that next month already released asks to cover
   await expect(cover).toContainText(
     /has already released, from Saved, the money Gifts leaves over/,
   );
-  await expect(cover).not.toContainText("Release");
+  // Next month hasn't spent it, so releasing less there is offered first.
+  await expect(cover).toContainText(/It hasn’t spent it, so .* can release less instead/);
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(/^Release less in /);
   await chooseEnvelope(cover.getByLabel(/cover .* from/i), "Available to Assign");
   await cover.getByRole("button", { name: "Cover and save" }).click();
 
@@ -174,6 +179,63 @@ test("spending a month's leftover that next month already released asks to cover
   await goTo(page, "Budget");
   await page.getByRole("link", { name: "Next month" }).click();
   await expect(envelope(page, "Gifts")).toContainText("Saved $0.00");
+});
+
+test("moving next month's spending into this month can release less next month", async ({
+  page,
+}) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const today = new Date();
+  const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const thisMonthDay = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`;
+  const nextMonth = `${next.getFullYear()}-${pad(next.getMonth() + 1)}`;
+
+  await newAccount(page, "Checking", "1000");
+  await addGroupWithEnvelopes(page, "Often", ["Gifts"]);
+  await editCell(page, "Gifts", "assigned", "50");
+
+  // Next month releases this month's $50 and spends it.
+  await page.getByRole("link", { name: "Next month" }).click();
+  const sheet = await openEnvelope(page, "Gifts");
+  const saved = sheet.getByRole("region", { name: "Saved" });
+  await saved.getByRole("button", { name: "Move some into Remaining…" }).click();
+  await saved.getByLabel("Amount to move into Remaining").fill("50");
+  await saved.getByRole("button", { name: "Move", exact: true }).click();
+  await sheet.getByRole("button", { name: "Close" }).click();
+  const dialog = await openAddTransaction(page);
+  await dialog.getByLabel("Amount").first().fill("50");
+  await dialog.getByLabel("Payee").fill("Card shop");
+  await dialog.getByLabel("Date").fill(`${nextMonth}-02`);
+  await chooseEnvelope(dialog.getByLabel("Envelope").first(), "Gifts");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+
+  // It belonged to this month: moving it back asks next month to release less.
+  await openActivityMonth(page, nextMonth);
+  await editActivityRow(page, "Card shop");
+  const form = page.getByRole("form", { name: "Edit transaction" });
+  await form.getByLabel("Date").fill(thisMonthDay);
+  await form.getByRole("button", { name: "Save changes" }).click();
+  const cover = page.getByRole("alertdialog");
+  await expect(cover).toContainText("Gifts would be $50.00 short");
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(/^Release less in /);
+  await cover.getByRole("button", { name: "Cover and save" }).click();
+  await expect(cover).toBeHidden();
+
+  // Next month (Budget opens in the month Accounts showed): nothing released,
+  // nothing spent, nothing negative.
+  await goTo(page, "Budget");
+  const later = await openEnvelope(page, "Gifts");
+  await expect(later.locator(".sheet-hero-amount")).toHaveText("$0.00");
+  await expect(later.getByRole("region", { name: "Money flow this month" })).not.toContainText(
+    "Released",
+  );
+  await later.getByRole("button", { name: "Close" }).click();
+  await expect(envelope(page, "Gifts")).toContainText("Saved $0.00");
+  // This month now spends the $50 it assigned.
+  await page.getByRole("link", { name: "Previous month" }).click();
+  const before = await openEnvelope(page, "Gifts");
+  await expect(before.locator(".sheet-hero-amount")).toHaveText("$0.00");
 });
 
 test("Saved can be moved into Remaining from the sheet", async ({ page }) => {

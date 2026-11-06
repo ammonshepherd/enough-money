@@ -158,6 +158,11 @@ non-card budget balances − all envelope money (P included)`.
   month (spending, moving, taking back) may use only what that month leaves
   over beyond what later months already released (`givable` /
   `laterReserve` in `budgetMath.ts`); the cover prompt covers the rest.
+  When only later months are short and they still hold what they released
+  unspent (as when a transaction moves to an earlier month), the prompt
+  offers first to release less in those months instead (v0.41.0,
+  `laterReleaseCuts`): their Saved stays at $0.00 and their Remaining drops
+  by the same.
 - Assigning is blocked when Available to Assign is insufficient.
 - Each month's Budget page shows only envelopes in use that month (a stored
   month record, spending that month, or money in Saved/Remaining; never-used

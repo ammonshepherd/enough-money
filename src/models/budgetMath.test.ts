@@ -5,6 +5,7 @@ import {
   checkSpend,
   givable,
   laterReserve,
+  laterReleaseCuts,
   computeEnvelopeHistory,
   computeEnvelopeMonth,
   envelopeAsOf,
@@ -359,5 +360,46 @@ describe("envelopeLeft and groupLeft", () => {
     ];
     expect(groupLeft({ id: "g", name: "G", envelopes })).toBe(10_500);
     expect(groupLeft({ id: "e", name: "Empty", envelopes: [] })).toBe(0);
+  });
+});
+
+describe("laterReleaseCuts", () => {
+  /** October leaves $100 over; November releases it and spends `novSpent`. */
+  const history = (novSpent: number, decReleased = 0) =>
+    computeEnvelopeHistory([
+      { month: "2026-10", assigned: 10_000, released: 0, spent: 0 },
+      { month: "2026-11", assigned: 0, released: 10_000, spent: novSpent },
+      { month: "2026-12", assigned: 0, released: decReleased, spent: 0 },
+    ]);
+
+  it("releases less in the later month that has the money unspent", () => {
+    expect(laterReleaseCuts(history(0), "2026-10", 6_000)).toEqual([
+      { month: "2026-11", amount: 6_000 },
+    ]);
+  });
+
+  it("is null when the later month already spent what it released", () => {
+    expect(laterReleaseCuts(history(5_000), "2026-10", 6_000)).toBeNull();
+    expect(laterReleaseCuts(history(4_000), "2026-10", 6_000)).toEqual([
+      { month: "2026-11", amount: 6_000 },
+    ]);
+  });
+
+  it("cuts only what each later month is short of", () => {
+    // November keeps $40 in Saved; December releases what November left over.
+    const h = computeEnvelopeHistory([
+      { month: "2026-10", assigned: 10_000, released: 0, spent: 0 },
+      { month: "2026-11", assigned: 0, released: 6_000, spent: 0 },
+      { month: "2026-12", assigned: 0, released: 10_000, spent: 0 },
+    ]);
+    expect(laterReleaseCuts(h, "2026-10", 5_000)).toEqual([
+      { month: "2026-11", amount: 1_000 },
+      { month: "2026-12", amount: 5_000 },
+    ]);
+  });
+
+  it("is null when no later month needs it", () => {
+    expect(laterReleaseCuts(history(0), "2026-11", 6_000)).toBeNull();
+    expect(laterReleaseCuts(history(0), "2026-12", 6_000)).toBeNull();
   });
 });

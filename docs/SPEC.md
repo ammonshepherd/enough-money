@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.40.1.
+Version described: 0.41.0.
 
 ## 1. Purpose
 
@@ -198,6 +198,12 @@ These are implemented in `budgetMath.ts` and the controllers:
   sources all use that limit, and the cover prompt asks to cover the rest
   (from another envelope or Available to Assign; releasing this month's Saved
   does not help), with a line saying which later month released the money.
+  When this month itself is not short and every later month that is short
+  still holds the released money unspent (typically a transaction redated
+  from that month to an earlier one), the picker's first and default choice
+  is "Release less in <month>" (v0.41.0, `laterReleaseCuts`): each such
+  month releases what it is short of less, so its Saved stays at $0.00 and
+  its Remaining drops by the same; no money moves between envelopes.
 - **Release from Saved:** amount above 0 and at most Saved.
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment

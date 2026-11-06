@@ -12,6 +12,12 @@ import { EnvelopePicker } from "../EnvelopePicker";
 
 /** The CoverChoice a "Cover from" option stands for. */
 const AVAILABLE = "available";
+/** The option that releases less in later months (plan.releaseCuts). */
+const RELEASE_LESS = "release-less";
+
+/** Month names joined for a sentence: "November", "November and December". */
+const monthList = (months: string[]) =>
+  months.length < 2 ? months.join("") : `${months.slice(0, -1).join(", ")} and ${months.at(-1)}`;
 
 /**
  * The cover prompt: the transaction would leave its envelope short, so
@@ -31,17 +37,28 @@ export function CoverCard({
   onDone: () => void;
   onBack: () => void;
 }) {
+  const cuts = plan.releaseCuts;
+  const cutMonths = monthList((cuts ?? []).map((cut) => formatMonth(cut.month)));
   const [choice, setChoice] = useState<CoverChoice>(() =>
     plan.stillShort === 0
       ? null
-      : plan.sources[0]
-        ? { fromEnvelopeId: plan.sources[0].id }
-        : plan.canUseAvailable
-          ? AVAILABLE
-          : null,
+      : cuts
+        ? { releaseCuts: cuts }
+        : plan.sources[0]
+          ? { fromEnvelopeId: plan.sources[0].id }
+          : plan.canUseAvailable
+            ? AVAILABLE
+            : null,
   );
   const cover = useAsyncAction(entry.coverAndSave);
-  const noWayToCover = plan.stillShort > 0 && plan.sources.length === 0 && !plan.canUseAvailable;
+  const noWayToCover =
+    plan.stillShort > 0 && !cuts && plan.sources.length === 0 && !plan.canUseAvailable;
+  const pickerValue =
+    choice === AVAILABLE
+      ? AVAILABLE
+      : choice && "releaseCuts" in choice
+        ? RELEASE_LESS
+        : (choice?.fromEnvelopeId ?? "");
   const step = plan.covered.length + 1;
   const steps = step + plan.moreShort;
 
@@ -60,6 +77,7 @@ export function CoverCard({
         <p className="empty-state">
           {formatMonth(plan.heldBy)} has already released, from Saved, the money {plan.envelopeName}{" "}
           leaves over in {formatMonth(plan.month)}.
+          {cuts && ` It hasn’t spent it, so ${cutMonths} can release less instead.`}
         </p>
       )}
       <p className="empty-state">Envelopes can’t go negative. Cover the difference:</p>
@@ -73,8 +91,17 @@ export function CoverCard({
           <li>
             <EnvelopePicker
               label={`${plan.fromSaved > 0 ? "Then cover" : "Cover"} ${formatCents(plan.stillShort)} from`}
-              value={choice === AVAILABLE ? AVAILABLE : (choice?.fromEnvelopeId ?? "")}
+              value={pickerValue}
               options={[
+                ...(cuts
+                  ? [
+                      {
+                        value: RELEASE_LESS,
+                        // No detail: a long label would run under it (the line above explains).
+                        label: `Release less in ${cutMonths}`,
+                      },
+                    ]
+                  : []),
                 ...plan.sources.map((source) => ({
                   value: source.id,
                   label: source.name,
@@ -88,7 +115,13 @@ export function CoverCard({
                 },
               ]}
               onChange={(value) =>
-                setChoice(value === AVAILABLE ? AVAILABLE : { fromEnvelopeId: value })
+                setChoice(
+                  value === AVAILABLE
+                    ? AVAILABLE
+                    : value === RELEASE_LESS && cuts
+                      ? { releaseCuts: cuts }
+                      : { fromEnvelopeId: value },
+                )
               }
             />
           </li>

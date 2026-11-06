@@ -7,6 +7,7 @@ import {
   transactionShortfalls,
   type EnvelopeMonthChange,
   type PendingTransaction,
+  type ReleaseCut,
   type TransactionShortfall,
 } from "../models/budgetMath";
 import { UserFacingError, type DataStore, type TransactionInput } from "../models/dataStore";
@@ -96,8 +97,12 @@ export interface CoverPlan extends TransactionShortfall {
   available: number;
 }
 
-/** How to cover what Saved could not: another envelope, or Available to Assign. */
-export type CoverChoice = { fromEnvelopeId: string } | "available" | null;
+/**
+ * How to cover what Saved could not: another envelope, Available to Assign,
+ * or (when only later months are short) releasing less in those months.
+ */
+export type CoverChoice =
+  { fromEnvelopeId: string } | { releaseCuts: ReleaseCut[] } | "available" | null;
 
 export type PrepareResult = { kind: "saved" } | { kind: "cover"; plan: CoverPlan };
 
@@ -156,6 +161,12 @@ function coverChanges(covers: readonly Cover[]): EnvelopeMonthChange[] {
     const changes: EnvelopeMonthChange[] = [];
     if (fromSaved > 0) changes.push({ envelopeId, month, released: fromSaved });
     if (stillShort === 0 || !choice) return changes;
+    if (typeof choice === "object" && "releaseCuts" in choice) {
+      for (const cut of choice.releaseCuts) {
+        changes.push({ envelopeId, month: cut.month, released: -cut.amount });
+      }
+      return changes;
+    }
     if (choice !== "available") {
       changes.push({ envelopeId: choice.fromEnvelopeId, month, assigned: -stillShort });
     }
@@ -469,7 +480,11 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
             });
           }
           if (cover.stillShort === 0) continue;
-          if (cover.choice === "available") {
+          if (cover.choice && typeof cover.choice === "object" && "releaseCuts" in cover.choice) {
+            for (const cut of cover.choice.releaseCuts) {
+              await s.adjustEnvelopeMonth(cover.envelopeId, cut.month, { released: -cut.amount });
+            }
+          } else if (cover.choice === "available") {
             await s.adjustEnvelopeMonth(cover.envelopeId, cover.month, {
               assigned: cover.stillShort,
             });
