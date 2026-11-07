@@ -10,9 +10,10 @@ import { formatMonth } from "../../models/month";
 import { ErrorMessage, Money } from "../components";
 import { EnvelopePicker } from "../EnvelopePicker";
 
-/** The CoverChoice a "Cover from" option stands for. */
+/** The CoverChoices "Cover from" options stand for, besides envelopes. */
 const AVAILABLE = "available";
-/** The option that releases less in later months (plan.releaseCuts). */
+const SAVED = "saved";
+/** The option that undoes later months' releases from Saved (plan.releaseCuts). */
 const RELEASE_LESS = "release-less";
 
 /** Month names joined for a sentence: "November", "November and December". */
@@ -20,8 +21,11 @@ const monthList = (months: string[]) =>
   months.length < 2 ? months.join("") : `${months.slice(0, -1).join(", ")} and ${months.at(-1)}`;
 
 /**
- * The cover prompt: the transaction would leave its envelope short, so
- * release Saved, then move from another envelope or Available to Assign.
+ * The cover prompt: the transaction would leave its envelope short. An undo
+ * of later months' releases from Saved, when offered, comes first (it uses
+ * no money). For a new transaction, Available to Assign comes next when it
+ * has enough, and covering it all leaves Saved alone. Otherwise release
+ * Saved, then move from another envelope or Available to Assign.
  */
 export function CoverCard({
   entry,
@@ -39,26 +43,72 @@ export function CoverCard({
 }) {
   const cuts = plan.releaseCuts;
   const cutMonths = monthList((cuts ?? []).map((cut) => formatMonth(cut.month)));
+  // The undo names its amount when only one month gives it back.
+  const onlyCut = cuts?.length === 1 ? cuts[0] : null;
+  const undoLabel = onlyCut
+    ? `Undo ${formatCents(onlyCut.amount)} of ${cutMonths}’s release from Saved`
+    : `Undo releases from Saved in ${cutMonths}`;
+  const availableFirst = plan.isNew && (plan.availableCoversAll || plan.canUseAvailable);
   const [choice, setChoice] = useState<CoverChoice>(() =>
-    plan.stillShort === 0
-      ? null
-      : cuts
-        ? { releaseCuts: cuts }
-        : plan.sources[0]
-          ? { fromEnvelopeId: plan.sources[0].id }
-          : plan.canUseAvailable
-            ? AVAILABLE
-            : null,
+    cuts
+      ? { releaseCuts: cuts }
+      : availableFirst
+        ? AVAILABLE
+        : plan.stillShort === 0
+          ? null
+          : plan.sources[0]
+            ? { fromEnvelopeId: plan.sources[0].id }
+            : plan.canUseAvailable
+              ? AVAILABLE
+              : null,
   );
   const cover = useAsyncAction(entry.coverAndSave);
   const noWayToCover =
     plan.stillShort > 0 && !cuts && plan.sources.length === 0 && !plan.canUseAvailable;
+  // Available to Assign covering it all, or Saved alone: one choice covers the whole shortfall.
+  const coversAll = (choice === AVAILABLE && plan.availableCoversAll) || choice === SAVED;
+  const releasesSaved = plan.fromSaved > 0 && !coversAll;
+  const showPicker = (plan.stillShort > 0 && !noWayToCover) || plan.availableCoversAll;
   const pickerValue =
-    choice === AVAILABLE
-      ? AVAILABLE
+    choice === AVAILABLE || choice === SAVED
+      ? choice
       : choice && "releaseCuts" in choice
         ? RELEASE_LESS
         : (choice?.fromEnvelopeId ?? "");
+  const availableOption = {
+    value: AVAILABLE,
+    label: "Available to Assign",
+    detail: `${formatCents(plan.available)} free`,
+    disabled: !(plan.availableCoversAll || plan.canUseAvailable),
+  };
+  const options = [
+    ...(cuts
+      ? [
+          {
+            value: RELEASE_LESS,
+            // No detail: a long label would run under it (the line above explains).
+            label: undoLabel,
+          },
+        ]
+      : []),
+    ...(availableFirst ? [availableOption] : []),
+    // Saved alone covers it: offered as the other choice to Available to Assign.
+    ...(plan.stillShort === 0 && plan.fromSaved > 0
+      ? [
+          {
+            value: SAVED,
+            label: "Release from Saved",
+            detail: formatCents(plan.fromSaved),
+          },
+        ]
+      : []),
+    ...plan.sources.map((source) => ({
+      value: source.id,
+      label: source.name,
+      detail: `has ${formatCents(source.remaining)}`,
+    })),
+    ...(availableFirst ? [] : [availableOption]),
+  ];
   const step = plan.covered.length + 1;
   const steps = step + plan.moreShort;
 
@@ -77,47 +127,28 @@ export function CoverCard({
         <p className="empty-state">
           {formatMonth(plan.heldBy)} has already released, from Saved, the money {plan.envelopeName}{" "}
           leaves over in {formatMonth(plan.month)}.
-          {cuts && ` It hasn’t spent it, so ${cutMonths} can release less instead.`}
+          {cuts && ` It hasn’t spent it, so that release can be undone instead.`}
         </p>
       )}
       <p className="empty-state">Envelopes can’t go negative. Cover the difference:</p>
       <ol>
-        {plan.fromSaved > 0 && (
+        {releasesSaved && (
           <li>
             Release <Money cents={plan.fromSaved} /> from {plan.envelopeName}’s Saved.
           </li>
         )}
-        {plan.stillShort > 0 && !noWayToCover && (
+        {showPicker && (
           <li>
             <EnvelopePicker
-              label={`${plan.fromSaved > 0 ? "Then cover" : "Cover"} ${formatCents(plan.stillShort)} from`}
+              label={`${releasesSaved ? "Then cover" : "Cover"} ${formatCents(
+                coversAll ? plan.shortfall : plan.stillShort,
+              )} from`}
               value={pickerValue}
-              options={[
-                ...(cuts
-                  ? [
-                      {
-                        value: RELEASE_LESS,
-                        // No detail: a long label would run under it (the line above explains).
-                        label: `Release less in ${cutMonths}`,
-                      },
-                    ]
-                  : []),
-                ...plan.sources.map((source) => ({
-                  value: source.id,
-                  label: source.name,
-                  detail: `has ${formatCents(source.remaining)}`,
-                })),
-                {
-                  value: AVAILABLE,
-                  label: "Available to Assign",
-                  detail: `${formatCents(plan.available)} free`,
-                  disabled: !plan.canUseAvailable,
-                },
-              ]}
+              options={options}
               onChange={(value) =>
                 setChoice(
-                  value === AVAILABLE
-                    ? AVAILABLE
+                  value === AVAILABLE || value === SAVED
+                    ? value
                     : value === RELEASE_LESS && cuts
                       ? { releaseCuts: cuts }
                       : { fromEnvelopeId: value },

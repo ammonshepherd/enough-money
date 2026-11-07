@@ -73,7 +73,8 @@ export interface Cover {
   month: Month;
   fromSaved: Cents;
   stillShort: Cents;
-  choice: CoverChoice;
+  /** Where stillShort came from (null when nothing was left after Saved). */
+  choice: Exclude<CoverChoice, "saved">;
 }
 
 /**
@@ -92,17 +93,30 @@ export interface CoverPlan extends TransactionShortfall {
   envelopeName: string;
   /** Step 2 choices: envelopes with enough Remaining this month. */
   sources: { id: string; name: string; remaining: number }[];
-  /** Step 3: Available to Assign can cover what is still short. */
+  /** Available to Assign can cover what is still short after releasing Saved. */
   canUseAvailable: boolean;
+  /**
+   * A new transaction (not an edit): Available to Assign comes first when it
+   * can cover (after an undo of later months' releases, when offered).
+   */
+  isNew: boolean;
+  /**
+   * A new transaction and Available to Assign can cover the whole
+   * shortfall, so no Saved is released when it is chosen.
+   */
+  availableCoversAll: boolean;
   available: number;
 }
 
 /**
- * How to cover what Saved could not: another envelope, Available to Assign,
- * or (when only later months are short) releasing less in those months.
+/**
+ * How to cover the shortfall: Available to Assign (the whole shortfall when
+ * it can, else what Saved leaves), "saved" (only Saved, when it covers it
+ * all), another envelope (after releasing Saved), or (when only later months
+ * are short) releasing less in those months.
  */
 export type CoverChoice =
-  { fromEnvelopeId: string } | { releaseCuts: ReleaseCut[] } | "available" | null;
+  { fromEnvelopeId: string } | { releaseCuts: ReleaseCut[] } | "available" | "saved" | null;
 
 export type PrepareResult = { kind: "saved" } | { kind: "cover"; plan: CoverPlan };
 
@@ -290,7 +304,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
    * envelopes are offered as they would be after the save, so an envelope
    * this split also spends from only offers what it has left.
    */
-  const planFor = (save: PendingSave, covered: Cover[]): CoverPlan | null => {
+  const planFor = (save: PendingSave, covered: Cover[], isNew: boolean): CoverPlan | null => {
     const pending = pendingOf(save);
     const changes = coverChanges(covered);
     const [short, ...rest] = transactionShortfalls(budgetWith(data, [], changes), pending);
@@ -312,6 +326,8 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
             }))
           : [],
       canUseAvailable: short.stillShort > 0 && short.stillShort <= view.assignable,
+      isNew,
+      availableCoversAll: isNew && short.shortfall <= view.assignable,
       available: view.assignable,
     };
   };
@@ -452,15 +468,17 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
         form.category === TRANSFER
           ? { kind: "transfer", input: toTransfer(form).input }
           : { kind: "transaction", input: toInput(form) };
-      const plan = planFor(save, []);
+      const plan = planFor(save, [], !form.id);
       if (plan) return { kind: "cover", plan };
       await budget.change(store(save));
       return { kind: "saved" };
     },
 
     /**
-     * Covers the shortfall in CLAUDE.md order — release this envelope's Saved,
-     * then move from another envelope or assign from Available to Assign.
+     * Covers the shortfall in CLAUDE.md order: Available to Assign when it
+     * can cover it all; else (or when another choice is made) release this
+     * envelope's Saved, then move from another envelope or assign from
+     * Available to Assign.
      * Returns the prompt for the next short envelope of a split, if any;
      * after the last one, makes every cover and saves the transaction.
      */
@@ -468,9 +486,23 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
       if (plan.stillShort > 0 && !choice) {
         throw new UserFacingError("Choose where the rest of the money comes from.");
       }
-      const { envelopeId, month, fromSaved, stillShort } = plan;
-      const covered = [...plan.covered, { envelopeId, month, fromSaved, stillShort, choice }];
-      const next = planFor(plan.save, covered);
+      if (choice === "saved" && plan.stillShort > 0) {
+        throw new UserFacingError(
+          "Saved can’t cover all of this. Choose where the rest comes from.",
+        );
+      }
+      const { envelopeId, month } = plan;
+      // Available to Assign covering it all leaves Saved alone.
+      const allFromAvailable = choice === "available" && plan.availableCoversAll;
+      const cover: Cover = {
+        envelopeId,
+        month,
+        fromSaved: allFromAvailable ? 0 : plan.fromSaved,
+        stillShort: allFromAvailable ? plan.shortfall : plan.stillShort,
+        choice: choice === "saved" ? null : choice,
+      };
+      const covered = [...plan.covered, cover];
+      const next = planFor(plan.save, covered, plan.isNew);
       if (next) return { kind: "cover", plan: next };
       await budget.change(async (s) => {
         for (const cover of covered) {

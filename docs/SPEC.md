@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.41.0.
+Version described: 0.42.0.
 
 ## 1. Purpose
 
@@ -201,17 +201,25 @@ These are implemented in `budgetMath.ts` and the controllers:
   When this month itself is not short and every later month that is short
   still holds the released money unspent (typically a transaction redated
   from that month to an earlier one), the picker's first and default choice
-  is "Release less in <month>" (v0.41.0, `laterReleaseCuts`): each such
-  month releases what it is short of less, so its Saved stays at $0.00 and
+  is "Undo $X of ⟨month⟩'s release from Saved" ("Undo releases from Saved
+  in ⟨months⟩" for several; v0.41.0 as "Release less", renamed in v0.42.0;
+  `laterReleaseCuts`): each such month releases what it is short of less, so its Saved stays at $0.00 and
   its Remaining drops by the same; no money moves between envelopes.
 - **Release from Saved:** amount above 0 and at most Saved.
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
   envelope, that would make Remaining negative): title "⟨Envelope⟩ would be $X
-  short in ⟨Month⟩". Step 1 releases this envelope's Saved automatically; for the
-  rest, a "Cover $X from" envelope picker offers other envelopes with enough to give
-  this month (moved) and Available to Assign (assigned, only if `assignable`
-  allows). If neither can cover it, saving is blocked with an explanation (card
+  short in ⟨Month⟩". After the undo above (when offered), a new
+  transaction's "Cover $X from" picker lists Available to Assign first
+  whenever `assignable` allows (v0.42.0), and chooses it. When it can cover
+  the whole shortfall, choosing it assigns all of it and leaves Saved alone;
+  the picker then also offers "Release from Saved" when Saved alone covers
+  it. Editing a transaction keeps the older order. Otherwise (or when
+  another envelope is chosen) this
+  envelope's Saved is released first ("Release $X from ⟨Envelope⟩'s Saved"),
+  and the picker ("Then cover $X from") covers the rest from other
+  envelopes with enough to give this month (moved) or Available to Assign
+  (assigned), shown last and disabled when it cannot. If neither can cover it, saving is blocked with an explanation (card
   payments never suggest Uncategorized). Cover actions happen in the
   transaction's month.
 - **Covering a split:** each envelope the split would overdraw gets its own
@@ -547,7 +555,8 @@ $0.00 balance.
     uppercase, amount 15px 800), three columns. Row 1: MONEY IN (green) and
     MONEY OUT (red) for the month shown (the account's inflows and outflows
     dated in it, transfers (card payments too) left out, a split once at
-    its full amount, inflows to review included), CURRENT BALANCE (every
+    its full amount, inflows to review included), AVAILABLE BALANCE on a
+    checking account, CURRENT BALANCE on a card or tracking account (every
     transaction, any date). Row 2: OPENING BALANCE (as entered, signed)
     on a checking account; on a credit card EXTRA PAID instead (v0.33.6,
     `cardExtraPaid` in `budgetMath.ts`): the month's payments beyond the
@@ -564,7 +573,7 @@ $0.00 balance.
   - "Import CSV" (an open account only) opens the bank import already set to
     this account (no account picker) in a sheet with Close.
   - Collapsed (v0.36.0, phone, "Collapse info pane" in the page menu): line
-    1, then only CURRENT BALANCE on one line (BALANCE TODAY on All
+    1, then only that balance on one line (BALANCE TODAY on All
     accounts); the other figures and Import CSV are hidden. Kept in
     localStorage under `bb.accounts.paneCollapsed.<userId>` ("1" or "0";
     unreadable means open), for every account.
@@ -738,7 +747,8 @@ the envelope's name or group, in any order ("car ins"; `matchOptions` in
 `src/models/envelopeSearch.ts`). Tap a match, use the arrows and Enter, or type
 the full name (Enter or leaving the field picks it); anything else puts the
 choice back. Escape closes the list only. The chosen envelope shows its "has
-$X" in the field.
+$X" in the field, which leaves room for it so a long name ends in "…"
+(v0.42.0); split lines are too narrow, so they show it only in the list.
 
 Envelope choices: Uncategorized; Income (to Available to Assign) — disabled for
 outflows; Split across envelopes; Transfer — needs two open budget accounts
@@ -934,12 +944,12 @@ Decided or wanted, but not in the app:
   reconciliation is chosen as the next step, with its decisions in
   `docs/proposals/statement-reconciliation.md`.
 - Later months' Saved, beyond spending: only spending and card payments are
-  checked against later months (`laterReserve`, v0.40.1; "Release less",
-  v0.41.0). Deleting a refund, moving a refund to another envelope, or
+  checked against later months (`laterReserve`, v0.40.1; undoing later
+  releases, v0.41.0). Deleting a refund, moving a refund to another envelope, or
   marking a past refund as Income can still lower a later month's Saved
   below $0.00 without a prompt. A fix would run the same later-month check
-  (and offer Release less) for those changes. A cover that mixes Release
-  less with another envelope is not offered either.
+  (and offer the undo) for those changes. A cover that mixes the undo with
+  another envelope is not offered either.
 - Tithing/fast-offering rules.
 - Security: Supabase leaked-password protection (a paid plan).
 - Maintenance: dependency updates (minor releases of React, supabase-js,

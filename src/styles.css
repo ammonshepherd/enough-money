@@ -3767,6 +3767,20 @@ body:has(.app-shell.desktop) {
   min-inline-size: 0;
 }
 
+.picker-box[style*="--detail-chars"] input {
+  padding-inline-end: calc(var(--detail-chars) * 0.45rem + 1.2rem);
+  text-overflow: ellipsis;
+}
+
+/* Split lines are too narrow to show the detail in the field: only the list shows it. */
+.split-envelope .picker-box[style*="--detail-chars"] input {
+  padding-inline-end: 0.6rem;
+}
+
+.split-envelope .picker-box > .picker-detail {
+  display: none;
+}
+
 .picker-box > .picker-detail {
   position: absolute;
   inset-block: 0;
@@ -3848,6 +3862,7 @@ body:has(.app-shell.desktop) {
 }
 
 .split-envelope input {
+  text-align: start;
   min-block-size: 2.6rem;
   padding: 0.55rem 0.6rem;
   border: 1px solid var(--border);

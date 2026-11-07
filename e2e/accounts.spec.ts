@@ -150,7 +150,7 @@ test("an open account: its figures follow the month, its list does not", async (
   await expect
     .poll(() => figures(page))
     .toEqual({
-      "current balance": "$533.00",
+      "available balance": "$533.00",
       "month start": "$500.00",
       "opening balance": "$500.00",
       "money in": "+$100.00",
@@ -246,7 +246,7 @@ test("edit an account from its pencil: name, opening balance and opening date", 
   // Cancel leaves it unchanged.
   await again.getByRole("button", { name: "Cancel" }).click();
   await expect(again).toHaveCount(0);
-  await expect.poll(() => figures(page)).toMatchObject({ "current balance": "$1,200.00" });
+  await expect.poll(() => figures(page)).toMatchObject({ "available balance": "$1,200.00" });
 });
 
 // 150 made-up bank rows, 12 a day from 2030-02-05 back into January.

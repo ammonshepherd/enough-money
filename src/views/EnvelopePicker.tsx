@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { exactOption, matchOptions, type PickerOption } from "../models/envelopeSearch";
 
 export type { PickerOption };
@@ -86,7 +86,16 @@ export function EnvelopePicker({
       <label htmlFor={id} className={hideLabel ? "visually-hidden" : undefined}>
         {label}
       </label>
-      <div className="picker-box">
+      <div
+        className="picker-box"
+        // Room at the end of the field for the chosen envelope's detail, so a
+        // long name ends in "…" instead of running under it.
+        style={
+          !open && chosen?.detail
+            ? ({ "--detail-chars": chosen.detail.length } as CSSProperties)
+            : undefined
+        }
+      >
         <input
           ref={input}
           id={id}
