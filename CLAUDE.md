@@ -151,7 +151,7 @@ non-card budget balances − all envelope money (P included)`.
 
 - No envelope may go negative. When categorizing a transaction would push
   Remaining below 0, prompt to cover the shortfall (order decided in
-  v0.41.0):
+  v0.42.0):
   1. assign from Available to Assign when it can cover the whole shortfall
      (the first choice, chosen by default; Saved is left alone),
   2. otherwise, or when another choice is picked: release from this
@@ -161,6 +161,12 @@ non-card budget balances − all envelope money (P included)`.
   month (spending, moving, taking back) may use only what that month leaves
   over beyond what later months already released (`givable` /
   `laterReserve` in `budgetMath.ts`); the cover prompt covers the rest.
+  When only later months are short and they still hold what they released
+  unspent (as when a transaction moves to an earlier month), the prompt
+  offers to release less in those months instead (v0.41.0; since v0.42.0
+  after Available to Assign when that has money,
+  `laterReleaseCuts`): their Saved stays at $0.00 and their Remaining drops
+  by the same.
 - Assigning is blocked when Available to Assign is insufficient.
 - Each month's Budget page shows only envelopes in use that month (a stored
   month record, spending that month, or money in Saved/Remaining; never-used
@@ -286,7 +292,7 @@ non-card budget balances − all envelope money (P included)`.
   Tracking groups (`groupAccounts`), each row a link with name and balance;
   closed accounts behind "Show closed accounts". Opening one replaces the
   list with a sticky info pane (back arrow, name, pencil; Available
-  balance on a checking account (v0.41.0), Current balance on a card or
+  balance on a checking account (v0.42.0), Current balance on a card or
   tracking account,
   Month start, Opening balance (Extra paid on a card), Money in, Money out
   and Reconciled from `accountFigures` in `src/models/activity.ts`, display

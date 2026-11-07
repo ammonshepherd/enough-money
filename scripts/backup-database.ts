@@ -7,7 +7,10 @@
  * login`), with no browser, app password or database password. The query
  * acts as the household's owner for that one statement, because
  * export_backup only exports for a member of the household. The CLI stays
- * linked to the test project: `--project-ref` applies to this command only.
+ * linked to the test project: `--remote=<ref>` applies to this command only.
+ * Supabase CLI 3 asks before any statement on a hosted project, and cannot
+ * ask when an agent runs it; its `--read-only` mode may not call
+ * export_backup. The statement below only reads, so `--yes` answers for it.
  *
  * Restore: Settings → Restore in an empty household, choosing the file.
  * Run: npm run backup
@@ -43,9 +46,8 @@ function exportBackup(): Record<string, unknown> {
       "supabase",
       "db",
       "query",
-      "--linked",
-      "--project-ref",
-      PRODUCTION_REF,
+      `--remote=${PRODUCTION_REF}`,
+      "--yes",
       "--output-format",
       "json",
       SQL,

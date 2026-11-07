@@ -306,6 +306,7 @@ describe("transactionShortfalls for cards", () => {
         fromSaved: 10_000,
         stillShort: 25_000,
         heldBy: null,
+        releaseCuts: null,
       },
     ]);
   });

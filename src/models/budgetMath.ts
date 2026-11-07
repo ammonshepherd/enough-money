@@ -163,6 +163,41 @@ export function laterReserve(history: readonly EnvelopeMonth[], month: Month): L
   return lowest;
 }
 
+/** Releasing less from Saved in one later month (see laterReleaseCuts). */
+export interface ReleaseCut {
+  month: Month;
+  /** How much less that month releases (positive). */
+  amount: Cents;
+}
+
+/**
+ * The other way to keep later months' Saved at $0.00 or more when `amount`
+ * more leaves `month` (decided in v0.41.0): release less in the later months
+ * that count on it. Spending $X in `month` lowers every later month's Saved
+ * by $X; a later month whose Saved after releases is below $X releases the
+ * difference less, so its Saved stays at $0.00 and its Remaining drops by
+ * the same (months after it are unchanged by the cut: Saved carried on is
+ * Saved + Remaining). Possible only when every such month released that
+ * much and has it unspent in Remaining, as when a transaction moves from
+ * the month that released the money to an earlier one. Null when it is not
+ * possible or no later month needs it.
+ */
+export function laterReleaseCuts(
+  history: readonly EnvelopeMonth[],
+  month: Month,
+  amount: Cents,
+): ReleaseCut[] | null {
+  const cuts: ReleaseCut[] = [];
+  for (const row of history) {
+    if (row.month <= month) continue;
+    const cut = amount - Math.max(0, row.saved);
+    if (cut <= 0) continue;
+    if (cut > row.released || cut > row.remaining) return null;
+    cuts.push({ month: row.month, amount: cut });
+  }
+  return cuts.length > 0 ? cuts : null;
+}
+
 /** Totals needed for Available to Assign, each counted through the end of a month. */
 export interface AvailableToAssignInput {
   /** Opening balances of all budget accounts. */
@@ -773,6 +808,11 @@ export interface PendingTransaction {
 export interface TransactionShortfall extends SpendCheck {
   envelopeId: string;
   month: Month;
+  /**
+   * Set when only later months are short and they can release less instead
+   * of more being covered (see laterReleaseCuts); null otherwise.
+   */
+  releaseCuts: ReleaseCut[] | null;
 }
 
 /**
@@ -800,7 +840,11 @@ export function transactionShortfalls(
       additionalSpent,
       laterReserve(history, month),
     );
-    if (result.shortfall > 0) shortfalls.push({ ...result, envelopeId, month });
+    if (result.shortfall === 0) return;
+    // Releasing less later only helps when this month itself is not short.
+    const onlyLater = result.remainingAfter + result.fromSaved >= 0;
+    const releaseCuts = onlyLater ? laterReleaseCuts(history, month, additionalSpent) : null;
+    shortfalls.push({ ...result, envelopeId, month, releaseCuts });
   };
 
   for (const tx of pending) {
