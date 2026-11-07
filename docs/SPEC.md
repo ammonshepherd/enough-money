@@ -200,20 +200,22 @@ These are implemented in `budgetMath.ts` and the controllers:
   does not help), with a line saying which later month released the money.
   When this month itself is not short and every later month that is short
   still holds the released money unspent (typically a transaction redated
-  from that month to an earlier one), the picker offers "Release less in
-  <month>" (v0.41.0, `laterReleaseCuts`; the first and default choice
-  unless Available to Assign has money, which comes first since v0.42.0): each such
-  month releases what it is short of less, so its Saved stays at $0.00 and
+  from that month to an earlier one), the picker's first and default choice
+  is "Undo $X of ⟨month⟩'s release from Saved" ("Undo releases from Saved
+  in ⟨months⟩" for several; v0.41.0 as "Release less", renamed in v0.42.0;
+  `laterReleaseCuts`): each such month releases what it is short of less, so its Saved stays at $0.00 and
   its Remaining drops by the same; no money moves between envelopes.
 - **Release from Saved:** amount above 0 and at most Saved.
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
   envelope, that would make Remaining negative): title "⟨Envelope⟩ would be $X
-  short in ⟨Month⟩". A "Cover $X from" envelope picker lists Available to
-  Assign first whenever `assignable` allows (v0.42.0), and chooses it. When
-  it can cover the whole shortfall, choosing it assigns all of it and leaves
-  Saved alone; the picker then also offers "Release from Saved" when Saved
-  alone covers it. Otherwise (or when another envelope is chosen) this
+  short in ⟨Month⟩". After the undo above (when offered), a new
+  transaction's "Cover $X from" picker lists Available to Assign first
+  whenever `assignable` allows (v0.42.0), and chooses it. When it can cover
+  the whole shortfall, choosing it assigns all of it and leaves Saved alone;
+  the picker then also offers "Release from Saved" when Saved alone covers
+  it. Editing a transaction keeps the older order. Otherwise (or when
+  another envelope is chosen) this
   envelope's Saved is released first ("Release $X from ⟨Envelope⟩'s Saved"),
   and the picker ("Then cover $X from") covers the rest from other
   envelopes with enough to give this month (moved) or Available to Assign
@@ -942,12 +944,12 @@ Decided or wanted, but not in the app:
   reconciliation is chosen as the next step, with its decisions in
   `docs/proposals/statement-reconciliation.md`.
 - Later months' Saved, beyond spending: only spending and card payments are
-  checked against later months (`laterReserve`, v0.40.1; "Release less",
-  v0.41.0). Deleting a refund, moving a refund to another envelope, or
+  checked against later months (`laterReserve`, v0.40.1; undoing later
+  releases, v0.41.0). Deleting a refund, moving a refund to another envelope, or
   marking a past refund as Income can still lower a later month's Saved
   below $0.00 without a prompt. A fix would run the same later-month check
-  (and offer Release less) for those changes. A cover that mixes Release
-  less with another envelope is not offered either.
+  (and offer the undo) for those changes. A cover that mixes the undo with
+  another envelope is not offered either.
 - Tithing/fast-offering rules.
 - Security: Supabase leaked-password protection (a paid plan).
 - Maintenance: dependency updates (minor releases of React, supabase-js,

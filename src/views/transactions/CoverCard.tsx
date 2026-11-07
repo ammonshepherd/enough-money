@@ -13,7 +13,7 @@ import { EnvelopePicker } from "../EnvelopePicker";
 /** The CoverChoices "Cover from" options stand for, besides envelopes. */
 const AVAILABLE = "available";
 const SAVED = "saved";
-/** The option that releases less in later months (plan.releaseCuts). */
+/** The option that undoes later months' releases from Saved (plan.releaseCuts). */
 const RELEASE_LESS = "release-less";
 
 /** Month names joined for a sentence: "November", "November and December". */
@@ -21,10 +21,11 @@ const monthList = (months: string[]) =>
   months.length < 2 ? months.join("") : `${months.slice(0, -1).join(", ")} and ${months.at(-1)}`;
 
 /**
- * The cover prompt: the transaction would leave its envelope short. When
- * Available to Assign has enough, it is the first choice and Saved is left
- * alone; otherwise release Saved, then move from another envelope or
- * Available to Assign.
+ * The cover prompt: the transaction would leave its envelope short. An undo
+ * of later months' releases from Saved, when offered, comes first (it uses
+ * no money). For a new transaction, Available to Assign comes next when it
+ * has enough, and covering it all leaves Saved alone. Otherwise release
+ * Saved, then move from another envelope or Available to Assign.
  */
 export function CoverCard({
   entry,
@@ -42,17 +43,24 @@ export function CoverCard({
 }) {
   const cuts = plan.releaseCuts;
   const cutMonths = monthList((cuts ?? []).map((cut) => formatMonth(cut.month)));
-  const availableFirst = plan.availableCoversAll || plan.canUseAvailable;
+  // The undo names its amount when only one month gives it back.
+  const onlyCut = cuts?.length === 1 ? cuts[0] : null;
+  const undoLabel = onlyCut
+    ? `Undo ${formatCents(onlyCut.amount)} of ${cutMonths}’s release from Saved`
+    : `Undo releases from Saved in ${cutMonths}`;
+  const availableFirst = plan.isNew && (plan.availableCoversAll || plan.canUseAvailable);
   const [choice, setChoice] = useState<CoverChoice>(() =>
-    availableFirst
-      ? AVAILABLE
-      : plan.stillShort === 0
-        ? null
-        : cuts
-          ? { releaseCuts: cuts }
+    cuts
+      ? { releaseCuts: cuts }
+      : availableFirst
+        ? AVAILABLE
+        : plan.stillShort === 0
+          ? null
           : plan.sources[0]
             ? { fromEnvelopeId: plan.sources[0].id }
-            : null,
+            : plan.canUseAvailable
+              ? AVAILABLE
+              : null,
   );
   const cover = useAsyncAction(entry.coverAndSave);
   const noWayToCover =
@@ -71,9 +79,18 @@ export function CoverCard({
     value: AVAILABLE,
     label: "Available to Assign",
     detail: `${formatCents(plan.available)} free`,
-    disabled: !availableFirst,
+    disabled: !(plan.availableCoversAll || plan.canUseAvailable),
   };
   const options = [
+    ...(cuts
+      ? [
+          {
+            value: RELEASE_LESS,
+            // No detail: a long label would run under it (the line above explains).
+            label: undoLabel,
+          },
+        ]
+      : []),
     ...(availableFirst ? [availableOption] : []),
     // Saved alone covers it: offered as the other choice to Available to Assign.
     ...(plan.stillShort === 0 && plan.fromSaved > 0
@@ -82,15 +99,6 @@ export function CoverCard({
             value: SAVED,
             label: "Release from Saved",
             detail: formatCents(plan.fromSaved),
-          },
-        ]
-      : []),
-    ...(cuts
-      ? [
-          {
-            value: RELEASE_LESS,
-            // No detail: a long label would run under it (the line above explains).
-            label: `Release less in ${cutMonths}`,
           },
         ]
       : []),
@@ -119,7 +127,7 @@ export function CoverCard({
         <p className="empty-state">
           {formatMonth(plan.heldBy)} has already released, from Saved, the money {plan.envelopeName}{" "}
           leaves over in {formatMonth(plan.month)}.
-          {cuts && ` It hasn’t spent it, so ${cutMonths} can release less instead.`}
+          {cuts && ` It hasn’t spent it, so that release can be undone instead.`}
         </p>
       )}
       <p className="empty-state">Envelopes can’t go negative. Cover the difference:</p>

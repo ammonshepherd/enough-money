@@ -7,6 +7,7 @@ import {
   editCell,
   envelope,
   goTo,
+  openAllAccounts,
   openEnvelope,
   pickerChoices,
   signInWithHousehold,
@@ -173,14 +174,14 @@ test("spending a month's leftover that next month already released asks to cover
   await expect(cover).toContainText(
     /has already released, from Saved, the money Gifts leaves over/,
   );
-  // Next month hasn't spent it, so releasing less there is offered first.
-  await expect(cover).toContainText(/It hasn’t spent it, so .* can release less instead/);
-  // Available to Assign comes first; releasing less next month is offered after it.
-  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue("Available to Assign");
+  // Next month hasn't spent it, so undoing its release is offered first (it
+  // uses no money), even ahead of Available to Assign on a new transaction.
+  await expect(cover).toContainText("It hasn’t spent it, so that release can be undone instead.");
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(
+    /^Undo \$20\.00 of .*’s release from Saved$/,
+  );
   const choices = await pickerChoices(cover.getByLabel(/cover .* from/i));
-  await expect(choices.nth(1)).toContainText("Release less in ");
-  await choices.nth(1).click();
-  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(/^Release less in /);
+  await expect(choices.nth(1)).toContainText("Available to Assign");
   await chooseEnvelope(cover.getByLabel(/cover .* from/i), "Available to Assign");
   await cover.getByRole("button", { name: "Cover and save" }).click();
 
@@ -225,9 +226,24 @@ test("the cover prompt uses Available to Assign before Saved", async ({ page }) 
   await goTo(page, "Budget");
   await expect(envelope(page, "Gifts")).toContainText("Saved $30.00");
   await expect(available(page)).toContainText("$920.00");
+
+  // Editing keeps the older order: Saved first, no Available to Assign choice.
+  await openAllAccounts(page);
+  await editActivityRow(page, "Wrapping");
+  const form = page.getByRole("form", { name: "Edit transaction" });
+  await form.getByLabel("Amount").first().fill("30");
+  await form.getByRole("button", { name: "Save changes" }).click();
+  cover = page.getByRole("alertdialog");
+  await expect(cover).toContainText("Release $10.00 from Gifts’s Saved.");
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveCount(0);
+  await cover.getByRole("button", { name: "Cover and save" }).click();
+  await expect(cover).toBeHidden();
+  await goTo(page, "Budget");
+  await expect(envelope(page, "Gifts")).toContainText("Saved $20.00");
+  await expect(available(page)).toContainText("$920.00");
 });
 
-test("moving next month's spending into this month can release less next month", async ({
+test("moving next month's spending into this month can undo next month's release", async ({
   page,
 }) => {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -256,7 +272,7 @@ test("moving next month's spending into this month can release less next month",
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog).toBeHidden();
 
-  // It belonged to this month: moving it back asks next month to release less.
+  // It belonged to this month: moving it back offers to undo next month's release.
   await openActivityMonth(page, nextMonth);
   await editActivityRow(page, "Card shop");
   const form = page.getByRole("form", { name: "Edit transaction" });
@@ -264,12 +280,9 @@ test("moving next month's spending into this month can release less next month",
   await form.getByRole("button", { name: "Save changes" }).click();
   const cover = page.getByRole("alertdialog");
   await expect(cover).toContainText("Gifts would be $50.00 short");
-  // Available to Assign comes first; releasing less next month is offered after it.
-  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue("Available to Assign");
-  const choices = await pickerChoices(cover.getByLabel(/cover .* from/i));
-  await expect(choices.nth(1)).toContainText("Release less in ");
-  await choices.nth(1).click();
-  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(/^Release less in /);
+  await expect(cover.getByLabel(/cover .* from/i)).toHaveValue(
+    /^Undo \$50\.00 of .*’s release from Saved$/,
+  );
   await cover.getByRole("button", { name: "Cover and save" }).click();
   await expect(cover).toBeHidden();
 

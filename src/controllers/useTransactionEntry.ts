@@ -96,8 +96,13 @@ export interface CoverPlan extends TransactionShortfall {
   /** Available to Assign can cover what is still short after releasing Saved. */
   canUseAvailable: boolean;
   /**
-   * Available to Assign can cover the whole shortfall, so it comes first and
-   * no Saved is released when it is chosen.
+   * A new transaction (not an edit): Available to Assign comes first when it
+   * can cover (after an undo of later months' releases, when offered).
+   */
+  isNew: boolean;
+  /**
+   * A new transaction and Available to Assign can cover the whole
+   * shortfall, so no Saved is released when it is chosen.
    */
   availableCoversAll: boolean;
   available: number;
@@ -299,7 +304,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
    * envelopes are offered as they would be after the save, so an envelope
    * this split also spends from only offers what it has left.
    */
-  const planFor = (save: PendingSave, covered: Cover[]): CoverPlan | null => {
+  const planFor = (save: PendingSave, covered: Cover[], isNew: boolean): CoverPlan | null => {
     const pending = pendingOf(save);
     const changes = coverChanges(covered);
     const [short, ...rest] = transactionShortfalls(budgetWith(data, [], changes), pending);
@@ -321,7 +326,8 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
             }))
           : [],
       canUseAvailable: short.stillShort > 0 && short.stillShort <= view.assignable,
-      availableCoversAll: short.shortfall <= view.assignable,
+      isNew,
+      availableCoversAll: isNew && short.shortfall <= view.assignable,
       available: view.assignable,
     };
   };
@@ -462,7 +468,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
         form.category === TRANSFER
           ? { kind: "transfer", input: toTransfer(form).input }
           : { kind: "transaction", input: toInput(form) };
-      const plan = planFor(save, []);
+      const plan = planFor(save, [], !form.id);
       if (plan) return { kind: "cover", plan };
       await budget.change(store(save));
       return { kind: "saved" };
@@ -496,7 +502,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
         choice: choice === "saved" ? null : choice,
       };
       const covered = [...plan.covered, cover];
-      const next = planFor(plan.save, covered);
+      const next = planFor(plan.save, covered, plan.isNew);
       if (next) return { kind: "cover", plan: next };
       await budget.change(async (s) => {
         for (const cover of covered) {
