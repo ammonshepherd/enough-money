@@ -933,6 +933,13 @@ Decided or wanted, but not in the app:
   a separate cleared status, "Select all" for a day or month. Statement
   reconciliation is chosen as the next step, with its decisions in
   `docs/proposals/statement-reconciliation.md`.
+- Later months' Saved, beyond spending: only spending and card payments are
+  checked against later months (`laterReserve`, v0.40.1; "Release less",
+  v0.41.0). Deleting a refund, moving a refund to another envelope, or
+  marking a past refund as Income can still lower a later month's Saved
+  below $0.00 without a prompt. A fix would run the same later-month check
+  (and offer Release less) for those changes. A cover that mixes Release
+  less with another envelope is not offered either.
 - Tithing/fast-offering rules.
 - Security: Supabase leaked-password protection (a paid plan).
 - Maintenance: dependency updates (minor releases of React, supabase-js,
