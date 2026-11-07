@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.40.1.
+Version described: 0.41.0.
 
 ## 1. Purpose
 
@@ -198,6 +198,12 @@ These are implemented in `budgetMath.ts` and the controllers:
   sources all use that limit, and the cover prompt asks to cover the rest
   (from another envelope or Available to Assign; releasing this month's Saved
   does not help), with a line saying which later month released the money.
+  When this month itself is not short and every later month that is short
+  still holds the released money unspent (typically a transaction redated
+  from that month to an earlier one), the picker's first and default choice
+  is "Release less in <month>" (v0.41.0, `laterReleaseCuts`): each such
+  month releases what it is short of less, so its Saved stays at $0.00 and
+  its Remaining drops by the same; no money moves between envelopes.
 - **Release from Saved:** amount above 0 and at most Saved.
 - **Planned:** 0 or more; input only.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
@@ -927,6 +933,13 @@ Decided or wanted, but not in the app:
   a separate cleared status, "Select all" for a day or month. Statement
   reconciliation is chosen as the next step, with its decisions in
   `docs/proposals/statement-reconciliation.md`.
+- Later months' Saved, beyond spending: only spending and card payments are
+  checked against later months (`laterReserve`, v0.40.1; "Release less",
+  v0.41.0). Deleting a refund, moving a refund to another envelope, or
+  marking a past refund as Income can still lower a later month's Saved
+  below $0.00 without a prompt. A fix would run the same later-month check
+  (and offer Release less) for those changes. A cover that mixes Release
+  less with another envelope is not offered either.
 - Tithing/fast-offering rules.
 - Security: Supabase leaked-password protection (a paid plan).
 - Maintenance: dependency updates (minor releases of React, supabase-js,

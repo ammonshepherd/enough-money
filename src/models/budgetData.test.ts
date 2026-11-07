@@ -294,6 +294,7 @@ describe("transactionShortfalls", () => {
         fromSaved: 3_000,
         stillShort: 2_000,
         heldBy: null,
+        releaseCuts: null,
       },
     ]);
   });
@@ -320,6 +321,7 @@ describe("transactionShortfalls", () => {
         fromSaved: 1_000,
         stillShort: 0,
         heldBy: null,
+        releaseCuts: null,
       },
     ]);
     const both = transactionShortfalls(household(), [
@@ -452,6 +454,7 @@ describe("a later month that already released Saved", () => {
         fromSaved: 0,
         stillShort: 2_000,
         heldBy: "2026-11",
+        releaseCuts: null,
       },
     ]);
   });
@@ -474,6 +477,59 @@ describe("a later month that already released Saved", () => {
     expect(transactionShortfalls(data, [cash])).toEqual([]);
     const after = buildBudgetMonth(budgetWith(data, [cash]), "2026-11");
     expect(after.groups[0]!.envelopes.find((e) => e.id === "fun")!.saved).toBe(0);
+  });
+
+  it("offers to release less in November when November's spending moves to October", () => {
+    // The $100 Fun spent in November is dated October instead: October still has
+    // $100 left for it, and November's released $100 is then unspent.
+    const moved = {
+      id: "nov",
+      accountId: "checking",
+      date: "2026-10-30",
+      amount: -10_000,
+      allocations: [{ envelopeId: "fun", amount: -10_000 }],
+      isTransfer: false,
+      isIncome: false,
+    };
+    const data = releasedInNovember();
+    const [short, ...rest] = transactionShortfalls(data, [moved]);
+    expect(rest).toEqual([]);
+    expect(short).toMatchObject({
+      month: "2026-10",
+      stillShort: 10_000,
+      heldBy: "2026-11",
+      releaseCuts: [{ month: "2026-11", amount: 10_000 }],
+    });
+    // Releasing that much less leaves November at $0.00 Saved and $0.00 Remaining.
+    const after = budgetWith(
+      data,
+      [moved],
+      [{ envelopeId: "fun", month: "2026-11", released: -10_000 }],
+    );
+    expect(
+      transactionShortfalls(
+        budgetWith(data, [], [{ envelopeId: "fun", month: "2026-11", released: -10_000 }]),
+        [moved],
+      ),
+    ).toEqual([]);
+    const fun = buildBudgetMonth(after, "2026-11").groups[0]!.envelopes.find(
+      (e) => e.id === "fun",
+    )!;
+    expect(fun).toMatchObject({ saved: 0, remaining: 0, released: 0 });
+  });
+
+  it("does not offer releasing less when October itself is short", () => {
+    const moved = {
+      id: "nov",
+      accountId: "checking",
+      date: "2026-10-30",
+      amount: -15_000,
+      allocations: [{ envelopeId: "fun", amount: -15_000 }],
+      isTransfer: false,
+      isIncome: false,
+    };
+    const [short] = transactionShortfalls(releasedInNovember(), [moved]);
+    expect(short).toMatchObject({ month: "2026-10", releaseCuts: null });
   });
 
   it("gives nothing October's leftover still carries for November", () => {
