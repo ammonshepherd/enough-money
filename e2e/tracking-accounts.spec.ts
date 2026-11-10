@@ -66,7 +66,7 @@ test("a tracking account stands alone: own balance, no envelopes, no transfers",
   await expect(page.getByRole("region", { name: "To review" })).toHaveCount(0);
   await expect(activityRow(page, "Dividend")).toContainText("Q3 payout");
   await expect(page.locator(".badge-uncategorized")).toHaveCount(0);
-  await expect(figure(page, "Current balance")).toContainText("$5,015.00");
+  await expect(figure(page, "Current Balance")).toContainText("$5,015.00");
 
   // Reconciling works as in any account.
   await activityRow(page, "Dividend").getByRole("checkbox").check();

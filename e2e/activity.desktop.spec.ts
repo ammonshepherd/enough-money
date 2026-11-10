@@ -108,7 +108,7 @@ test("transactions edit in the panel, which shows To review otherwise", async ({
 
   // The totals sit in the info pane above the list, not in the band or the
   // panel; the payee is bold only while it waits for review.
-  await expect(page.locator(".account-pane .activity-totals")).toContainText("Balance today");
+  await expect(page.locator(".account-pane .activity-totals")).toContainText("Balance Today");
   await expect(page.locator(".activity-band .activity-totals")).toHaveCount(0);
   await expect(panel(page).locator(".activity-totals")).toHaveCount(0);
   await expect(activityRow(page, "Shell").locator(".activity-payee")).toHaveCSS(

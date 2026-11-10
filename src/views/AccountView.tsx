@@ -60,9 +60,14 @@ export function AccountView({
 }) {
   const view = useAccountView(budget, data, month, accountId);
   const account = view.account;
-  // Checking accounts show what is available; cards and tracking accounts what it is.
-  const balanceLabel =
-    account?.type === "checking" && account.onBudget ? "Available balance" : "Current balance";
+  // The headline balance: what is available on checking, what is owed on a
+  // card (positive), what it is on a tracking account. The reconciled figure
+  // takes the bank's name, Current Balance, except on a tracking account.
+  const isCard = account?.type === "credit_card";
+  const isChecking = account?.type === "checking" && account.onBudget;
+  const balanceLabel = isChecking ? "Available Balance" : isCard ? "Total Owed" : "Current Balance";
+  const balanceCents = (cents: number) => (isCard ? -cents : cents);
+  const reconciledLabel = isChecking || isCard ? "Current Balance" : "Reconciled";
   /** The open account's row, with what the edit form needs; null when closed (read only). */
   const editable = page.openAccounts.find((a) => a.id === accountId) ?? null;
   const panel = useSidebar("panel", userId);
@@ -168,23 +173,23 @@ export function AccountView({
       {paneCollapsed ? (
         <dl className="account-figures folded" aria-label={`${title} balance`}>
           {view.figures ? (
-            <Figure label={balanceLabel} cents={view.figures.current} />
+            <Figure label={balanceLabel} cents={balanceCents(view.figures.current)} />
           ) : (
-            <Figure label="Balance today" cents={view.balance.today} />
+            <Figure label="Balance Today" cents={view.balance.today} />
           )}
         </dl>
       ) : view.figures ? (
         <dl className="account-figures" aria-label={`${title} figures for ${view.monthLabel}`}>
-          <Figure label="Money in" cents={view.figures.moneyIn} signed tone="in" />
-          <Figure label="Money out" cents={-view.figures.moneyOut} signed tone="out" />
-          <Figure label={balanceLabel} cents={view.figures.current} />
+          <Figure label="Money In" cents={view.figures.moneyIn} signed tone="in" />
+          <Figure label="Money Out" cents={-view.figures.moneyOut} signed tone="out" />
+          <Figure label={balanceLabel} cents={balanceCents(view.figures.current)} />
           {view.figures.extraPaid === null ? (
-            <Figure label="Opening balance" cents={view.figures.opening} />
+            <Figure label="Opening Balance" cents={view.figures.opening} />
           ) : (
-            <Figure label="Extra paid" cents={view.figures.extraPaid} />
+            <Figure label="Extra Paid" cents={view.figures.extraPaid} />
           )}
-          <Figure label="Month start" cents={view.figures.monthStart} />
-          <Figure label="Reconciled" cents={view.figures.reconciled} />
+          <Figure label="Month Start" cents={view.figures.monthStart} />
+          <Figure label={reconciledLabel} cents={view.figures.reconciled} />
         </dl>
       ) : (
         <AllAccountsTotals view={view} />
@@ -485,7 +490,7 @@ function AllAccountsTotals({ view }: { view: ReturnType<typeof useAccountView> }
         <dd className="activity-out">{formatSignedCents(-totals.moneyOut)}</dd>
       </div>
       <div className="activity-balance">
-        <dt>Balance today</dt>
+        <dt>Balance Today</dt>
         <dd>{formatCents(balance.today)}</dd>
         <dd className="activity-balance-detail">
           {balance.hasCards
