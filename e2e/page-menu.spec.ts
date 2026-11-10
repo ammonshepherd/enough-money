@@ -115,10 +115,10 @@ test("Accounts: fold dates, collapse the info pane, sort income first", async ({
   await expect(activityRow(page, "Grocer")).toBeVisible();
   await expect(activityRow(page, "Paycheck")).toBeVisible();
 
-  // Collapse info pane: only Available balance (a checking account), remembered after a reload.
+  // Collapse info pane: only Available Balance (a checking account), remembered after a reload.
   const pane = page.getByRole("region", { name: "Checking", exact: true });
   await choosePageMenu(page, "Collapse info pane");
-  await expect(pane.locator(".account-figure dt")).toHaveText(["Available balance"]);
+  await expect(pane.locator(".account-figure dt")).toHaveText(["Available Balance"]);
   await expect(pane.locator(".account-figure dd")).toHaveText("$1,476.00");
   await expect(page.getByRole("button", { name: "Import CSV" })).toHaveCount(0);
   menu = await openPageMenu(page);
@@ -129,12 +129,12 @@ test("Accounts: fold dates, collapse the info pane, sort income first", async ({
   ).toBe("1");
   await choosePageMenu(page, "Collapse info pane");
   await expect(pane.locator(".account-figure dt")).toHaveText([
-    "Money in",
-    "Money out",
-    "Available balance",
-    "Opening balance",
-    "Month start",
-    "Current balance",
+    "Money In",
+    "Money Out",
+    "Available Balance",
+    "Opening Balance",
+    "Month Start",
+    "Current Balance",
   ]);
 
   // Income/expense: money in first; Descending puts money out first.

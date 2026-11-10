@@ -552,12 +552,13 @@ $0.00 balance.
     (`<h2>`; "Closed" tag on a closed account), and a pencil (44×44, "Edit
     ⟨name⟩") on an open account.
   - Figures (`accountFigures` in `activity.ts`, display only; label 9px
-    uppercase, amount 15px 800), three columns. Row 1: MONEY IN (green) and
+    uppercase, written in Title Case since v0.42.1, amount 15px 800),
+    three columns. Row 1: MONEY IN (green) and
     MONEY OUT (red) for the month shown (the account's inflows and outflows
     dated in it, transfers (card payments too) left out, a split once at
     its full amount, inflows to review included), AVAILABLE BALANCE on a
-    checking account, CURRENT BALANCE on a card or tracking account (every
-    transaction, any date). Row 2: OPENING BALANCE (as entered, signed)
+    checking account, TOTAL OWED on a card (as a positive amount, v0.42.1),
+    CURRENT BALANCE on a tracking account (every transaction, any date). Row 2: OPENING BALANCE (as entered, signed)
     on a checking account; on a credit card EXTRA PAID instead (v0.33.6,
     `cardExtraPaid` in `budgetMath.ts`): the month's payments beyond the
     card's charges, i.e. paid from money set aside for paydown. Month by
@@ -567,8 +568,8 @@ $0.00 balance.
     nothing, and debt from before the opening date is all extra when paid.
     Then MONTH START (every transaction dated
     before the month's first day: `accountBalance` with `before`),
-    CURRENT BALANCE on a checking account, as its bank names it (v0.42.1),
-    RECONCILED on a card or tracking account (opening balance plus
+    CURRENT BALANCE on a checking account or card, as the bank names it
+    (v0.42.1), RECONCILED on a tracking account (opening balance plus
     reconciled transactions). Month start
     plus the month's net activity is the next month's start. Only the month
     figures follow the month picker.

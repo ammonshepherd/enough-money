@@ -271,7 +271,7 @@ non-card budget balances − all envelope money (P included)`.
   Budget: Compact rows, Collapse/Expand all groups, Go to this month (in
   another month), Edit groups (`#settings/groups`). Accounts list: Add
   account. An account or All accounts open: Collapse/Expand all dates,
-  Collapse info pane (only the balance, or Balance today, stays;
+  Collapse info pane (only the balance, or Balance Today, stays;
   remembered per device and user, `layoutPrefs.ts`); an open account also
   sorts: Date, Name, Amount, Envelope, Income/expense, Ascending or
   Descending. Settings: Sign out. A desktop keeps its own controls.
@@ -295,10 +295,11 @@ non-card budget balances − all envelope money (P included)`.
   Tracking groups (`groupAccounts`), each row a link with name and balance;
   closed accounts behind "Show closed accounts". Opening one replaces the
   list with a sticky info pane (back arrow, name, pencil; Available
-  balance on a checking account (v0.42.0), Current balance on a card or
-  tracking account,
-  Month start, Opening balance (Extra paid on a card), Money in, Money out
-  and Reconciled (named Current balance on a checking account, v0.42.1)
+  Balance on a checking account (v0.42.0), Total Owed (positive) on a card,
+  Current Balance on a tracking account (v0.42.1),
+  Month Start, Opening Balance (Extra Paid on a card), Money In, Money Out
+  and Reconciled (named Current Balance, as the bank does, on a checking
+  account or card; v0.42.1; figure labels in Title Case)
   from `accountFigures` in `src/models/activity.ts`, display
   only; transfers and
   card payments left out of in and out; only the month figures follow the

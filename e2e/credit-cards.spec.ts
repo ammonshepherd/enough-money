@@ -65,17 +65,29 @@ test("a credit card account owes money and gets a payment envelope", async ({ pa
   await expect(edit.getByLabel("Amount owed on the opening date")).toHaveValue("200.00");
   await edit.getByLabel("Amount owed on the opening date").fill("250");
   await edit.getByRole("button", { name: "Save changes" }).click();
-  // A card's pane shows Extra paid in place of the opening balance, which
+  // A card's pane shows Extra Paid in place of the opening balance, what is
+  // owed (positive) on top, and the reconciled figure as Current Balance.
   // flows into the current balance, signed like it.
-  await expect(page.locator(".account-figure").filter({ hasText: "Opening balance" })).toHaveCount(
+  await expect(page.locator(".account-figure").filter({ hasText: "Opening Balance" })).toHaveCount(
     0,
   );
-  await expect(page.locator(".account-figure").filter({ hasText: "Extra paid" })).toContainText(
+  await expect(page.locator(".account-figure").filter({ hasText: "Extra Paid" })).toContainText(
     "$0.00",
   );
-  await expect(
-    page.locator(".account-figure").filter({ hasText: "Current balance" }),
-  ).toContainText("-$280.00");
+  await expect(page.locator(".account-figure").filter({ hasText: "Total Owed" })).toContainText(
+    "$280.00",
+  );
+  await expect(page.locator(".account-figure").filter({ hasText: "Total Owed" })).not.toContainText(
+    "-",
+  );
+  await expect(page.locator(".account-figure dt")).toHaveText([
+    "Money In",
+    "Money Out",
+    "Total Owed",
+    "Extra Paid",
+    "Month Start",
+    "Current Balance",
+  ]);
 
   // Renaming the card renames its payment envelope.
   const rename = await editAccount(page, "Visa");
@@ -143,7 +155,7 @@ test("pay a card from checking, covering what the payment envelope lacks", async
   // down older debt: that is Extra paid, on the card's pane for this month
   // only, and in its payment envelope's sheet.
   await openAccount(page, "Visa");
-  const extra = page.locator(".account-figure").filter({ hasText: "Extra paid" });
+  const extra = page.locator(".account-figure").filter({ hasText: "Extra Paid" });
   await expect(extra).toContainText("$100.00");
   await page.getByRole("link", { name: "Previous month" }).click();
   await expect(extra).toContainText("$0.00");
