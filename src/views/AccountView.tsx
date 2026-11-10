@@ -63,6 +63,9 @@ export function AccountView({
   // Checking accounts show what is available; cards and tracking accounts what it is.
   const balanceLabel =
     account?.type === "checking" && account.onBudget ? "Available balance" : "Current balance";
+  /** A checking account uses its bank's name; a card or tracking account already shows a Current balance. */
+  const reconciledLabel =
+    account?.type === "checking" && account.onBudget ? "Current balance" : "Reconciled";
   /** The open account's row, with what the edit form needs; null when closed (read only). */
   const editable = page.openAccounts.find((a) => a.id === accountId) ?? null;
   const panel = useSidebar("panel", userId);
@@ -184,7 +187,7 @@ export function AccountView({
             <Figure label="Extra paid" cents={view.figures.extraPaid} />
           )}
           <Figure label="Month start" cents={view.figures.monthStart} />
-          <Figure label="Reconciled" cents={view.figures.reconciled} />
+          <Figure label={reconciledLabel} cents={view.figures.reconciled} />
         </dl>
       ) : (
         <AllAccountsTotals view={view} />

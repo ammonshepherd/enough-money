@@ -298,7 +298,8 @@ non-card budget balances − all envelope money (P included)`.
   balance on a checking account (v0.42.0), Current balance on a card or
   tracking account,
   Month start, Opening balance (Extra paid on a card), Money in, Money out
-  and Reconciled from `accountFigures` in `src/models/activity.ts`, display
+  and Reconciled (named Current balance on a checking account, v0.42.1)
+  from `accountFigures` in `src/models/activity.ts`, display
   only; transfers and
   card payments left out of in and out; only the month figures follow the
   month; Import CSV), its To review list, and every transaction of the

@@ -128,7 +128,14 @@ test("Accounts: fold dates, collapse the info pane, sort income first", async ({
     await page.evaluate(() => localStorage.getItem("bb.accounts.paneCollapsed.memory-user")),
   ).toBe("1");
   await choosePageMenu(page, "Collapse info pane");
-  await expect(pane.locator(".account-figure dt")).toContainText(["Money in", "Money out"]);
+  await expect(pane.locator(".account-figure dt")).toHaveText([
+    "Money in",
+    "Money out",
+    "Available balance",
+    "Opening balance",
+    "Month start",
+    "Current balance",
+  ]);
 
   // Income/expense: money in first; Descending puts money out first.
   await choosePageMenu(page, "Income/expense");

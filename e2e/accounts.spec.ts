@@ -155,7 +155,7 @@ test("an open account: its figures follow the month, its list does not", async (
       "opening balance": "$500.00",
       "money in": "+$100.00",
       "money out": "−$20.00",
-      reconciled: "$500.00",
+      "current balance": "$500.00",
     });
 
   // Every month's transactions in this account, newest first, under month

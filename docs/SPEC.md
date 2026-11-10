@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.42.0.
+Version described: 0.42.1.
 
 ## 1. Purpose
 
@@ -567,7 +567,9 @@ $0.00 balance.
     nothing, and debt from before the opening date is all extra when paid.
     Then MONTH START (every transaction dated
     before the month's first day: `accountBalance` with `before`),
-    RECONCILED (opening balance plus reconciled transactions). Month start
+    CURRENT BALANCE on a checking account, as its bank names it (v0.42.1),
+    RECONCILED on a card or tracking account (opening balance plus
+    reconciled transactions). Month start
     plus the month's net activity is the next month's start. Only the month
     figures follow the month picker.
   - "Import CSV" (an open account only) opens the bank import already set to
