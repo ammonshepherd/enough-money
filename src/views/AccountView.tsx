@@ -4,8 +4,9 @@ import { ROWS_PER_PAGE, useAccountView } from "../controllers/useAccountView";
 import type { Budget } from "../controllers/useBudget";
 import { useAccountPaneCollapsed, useSidebar } from "../controllers/useLayout";
 import { formFromTransaction } from "../controllers/useTransactionEntry";
-import { formatCents, formatSignedCents } from "../models/money";
+import { asDebt, formatCents, formatSignedCents } from "../models/money";
 import type { Month } from "../models/month";
+import type { AccountFigures } from "../models/activity";
 import { accountsHref } from "../models/routes";
 import type { BudgetData, Transaction } from "../models/types";
 import { EditAccount } from "./AccountForm";
@@ -60,13 +61,14 @@ export function AccountView({
 }) {
   const view = useAccountView(budget, data, month, accountId);
   const account = view.account;
-  // The headline balance: what is available on checking, what is owed on a
-  // card (positive), what it is on a tracking account. The reconciled figure
-  // takes the bank's name, Current Balance, except on a tracking account.
+  // The headline balance: what is available on checking (today), what is
+  // owed on a card at the end of the month (negative: debt), what it is on a
+  // tracking account (today). The reconciled figure takes the bank's name,
+  // Current Balance, except on a tracking account.
   const isCard = account?.type === "credit_card";
   const isChecking = account?.type === "checking" && account.onBudget;
   const balanceLabel = isChecking ? "Available Balance" : isCard ? "Total Owed" : "Current Balance";
-  const balanceCents = (cents: number) => (isCard ? -cents : cents);
+  const headline = (figures: AccountFigures) => (isCard ? figures.monthEnd : figures.current);
   const reconciledLabel = isChecking || isCard ? "Current Balance" : "Reconciled";
   /** The open account's row, with what the edit form needs; null when closed (read only). */
   const editable = page.openAccounts.find((a) => a.id === accountId) ?? null;
@@ -173,23 +175,24 @@ export function AccountView({
       {paneCollapsed ? (
         <dl className="account-figures folded" aria-label={`${title} balance`}>
           {view.figures ? (
-            <Figure label={balanceLabel} cents={balanceCents(view.figures.current)} />
+            <Figure label={balanceLabel} cents={headline(view.figures)} />
           ) : (
             <Figure label="Balance Today" cents={view.balance.today} />
           )}
         </dl>
       ) : view.figures ? (
         <dl className="account-figures" aria-label={`${title} figures for ${view.monthLabel}`}>
+          {/* Balances on the first row, the month's flow on the second. */}
+          <Figure label="Month Start" cents={view.figures.monthStart} />
+          <Figure label={reconciledLabel} cents={view.figures.reconciled} />
+          <Figure label={balanceLabel} cents={headline(view.figures)} />
           <Figure label="Money In" cents={view.figures.moneyIn} signed tone="in" />
           <Figure label="Money Out" cents={-view.figures.moneyOut} signed tone="out" />
-          <Figure label={balanceLabel} cents={balanceCents(view.figures.current)} />
           {view.figures.extraPaid === null ? (
             <Figure label="Opening Balance" cents={view.figures.opening} />
           ) : (
             <Figure label="Extra Paid" cents={view.figures.extraPaid} />
           )}
-          <Figure label="Month Start" cents={view.figures.monthStart} />
-          <Figure label={reconciledLabel} cents={view.figures.reconciled} />
         </dl>
       ) : (
         <AllAccountsTotals view={view} />
@@ -494,7 +497,7 @@ function AllAccountsTotals({ view }: { view: ReturnType<typeof useAccountView> }
         <dd>{formatCents(balance.today)}</dd>
         <dd className="activity-balance-detail">
           {balance.hasCards
-            ? `Cash ${formatCents(balance.cash)} · Cards owe ${formatCents(balance.cardsOwe)}`
+            ? `Cash ${formatCents(balance.cash)} · Card debt ${formatCents(asDebt(balance.cardsOwe))}`
             : `Reconciled ${formatCents(balance.reconciled)}`}
         </dd>
       </div>

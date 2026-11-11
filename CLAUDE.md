@@ -121,13 +121,13 @@ Owed         = −card balance
 Uncovered    = max(0, Owed − (Saved_P + Remaining_P))   (display only, like Planned)
 ```
 
-- Extra paid (decided in v0.33.6, `cardExtraPaid` in `budgetMath.ts`,
-  display only): the part of a card's payments beyond its charges, so paid
-  from money set aside for paydown. Month by month, charges (purchases in an
-  envelope, cash advances) fill a pool, payments take from it first, and
-  what the pool cannot cover is extra. Shown on a card's info pane (this
-  month, in place of Opening balance) and in P's sheet (month and year to
-  date). It changes no other number.
+- Extra paid (decided in v0.33.6, rule revised in v0.42.3, `cardExtraPaid`
+  in `budgetMath.ts`, display only): what came into the card in a month
+  (payments, refunds, card credits) beyond what went out (purchases, cash
+  advances), so what paid down the debt; never below $0.00, nothing
+  carried between months. Shown on a card's info pane (this month, in
+  place of Opening balance) and in P's sheet (month, and year to date as
+  the sum of its months). It changes no other number.
 - Card purchase in an envelope: money moves from that envelope into P. Transfer out
   of the card (cash advance): into P. A card purchase still to review touches
   neither P nor Available to Assign (it only raises Owed).
@@ -282,6 +282,11 @@ non-card budget balances − all envelope money (P included)`.
   remembered per device and user, `layoutPrefs.ts`); an open account also
   sorts: Date, Name, Amount, Envelope, Income/expense, Ascending or
   Descending. Settings: Sign out. A desktop keeps its own controls.
+- Debt is shown negative everywhere (decided in v0.42.3, `asDebt` in
+  `src/models/money.ts`): card balances, Total Owed, the Credit card debt
+  strip, Owed and Remaining debt on a card's payment envelope, "Card
+  debt" on All accounts and the desktop "Card debt not covered" list. Only
+  the card form takes the amount owed as positive.
 - Credit card debt (what the cards owe today, `cardDebt` in
   `src/models/accounts.ts`, display only) shows on every page while above
   $0.00: under the month band on Budget and Accounts, at the top of
@@ -301,16 +306,17 @@ non-card budget balances − all envelope money (P included)`.
   accounts" (the month's In / Out) first, then Checking, Credit cards and
   Tracking groups (`groupAccounts`), each row a link with name and balance;
   closed accounts behind "Show closed accounts". Opening one replaces the
-  list with a sticky info pane (back arrow, name, pencil; Available
-  Balance on a checking account (v0.42.0), Total Owed (positive) on a card,
-  Current Balance on a tracking account (v0.42.1),
-  Month Start, Opening Balance (Extra Paid on a card), Money In, Money Out
-  and Reconciled (named Current Balance, as the bank does, on a checking
-  account or card; v0.42.1; figure labels in Title Case)
-  from `accountFigures` in `src/models/activity.ts`, display
-  only; transfers and
-  card payments left out of in and out; only the month figures follow the
-  month; Import CSV), its To review list, and every transaction of the
+  list with a sticky info pane (back arrow, name, pencil; figures in
+  two rows of three, v0.42.3: Month Start, Reconciled (named Current
+  Balance, as the bank does, on a checking account or card; v0.42.1), then
+  Available Balance on a checking account (v0.42.0), Total Owed on a card
+  (its balance at the end of the month, negative) or Current Balance on a
+  tracking account (v0.42.1); then Money In, Money Out and Opening Balance
+  (Extra Paid on a card); figure labels in Title Case; from
+  `accountFigures` in `src/models/activity.ts`, display only; Money In
+  and Money Out count every inflow and outflow of the month, transfers
+  and card payments too (v0.42.3); Month Start, Total Owed and the month
+  figures follow the month, the other balances are today's; Import CSV), its To review list, and every transaction of the
   account in any month under month dividers (day nets leave transfers out).
   All accounts keeps the old Activity page: one month, the In / Out /
   Balance today strip (transfers left out; the balance is as of today, with

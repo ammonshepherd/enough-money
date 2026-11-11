@@ -8,7 +8,7 @@
  */
 import { accountBalance, cardExtraPaid, isCardCredit, isToReview } from "./budgetMath";
 import type { Cents } from "./money";
-import { monthOf, type Month } from "./month";
+import { addMonths, monthOf, type Month } from "./month";
 import { tagsOf, type Tag } from "./tags";
 import { transferPartner } from "./transfers";
 import type { BudgetData, IsoDate, Transaction } from "./types";
@@ -280,21 +280,24 @@ export interface AccountFigures {
   current: Cents;
   /** The balance at the start of the month: every transaction dated before its first day. */
   monthStart: Cents;
+  /** The balance at the end of the month: every transaction dated up to its last day. */
+  monthEnd: Cents;
   /** The balance on the opening date, as entered (signed: a card owing $50 is −$50.00). */
   opening: Cents;
   /** Opening balance plus the transactions marked reconciled. */
   reconciled: Cents;
-  /** The month's inflows, transfers left out: income, refunds, card credits, inflows to review. */
+  /** Every inflow in the month: transfers in (card payments), income, refunds, card credits. */
   moneyIn: Cents;
-  /** The month's outflows, transfers left out: spending and card purchases (positive). */
+  /** Every outflow in the month (positive): spending, purchases, transfers out. */
   moneyOut: Cents;
   /** A credit card's extra paid in the month (see cardExtraPaid); null for other accounts. */
   extraPaid: Cents | null;
 }
 
 /**
- * One account's figures for month M. Transfers (card payments too) are left
- * out of money in and out; a split counts once, at its full amount.
+ * One account's figures for month M. Money in and out count every
+ * transaction in the month, transfers too; a split counts once, at its full
+ * amount.
  */
 export function accountFigures(data: BudgetData, accountId: string, month: Month): AccountFigures {
   const account = data.accounts.find((a) => a.id === accountId);
@@ -302,7 +305,7 @@ export function accountFigures(data: BudgetData, accountId: string, month: Month
   let moneyIn = 0;
   let moneyOut = 0;
   for (const tx of data.transactions) {
-    if (tx.accountId !== accountId || tx.voided || tx.isTransfer) continue;
+    if (tx.accountId !== accountId || tx.voided) continue;
     if (monthOf(tx.date) !== month) continue;
     if (tx.amount > 0) moneyIn += tx.amount;
     else moneyOut -= tx.amount;
@@ -310,6 +313,7 @@ export function accountFigures(data: BudgetData, accountId: string, month: Month
   return {
     current: accountBalance(accountId, data),
     monthStart: accountBalance(accountId, data, { before: `${month}-01` }),
+    monthEnd: accountBalance(accountId, data, { before: `${addMonths(month, 1)}-01` }),
     opening: account.openingBalance,
     reconciled: accountBalance(accountId, data, { reconciled: true }),
     moneyIn,

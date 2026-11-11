@@ -129,12 +129,12 @@ test("Accounts: fold dates, collapse the info pane, sort income first", async ({
   ).toBe("1");
   await choosePageMenu(page, "Collapse info pane");
   await expect(pane.locator(".account-figure dt")).toHaveText([
-    "Money In",
-    "Money Out",
-    "Available Balance",
-    "Opening Balance",
     "Month Start",
     "Current Balance",
+    "Available Balance",
+    "Money In",
+    "Money Out",
+    "Opening Balance",
   ]);
 
   // Income/expense: money in first; Descending puts money out first.

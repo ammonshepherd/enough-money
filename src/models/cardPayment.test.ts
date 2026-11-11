@@ -358,15 +358,16 @@ describe("cardExtraPaid", () => {
 
   it("counts nothing extra when a payment stays within the month's charges", () => {
     const data = household();
-    data.transactions.push(purchase("a", "2026-10-03", 40_000), payment("p", "2026-10-20", 40_000));
+    data.transactions.push(purchase("a", "2026-10-03", 40_000), payment("p", "2026-10-20", 30_000));
     expect(extra(data, M)).toEqual({ month: 0, yearToDate: 0 });
   });
 
-  it("counts what a payment pays beyond the charges as extra (the spec's example)", () => {
+  it("counts what came in beyond what went out in the month", () => {
     const data = household();
     data.transactions.push(purchase("a", "2026-09-12", 40_000), payment("p", "2026-10-05", 60_000));
     expect(extra(data, "2026-09")).toEqual({ month: 0, yearToDate: 0 });
-    expect(extra(data, M)).toEqual({ month: 20_000, yearToDate: 20_000 });
+    // Last month's charges do not count against this month's payment.
+    expect(extra(data, M)).toEqual({ month: 60_000, yearToDate: 60_000 });
   });
 
   it("does not depend on order inside a month: paying first, charging later", () => {
@@ -375,20 +376,20 @@ describe("cardExtraPaid", () => {
     expect(extra(data, M).month).toBe(20_000);
   });
 
-  it("keeps extra paid as paid when later months charge more than they pay", () => {
+  it("adds up the months from January, a month that went out more counting $0.00", () => {
     const data = household();
     data.transactions.push(
-      payment("p1", "2026-10-05", 20_000), // all extra: nothing charged yet
+      payment("p1", "2026-10-05", 20_000),
       purchase("a", "2026-11-03", 30_000),
-      payment("p2", "2026-11-25", 10_000), // covered by November's charges
-      payment("p3", "2026-12-20", 25_000), // $20,000 still from November's charges, $5,000 extra
+      payment("p2", "2026-11-25", 10_000), // November went out $20,000 more: $0.00
+      payment("p3", "2026-12-20", 25_000),
     );
     expect(extra(data, M).month).toBe(20_000);
     expect(extra(data, "2026-11")).toEqual({ month: 0, yearToDate: 20_000 });
-    expect(extra(data, "2026-12")).toEqual({ month: 5_000, yearToDate: 25_000 });
+    expect(extra(data, "2026-12")).toEqual({ month: 25_000, yearToDate: 45_000 });
   });
 
-  it("counts a cash advance as a charge and starts the year-to-date in January", () => {
+  it("counts a cash advance as money out and starts the year-to-date in January", () => {
     const data = household();
     data.transactions.push(
       payment("p1", "2026-12-10", 10_000),
@@ -398,7 +399,7 @@ describe("cardExtraPaid", () => {
     expect(extra(data, "2027-01")).toEqual({ month: 3_000, yearToDate: 3_000 });
   });
 
-  it("funds nothing with card credits, purchases to review or voided rows", () => {
+  it("counts card credits and purchases to review, and leaves voided rows out", () => {
     const data = household();
     data.transactions.push(
       tx({ id: "credit", accountId: "visa", amount: 5_000 }),
@@ -407,7 +408,7 @@ describe("cardExtraPaid", () => {
       { ...payment("void-pay", "2026-10-03", 4_000), voided: true },
       payment("p", "2026-10-20", 6_000),
     );
-    expect(extra(data, M).month).toBe(6_000);
+    expect(extra(data, M).month).toBe(5_000 - 7_000 + 6_000);
   });
 
   it("shows on the payment envelope's row, and is 0 for an account without one", () => {

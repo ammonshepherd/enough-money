@@ -3,7 +3,7 @@ import { messageOf } from "../controllers/errors";
 import { useAsyncAction } from "../controllers/useAsyncAction";
 import type { BudgetPageState as Page } from "../controllers/useBudgetPage";
 import type { RemainingPart } from "../models/envelopeDetail";
-import { centsToInput, formatCents, formatSignedCents } from "../models/money";
+import { asDebt, centsToInput, formatCents, formatSignedCents } from "../models/money";
 import { formatShortDay } from "../models/month";
 import { PadAmount } from "./AssignPad";
 import { EditableTitle, ErrorMessage, Money, SingleFieldForm, SpentAmount } from "./components";
@@ -106,8 +106,8 @@ export function EnvelopeSheet({
               <Money cents={row.envelopeMoney} />
             </strong>
             <span className="sheet-hero-parts">
-              Owed <Money cents={row.card.owed} /> · Remaining debt{" "}
-              <Money cents={row.card.uncovered} />
+              Owed <Money cents={asDebt(row.card.owed)} /> · Remaining debt{" "}
+              <Money cents={asDebt(row.card.uncovered)} />
             </span>
             <span className="sheet-hero-parts">
               Extra paid <Money cents={row.card.extraPaid.month} /> this month ·{" "}

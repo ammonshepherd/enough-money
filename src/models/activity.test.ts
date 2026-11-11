@@ -479,22 +479,24 @@ describe("accountFigures", () => {
     expect(accountFigures(data, "checking", "2026-10")).toMatchObject({
       current: 100_000 - 2_000 + 300_000 + 1_500 - 9_000 - 25_000 - 1_000,
       monthStart: 100_000 - 1_000,
+      monthEnd: 100_000 - 1_000 + 300_000 + 1_500 - 9_000 - 25_000,
       opening: 100_000,
       reconciled: 100_000 + 300_000 - 1_000,
     });
   });
 
-  it("leaves transfers out of money in and out, and counts a split once", () => {
+  it("counts every inflow and outflow in money in and out, transfers too, and a split once", () => {
     expect(accountFigures(data, "checking", "2026-10")).toMatchObject({
       moneyIn: 301_500,
-      moneyOut: 9_000,
+      moneyOut: 9_000 + 25_000,
     });
-    // On the card the payment is a transfer too: nothing in or out.
+    // On the card the payment is money in.
     expect(accountFigures(data, "card", "2026-10")).toMatchObject({
-      moneyIn: 0,
+      moneyIn: 25_000,
       moneyOut: 0,
       opening: -40_000,
       current: -15_000,
+      monthEnd: -15_000,
     });
   });
 

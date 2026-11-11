@@ -403,7 +403,7 @@ function ledgerFor(data: BudgetData): Ledger {
   return { histories };
 }
 
-/** What a card's payments paid beyond its charges (display only). */
+/** What came into a card beyond what went out (display only). */
 export interface CardExtraPaid {
   /** Extra paid in the month. */
   month: Cents;
@@ -412,16 +412,11 @@ export interface CardExtraPaid {
 }
 
 /**
- * Extra paid on a card: the part of its payments that paid down debt no
- * charge had funded, so money set aside for paydown (Assigned or moved into
- * the payment envelope), not money for the card's own charges. Display only.
- *
- * Month by month, the card's charges (purchases in an envelope and cash
- * advances, the activity that fills the payment envelope) go into a pool
- * first; the month's payments (transfers into the card) are taken from the
- * pool, and whatever the pool cannot cover is extra. What was paid as extra
- * stays extra. Purchases still to review and card credits fund nothing, and
- * a debt from before the card's opening date is all extra when paid.
+ * Extra paid on a card: in each month, everything that came into the card
+ * (payments, refunds, card credits) beyond everything that went out
+ * (purchases, cash advances), so what paid down the debt; never below $0.00.
+ * A month that went out more than came in is $0.00, not a negative carried
+ * on. The year to date adds up the months from January. Display only.
  */
 export function cardExtraPaid(
   data: BudgetData,
@@ -431,28 +426,17 @@ export function cardExtraPaid(
   const result = { month: 0, yearToDate: 0 };
   if (!cardPaymentEnvelopes(data).has(cardAccountId)) return result;
 
-  const byMonth = new Map<Month, { charges: Cents; payments: Cents }>();
+  const year = month.slice(0, 4);
+  const net = new Map<Month, Cents>();
   for (const tx of budgetTransactions(data)) {
     const txMonth = monthOf(tx.date);
-    if (tx.accountId !== cardAccountId || txMonth > month) continue;
-    let entry = byMonth.get(txMonth);
-    if (!entry) byMonth.set(txMonth, (entry = { charges: 0, payments: 0 }));
-    if (tx.isTransfer && tx.amount > 0) entry.payments += tx.amount;
-    else if (tx.amount < 0 && (tx.isTransfer || tx.allocations.length > 0)) {
-      entry.charges -= tx.amount;
-    }
+    if (tx.accountId !== cardAccountId || txMonth > month || !txMonth.startsWith(year)) continue;
+    net.set(txMonth, (net.get(txMonth) ?? 0) + tx.amount);
   }
-
-  const year = month.slice(0, 4);
-  let pool = 0;
-  for (const txMonth of [...byMonth.keys()].sort()) {
-    const { charges, payments } = byMonth.get(txMonth)!;
-    pool += charges;
-    const covered = Math.min(payments, pool);
-    pool -= covered;
-    const extra = payments - covered;
+  for (const [txMonth, amount] of net) {
+    const extra = Math.max(0, amount);
     if (txMonth === month) result.month = extra;
-    if (txMonth.startsWith(year)) result.yearToDate += extra;
+    result.yearToDate += extra;
   }
   return result;
 }

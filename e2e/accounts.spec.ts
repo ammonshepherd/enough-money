@@ -146,7 +146,7 @@ test("an open account: its figures follow the month, its list does not", async (
   await accountRow(page, "Main").click();
   await expect(page).toHaveURL(/#accounts\/[\w-]+\/2030-01$/);
   await expect(page.getByRole("heading", { level: 2, name: "Main" })).toBeVisible();
-  // The transfer is left out of money in and out.
+  // The transfer counts in money out, like any outflow.
   await expect
     .poll(() => figures(page))
     .toEqual({
@@ -154,7 +154,7 @@ test("an open account: its figures follow the month, its list does not", async (
       "month start": "$500.00",
       "opening balance": "$500.00",
       "money in": "+$100.00",
-      "money out": "−$20.00",
+      "money out": "−$60.00",
       "current balance": "$500.00",
     });
 
