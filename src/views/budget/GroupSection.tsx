@@ -1,14 +1,15 @@
 import { useRef, useState } from "react";
 import type { BudgetPageState as Page } from "../../controllers/useBudgetPage";
 import { Money, SingleFieldForm } from "../components";
-import { ChevronDownIcon } from "../icons";
+import { CardIcon, ChevronDownIcon } from "../icons";
 import { EnvelopeItem } from "./EnvelopeItem";
 
 type Group = Page["groups"][number];
 
 /**
  * A group: a bar whose name collapses or expands its envelopes (collapsed, it
- * shows how many and their total left) and a + to add an envelope.
+ * shows how many and their total left) and a + to add an envelope (not on
+ * the card payments group, which holds only the cards' envelopes).
  */
 export function GroupSection({
   group,
@@ -37,6 +38,9 @@ export function GroupSection({
   const rows = useRef<HTMLDivElement>(null);
   const rowsId = `group-rows-${group.id}`;
   const count = group.envelopes.length;
+  // The cards' payment envelopes' group is set apart (v0.42.2): those
+  // envelopes work differently, and it takes no others, so it has no +.
+  const cards = group.cards;
 
   const toggle = () => {
     // A Planned or Assigned field open in this group saves before it is hidden.
@@ -47,7 +51,9 @@ export function GroupSection({
 
   return (
     <section
-      className={collapsed ? "budget-group collapsed" : "budget-group"}
+      className={["budget-group", cards && "card-group", collapsed && "collapsed"]
+        .filter(Boolean)
+        .join(" ")}
       aria-label={group.name}
     >
       <div className="group-heading">
@@ -60,6 +66,7 @@ export function GroupSection({
             onClick={toggle}
           >
             <ChevronDownIcon />
+            {cards && <CardIcon />}
             <span className="group-name">{group.name}</span>
             {collapsed && (
               <span className="group-summary">
@@ -74,19 +81,21 @@ export function GroupSection({
             <span className="visually-hidden"> remaining</span>
           </span>
         )}
-        <button
-          className="add-envelope-button"
-          type="button"
-          aria-label={adding ? `Stop adding to ${group.name}` : `Add envelope to ${group.name}`}
-          aria-expanded={adding}
-          onClick={() => {
-            // Opens the group too, so the new envelope shows up.
-            if (!adding) onExpand();
-            setAdding((open) => !open);
-          }}
-        >
-          {adding ? "×" : "+"}
-        </button>
+        {!cards && (
+          <button
+            className="add-envelope-button"
+            type="button"
+            aria-label={adding ? `Stop adding to ${group.name}` : `Add envelope to ${group.name}`}
+            aria-expanded={adding}
+            onClick={() => {
+              // Opens the group too, so the new envelope shows up.
+              if (!adding) onExpand();
+              setAdding((open) => !open);
+            }}
+          >
+            {adding ? "×" : "+"}
+          </button>
+        )}
       </div>
       {adding && (
         <div className="group-add">

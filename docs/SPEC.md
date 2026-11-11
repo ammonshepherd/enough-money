@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.42.1.
+Version described: 0.42.2.
 
 ## 1. Purpose
 
@@ -382,6 +382,13 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   months and renames; new groups start open. Collapsing saves an open
   Planned/Assigned field first. The + opens "New envelope" (+ becomes ×) and
   opens a collapsed group.
+- The group holding the cards' payment envelopes ("Credit card payments",
+  found by its envelopes, so a rename keeps it; `groupOrder.ts`, v0.42.2)
+  is always first, whatever its stored position, and holds only those
+  envelopes: it has no +, and no "Move to…" or envelope-sheet group picker
+  offers it. On a phone it sits apart in a slate-blue frame (1.5px border,
+  rounded corners, 8px in from the edges, 14px above and below). Its bar is
+  pale blue with blue text and chevron and a card icon after the chevron.
 - "Compact rows" (phone only; in the page menu since v0.36.0, a
   `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved and what is
   left); Planned, Spent (and Assigned on a desktop), Refunded and Short are hidden until it is
@@ -411,8 +418,9 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   row (in the pad for the pad) ("Only $X available to assign.", "Some is
   already spent: Assigned can go no lower than $X.", "Planned cannot be
   negative."). Edits show at once (an optimistic update) and are undone if the
-  save fails. Card payment envelopes show Available to pay and Remaining debt
-  cells.
+  save fails. A card payment envelope shows Available to pay once, as its
+  amount on the right (heard as "available to pay"), and only a Remaining
+  debt cell on line 2 (v0.42.2).
 - Typing amounts (decided in v0.35.0): every amount field (transaction
   amount and split lines, Planned, Assigned and its number pad, the Assign
   and Move money dialogs, Assign and Release on the envelope sheet, opening
@@ -478,9 +486,11 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
     the Available to Assign banner centred across the band (same rules).
   - Envelopes are a table with a sticky column head (Envelope, Planned,
     Assigned, Spent, Remaining): one line per envelope (name and Saved pill,
-    then the cells without their labels, then what is left). A card's payment
-    envelope shows Available to pay and Remaining debt, labelled, across the
-    three cell columns. Group bars show their total under Remaining when
+    then the cells without their labels, then what is left). The card
+    payments group is not in this table (v0.42.2): it is its own box above
+    it, a 1.25rem gap between, with a blue border and its own sticky head
+    (Card, Available to pay, Remaining debt); collapsed, its total sits
+    under Available to pay. Group bars show their total under Remaining when
     collapsed and the + in the last column. Refunded and Short sit on a line
     below, under the cells.
   - Clicking an envelope's name shows it in the panel instead of a sheet
@@ -796,7 +806,10 @@ In order: household name and "Signed in as ⟨email⟩"; About (version); Sign o
 Envelope groups; Import transactions; Income rules; Import envelope plan;
 Tags; Backup.
 
-- **Envelope groups:** list with envelope counts, a six-dot drag handle on the
+- **Envelope groups:** list with envelope counts. The card payments group
+  (when there is one) is pinned first with a card icon in place of a handle
+  and "Always first on Budget · N envelopes"; it cannot be dragged, and the
+  others always save after it (v0.42.2). The rest have a six-dot drag handle on the
   left of each row (mouse, touch, or keyboard: Space, arrows, Space) to reorder
   the groups on the Budget page, and "Group name" + Add group. Tapping a group
   opens its bottom sheet: the name with a pencil button to rename it, its

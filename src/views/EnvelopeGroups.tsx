@@ -4,6 +4,7 @@ import type { Budget } from "../controllers/useBudget";
 import { useEnvelopeGroups } from "../controllers/useEnvelopeGroups";
 import type { BudgetData } from "../models/types";
 import { EditableTitle, ErrorMessage, Sheet, SingleFieldForm } from "./components";
+import { CardIcon } from "./icons";
 import { SortableList } from "./SortableList";
 
 type Page = ReturnType<typeof useEnvelopeGroups>;
@@ -22,6 +23,20 @@ export function EnvelopeGroups({ budget, data }: { budget: Budget; data: BudgetD
   // The group open in the sheet; it closes by itself if the group goes.
   const [openId, setOpenId] = useState<string | null>(null);
   const open = page.groups.find((g) => g.id === openId);
+  // The card group is pinned first (no handle); the others are dragged below it.
+  const cardGroup = page.groups.find((g) => g.id === page.cardGroupId);
+  const sortable = page.groups.filter((g) => g.id !== page.cardGroupId);
+  const groupButton = (group: Group, detail: string) => (
+    <button
+      className="item item-button"
+      type="button"
+      aria-haspopup="dialog"
+      onClick={() => setOpenId(group.id)}
+    >
+      <span className="item-title">{group.name}</span>
+      <span className="item-detail">{detail}</span>
+    </button>
+  );
 
   return (
     <section className="list-card" aria-labelledby="groups-title">
@@ -34,23 +49,26 @@ export function EnvelopeGroups({ budget, data }: { budget: Budget; data: BudgetD
         + button on the Budget page. Drag the dots to change the order; tap a group to rename it or
         organize its envelopes.
       </p>
-      {page.groups.length > 0 && (
+      {cardGroup && (
+        <ul className="item-list pinned-group" aria-label="Pinned group">
+          <li className="sortable-row">
+            <span className="drag-handle pinned" aria-hidden="true">
+              <CardIcon />
+            </span>
+            {groupButton(
+              cardGroup,
+              `Always first on Budget · ${countEnvelopes(cardGroup.envelopes.length)}`,
+            )}
+          </li>
+        </ul>
+      )}
+      {sortable.length > 0 && (
         <SortableList
           label="Envelope groups"
-          items={page.groups}
+          items={sortable}
           onReorder={(ids) => void reorder.run(ids)}
         >
-          {(group) => (
-            <button
-              className="item item-button"
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setOpenId(group.id)}
-            >
-              <span className="item-title">{group.name}</span>
-              <span className="item-detail">{countEnvelopes(group.envelopes.length)}</span>
-            </button>
-          )}
+          {(group) => groupButton(group, countEnvelopes(group.envelopes.length))}
         </SortableList>
       )}
       <ErrorMessage error={reorder.error} />
@@ -86,7 +104,8 @@ function GroupSheet({ group, page, onClose }: { group: Group; page: Page; onClos
     await page.moveEnvelope(envelopeId, groupId);
     setMoved(`Moved ${name} to ${page.groups.find((g) => g.id === groupId)?.name ?? "its group"}.`);
   });
-  const otherGroups = page.groups.filter((g) => g.id !== group.id);
+  // Ordinary envelopes never move into the card group.
+  const otherGroups = page.groups.filter((g) => g.id !== group.id && g.id !== page.cardGroupId);
   const remove = useAsyncAction(async () => {
     await page.deleteGroup(group.id);
     onClose();
@@ -161,8 +180,9 @@ function GroupSheet({ group, page, onClose }: { group: Group; page: Page; onClos
               }
             </SortableList>
             <p className="empty-state">
-              Drag the dots to change the order on the Budget page. Tap a name to rename it; use
-              Move to… to put it in another group (its money and history go with it).
+              {group.id === page.cardGroupId
+                ? "Drag the dots to change the order on the Budget page. Each card’s payment envelope is named after its card: rename the card to rename it."
+                : "Drag the dots to change the order on the Budget page. Tap a name to rename it; use Move to… to put it in another group (its money and history go with it)."}
             </p>
           </>
         )}

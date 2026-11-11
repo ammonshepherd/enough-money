@@ -194,7 +194,13 @@ non-card budget balances − all envelope money (P included)`.
   groups are full-width bars whose name is a button that collapses the group
   (chevron; open, the bar shows no numbers; collapsed, it shows "N envelopes"
   and the group's total left, `groupLeft` in `budgetMath.ts`) and a + button
-  (which also opens a collapsed group). Collapsed groups are remembered per
+  (which also opens a collapsed group). The group of card payment envelopes
+  (v0.42.2, `src/models/groupOrder.ts`, found by its envelopes, not its
+  name) is always first, pinned in Settings (never dragged), and holds only
+  those envelopes (no +, never offered by "Move to…"); its bar is blue with
+  a card icon, framed apart on a phone, and on a desktop it is its own box
+  above the envelope table (Card, Available to pay, Remaining debt).
+  Collapsed groups are remembered per
   device and user in localStorage (`src/models/collapsedGroups.ts`, by group
   id; never in Supabase); envelopes are added
   with each group's + button; groups are added, renamed, reordered and deleted
@@ -244,7 +250,8 @@ non-card budget balances − all envelope money (P included)`.
   envelope. Spent shown = max(0, net spent); Refunded =
   refunds beyond the month's spending (`outflow` / `refunded` in
   `EnvelopeMonth`; math unchanged). A card's payment envelope shows Available
-  to pay (Saved + Remaining) and Remaining debt (Uncovered), no Saved pill;
+  to pay (Saved + Remaining) once, as its amount on the right, and Remaining
+  debt (Uncovered), no Saved pill;
   its sheet shows Available to pay, what is owed, an Assign form (negative to
   take back) and the Saved panel, and no Delete.
 - Desktop layout (decided in v0.26.0, `docs/proposals/desktop-layout.md`):
