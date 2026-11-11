@@ -66,3 +66,5 @@ export const EnvelopeIcon = () => (
     />
   </svg>
 );
+/** A payment card: the Credit card payments group bar on Budget. */
+export const CardIcon = () => <Icon path="M3 6h18v12H3zM3 10h18M6.5 14.5h4" />;

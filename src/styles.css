@@ -1113,7 +1113,7 @@ a:focus-visible {
   transition: transform 0.15s;
 }
 
-.budget-group.collapsed .group-toggle svg {
+.budget-group.collapsed .group-toggle svg:first-child {
   transform: rotate(-90deg);
 }
 
@@ -1169,6 +1169,40 @@ a:focus-visible {
 .group-empty {
   margin: 0;
   font-size: 0.8rem;
+}
+
+/* Credit card payments (v0.42.2): those envelopes work differently, so the
+   group sits apart in a slate-blue frame, its bar blue with a card icon. */
+.budget-group.card-group {
+  --bb-card-blue: #1f4766;
+  --bb-card-tint: #e3edf6;
+  --bb-card-line: #c9dbea;
+
+  overflow: hidden;
+  margin: 14px 8px;
+  border: 1.5px solid var(--bb-card-line);
+  border-radius: 10px;
+}
+
+.card-group .group-heading {
+  border-block: 0;
+  background: var(--bb-card-tint);
+}
+
+.card-group:not(.collapsed) .group-heading {
+  border-block-end: 1px solid var(--bb-card-line);
+}
+
+.card-group :is(.group-name, .group-total, .add-envelope-button) {
+  color: var(--bb-card-blue);
+}
+
+.card-group .group-toggle svg {
+  stroke: var(--bb-card-blue);
+}
+
+.card-group .envelope-list > li:last-child .envelope {
+  border-block-end: 0;
 }
 
 .envelope-list {
@@ -3049,6 +3083,14 @@ body:has(.app-shell.desktop) {
   text-align: end;
 }
 
+/* The card payments frame keeps the table's columns: no side inset, and
+   the name column may shrink so + is never cut off. */
+.desktop .budget-group.card-group {
+  --env-cols: minmax(0, 1fr) repeat(3, 5.75rem) 7rem 2.5rem;
+
+  margin-inline: 0;
+}
+
 .desktop .add-envelope-button {
   grid-column: 6;
   border-radius: 0.5rem;
@@ -3413,6 +3455,10 @@ body:has(.app-shell.desktop) {
 @media (max-width: 74.99rem) {
   :root {
     --env-cols: minmax(8rem, 1fr) repeat(3, 5.25rem) 6.25rem 2.25rem;
+  }
+
+  .desktop .budget-group.card-group {
+    --env-cols: minmax(0, 1fr) repeat(3, 5.25rem) 6.25rem 2.25rem;
   }
 
   .app-shell.desktop > .page-content {

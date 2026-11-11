@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { BudgetPageState as Page } from "../../controllers/useBudgetPage";
 import { Money, SingleFieldForm } from "../components";
-import { ChevronDownIcon } from "../icons";
+import { CardIcon, ChevronDownIcon } from "../icons";
 import { EnvelopeItem } from "./EnvelopeItem";
 
 type Group = Page["groups"][number];
@@ -37,6 +37,9 @@ export function GroupSection({
   const rows = useRef<HTMLDivElement>(null);
   const rowsId = `group-rows-${group.id}`;
   const count = group.envelopes.length;
+  // The group holding the cards' payment envelopes is framed apart (v0.42.2):
+  // those envelopes work differently. Found by its envelopes, not its name.
+  const cards = group.envelopes.some((envelope) => envelope.card);
 
   const toggle = () => {
     // A Planned or Assigned field open in this group saves before it is hidden.
@@ -47,7 +50,9 @@ export function GroupSection({
 
   return (
     <section
-      className={collapsed ? "budget-group collapsed" : "budget-group"}
+      className={["budget-group", cards && "card-group", collapsed && "collapsed"]
+        .filter(Boolean)
+        .join(" ")}
       aria-label={group.name}
     >
       <div className="group-heading">
@@ -60,6 +65,7 @@ export function GroupSection({
             onClick={toggle}
           >
             <ChevronDownIcon />
+            {cards && <CardIcon />}
             <span className="group-name">{group.name}</span>
             {collapsed && (
               <span className="group-summary">

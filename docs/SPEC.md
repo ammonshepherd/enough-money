@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.42.1.
+Version described: 0.42.2.
 
 ## 1. Purpose
 
@@ -382,6 +382,11 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   months and renames; new groups start open. Collapsing saves an open
   Planned/Assigned field first. The + opens "New envelope" (+ becomes ×) and
   opens a collapsed group.
+- The group holding the cards' payment envelopes ("Credit card payments",
+  found by its envelopes, so a rename keeps the look; v0.42.2) sits apart:
+  a 14px gap above it and a slate-blue frame (1.5px border, rounded
+  corners, 8px in from the edges) around its bar and rows. Its bar is pale
+  blue with blue text, chevron, + and a card icon after the chevron.
 - "Compact rows" (phone only; in the page menu since v0.36.0, a
   `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved and what is
   left); Planned, Spent (and Assigned on a desktop), Refunded and Short are hidden until it is
