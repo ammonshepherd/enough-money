@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.42.2.
+Version described: 0.42.3.
 
 ## 1. Purpose
 
@@ -281,7 +281,7 @@ These are implemented in `budgetMath.ts` and the controllers:
   account).
 - Credit card debt: while the cards owe anything today (`cardDebt` in
   `src/models/accounts.ts`, display only), every page shows "CREDIT CARD
-  DEBT" (14px) and the amount (26px) in a rounded strip with 12px space
+  DEBT" (14px) and the amount (26px, negative: debt, v0.42.3) in a rounded strip with 12px space
   above and below: under the month band on Budget (above Available to
   Assign) and Accounts, and at the top of Settings. Its background is one of 30 reds, pale to deep
   (`SHADES` in `src/models/cardDebtShades.ts`), picked at random once per
@@ -420,7 +420,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   negative."). Edits show at once (an optimistic update) and are undone if the
   save fails. A card payment envelope shows Available to pay once, as its
   amount on the right (heard as "available to pay"), and only a Remaining
-  debt cell on line 2 (v0.42.2).
+  debt cell on line 2 (v0.42.2), negative like all debt (v0.42.3).
 - Typing amounts (decided in v0.35.0): every amount field (transaction
   amount and split lines, Planned, Assigned and its number pad, the Assign
   and Move money dialogs, Assign and Release on the envelope sheet, opening
@@ -460,9 +460,11 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
     ⟨amount⟩, ⟨date⟩") that opens the transaction edit dialog over the sheet,
     which stays open and updates after a save or delete;
   - Delete envelope (confirm: money assigned returns to Available to Assign).
-    A card's payment envelope sheet shows Available to pay, "Owed $X · Remaining
-    debt $Y", "Extra paid $X this month · $Y this year" (`cardExtraPaid`,
-    see the info pane's EXTRA PAID), "Assign (negative to take back)", the Saved panel and how it fills,
+    A card's payment envelope sheet shows Available to pay, "Owed −$X · Remaining
+    debt −$Y" (Owed: the card's debt at the end of the month; Remaining debt:
+    the part of it not set aside; both negative, v0.42.3), "Extra paid $X
+    this month · $Y this year" (`cardExtraPaid`, see the info pane's EXTRA
+    PAID; the year adds up its months), "Assign (negative to take back)", the Saved panel and how it fills,
     and no Delete.
 - Moving money out of an envelope (v0.31.0): what is left on the right of a
   row (the Remaining column on a desktop) is a button ("Move money from
@@ -501,7 +503,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   - With no envelope chosen the panel shows the month at a glance (display
     only): Income, Assigned, Spent and In Saved (`totals` of the month), then
     lists of envelopes "Spent over Planned" ("$X over"), "Short" and "Card
-    debt not covered" (`monthWatchList` in `envelopeDetail.ts`; each opens
+    debt not covered" (negative, v0.42.3; `monthWatchList` in `envelopeDetail.ts`; each opens
     its envelope), and "Choose an envelope to see its details here."
 
 ### Accounts
@@ -563,26 +565,27 @@ $0.00 balance.
     ⟨name⟩") on an open account.
   - Figures (`accountFigures` in `activity.ts`, display only; label 9px
     uppercase, written in Title Case since v0.42.1, amount 15px 800),
-    three columns. Row 1: MONEY IN (green) and
-    MONEY OUT (red) for the month shown (the account's inflows and outflows
-    dated in it, transfers (card payments too) left out, a split once at
-    its full amount, inflows to review included), AVAILABLE BALANCE on a
-    checking account, TOTAL OWED on a card (as a positive amount, v0.42.1),
-    CURRENT BALANCE on a tracking account (every transaction, any date). Row 2: OPENING BALANCE (as entered, signed)
-    on a checking account; on a credit card EXTRA PAID instead (v0.33.6,
-    `cardExtraPaid` in `budgetMath.ts`): the month's payments beyond the
-    card's charges, i.e. paid from money set aside for paydown. Month by
-    month the card's charges (purchases in an envelope, cash advances) fill
-    a pool and payments take from it first; what the pool cannot cover is
-    extra and stays extra. Card credits and purchases to review fund
-    nothing, and debt from before the opening date is all extra when paid.
-    Then MONTH START (every transaction dated
-    before the month's first day: `accountBalance` with `before`),
-    CURRENT BALANCE on a checking account or card, as the bank names it
-    (v0.42.1), RECONCILED on a tracking account (opening balance plus
-    reconciled transactions). Month start
-    plus the month's net activity is the next month's start. Only the month
-    figures follow the month picker.
+    three columns, balances on row 1 and the month's flow on row 2
+    (v0.42.3). Row 1: MONTH START (every transaction dated before the
+    month's first day: `accountBalance` with `before`), then CURRENT BALANCE
+    on a checking account or card, as the bank names it (v0.42.1),
+    RECONCILED on a tracking account (opening balance plus reconciled
+    transactions), then AVAILABLE BALANCE on a checking account and CURRENT
+    BALANCE on a tracking account (every transaction, any date), or TOTAL
+    OWED on a card: its balance at the end of the month shown (every
+    transaction dated up to the month's last day, `monthEnd`), negative
+    as all debt is (v0.42.3). Row 2: MONEY IN (green) and MONEY OUT (red)
+    for the month shown: every inflow and outflow of the account dated in
+    it, transfers included (card payments are a card's money in) since
+    v0.42.3, a split once at its full amount, transactions to review
+    included; then OPENING BALANCE (as entered, signed) on a checking or
+    tracking account, or on a credit card EXTRA PAID (`cardExtraPaid` in
+    `budgetMath.ts`, rule revised in v0.42.3): money in beyond money out
+    in the month, i.e. what paid down the debt, never below $0.00 (a month
+    with more out than in is $0.00, nothing carried). Month start plus the
+    month's net activity is the next month's start. Month Start, Total
+    Owed, Money In, Money Out and Extra Paid follow the month picker; the
+    other balances are as of today.
   - "Import CSV" (an open account only) opens the bank import already set to
     this account (no account picker) in a sheet with Close.
   - Collapsed (v0.36.0, phone, "Collapse info pane" in the page menu): line
@@ -664,7 +667,7 @@ picker it shows is gone).
   `through`), to compare with the bank. Under it, without a card:
   "Reconciled $X" (opening balances plus reconciled transactions); with a
   card the balance is cash minus card debt (it can be negative), with "Cash
-  $X · Cards owe $Y" under it. No pencil or import.
+  $X · Card debt −$Y" under it (debt negative since v0.42.3). No pencil or import.
 - "No accounts" notice, then the "To review" card when anything waits (from
   any month): totals in and out, rows (tap to edit), "Mark as Income" on
   non-card inflows, "Apply income rules (N matches)", "Mark all N inflows as

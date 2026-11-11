@@ -2,7 +2,7 @@ import { useState } from "react";
 import { messageOf } from "../../controllers/errors";
 import type { BudgetPageState as Page } from "../../controllers/useBudgetPage";
 import { envelopeLeft, type EnvelopeRow } from "../../models/budgetMath";
-import { formatCents } from "../../models/money";
+import { asDebt, formatCents } from "../../models/money";
 import { ErrorMessage, Money, SpentAmount } from "../components";
 import { EnvelopeIcon } from "../icons";
 import { EditableCell } from "./EditableCell";
@@ -98,7 +98,8 @@ export function EnvelopeItem({
       {card ? (
         <div className={desktop ? "envelope-cells" : "envelope-cells two"}>
           <span className={card.uncovered > 0 ? "cell debt" : "cell"}>
-            <span className="cell-label">Remaining debt</span> <Money cents={card.uncovered} />
+            <span className="cell-label">Remaining debt</span>{" "}
+            <Money cents={asDebt(card.uncovered)} />
           </span>
         </div>
       ) : (

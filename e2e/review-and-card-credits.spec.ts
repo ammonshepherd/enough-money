@@ -104,7 +104,7 @@ test("money into a credit card is a card credit that only lowers what is owed", 
   await expect(page.getByText("to review")).toHaveCount(0);
   const payment = envelope(page, "Visa payment");
   await expect(payment.locator(".envelope-remaining")).toHaveText("$0.00");
-  await expect(payment).toContainText("Remaining debt $170.00");
+  await expect(payment).toContainText("Remaining debt -$170.00");
   await openAllAccounts(page);
   const credit = activityRow(page, "Returned shoes");
   await expect(credit.locator(".activity-account")).toHaveText("Visa");

@@ -15,6 +15,15 @@ export function assertCents(value: number, name = "amount"): asserts value is Ce
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
+/**
+ * What is owed, as the app shows debt: negative (decided in v0.42.3; a card
+ * company shows it positive, this app does not). $0.00 stays $0.00, never
+ * "-$0.00", and a card in credit shows positive.
+ */
+export function asDebt(owed: Cents): Cents {
+  return owed === 0 ? 0 : -owed;
+}
+
 /** Formats cents for display, e.g. -123456 → "-$1,234.56". */
 export function formatCents(cents: Cents): string {
   assertCents(cents);

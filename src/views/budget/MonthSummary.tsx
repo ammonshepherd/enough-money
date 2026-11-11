@@ -1,5 +1,6 @@
 import type { BudgetPageState as Page } from "../../controllers/useBudgetPage";
 import type { WatchItem } from "../../models/envelopeDetail";
+import { asDebt } from "../../models/money";
 import { Money, SpentAmount } from "../components";
 
 /**
@@ -49,7 +50,11 @@ export function MonthSummary({
       </dl>
       <WatchList title="Spent over Planned" items={watch.overPlan} suffix=" over" onOpen={onOpen} />
       <WatchList title="Short" items={watch.short} onOpen={onOpen} />
-      <WatchList title="Card debt not covered" items={watch.uncoveredDebt} onOpen={onOpen} />
+      <WatchList
+        title="Card debt not covered"
+        items={watch.uncoveredDebt.map((item) => ({ ...item, amount: asDebt(item.amount) }))}
+        onOpen={onOpen}
+      />
       <p className="panel-hint">Choose an envelope to see its details here.</p>
     </div>
   );

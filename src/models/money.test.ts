@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  asDebt,
   assertCents,
   centsToInput,
   formatCents,
@@ -84,5 +85,14 @@ describe("centsToInput", () => {
     }
     expect(centsToInput(123_456)).toBe("1234.56");
     expect(centsToInput(-5)).toBe("-0.05");
+  });
+});
+
+describe("asDebt", () => {
+  it("shows what is owed as negative, never -$0.00, and a credit as positive", () => {
+    expect(asDebt(20_000)).toBe(-20_000);
+    expect(Object.is(asDebt(0), 0)).toBe(true);
+    expect(formatCents(asDebt(0))).toBe("$0.00");
+    expect(asDebt(-500)).toBe(500);
   });
 });

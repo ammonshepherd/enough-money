@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { useCardDebt } from "../controllers/useCardDebt";
+import { asDebt } from "../models/money";
 import type { BudgetData } from "../models/types";
 import { Money } from "./components";
 
@@ -15,7 +16,7 @@ export function CardDebt({ data }: { data: BudgetData }) {
   return (
     <p className="card-debt" style={colors}>
       <span className="card-debt-label">Credit card debt</span>
-      <Money cents={owed} />
+      <Money cents={asDebt(owed)} />
     </p>
   );
 }
