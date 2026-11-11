@@ -41,7 +41,9 @@ test("a credit card account owes money and gets a payment envelope", async ({ pa
   await expect(page.getByRole("region", { name: "Credit card payments" })).toContainText(
     "Visa payment",
   );
-  await expect(payment).toContainText("Available to pay $0.00");
+  // Available to pay shows once: the amount on the right.
+  await expect(payment.locator(".envelope-left")).toHaveText("$0.00 available to pay");
+  await expect(payment).not.toContainText("Available to pay");
   await expect(payment).toContainText("Remaining debt $200.00");
   await expect(payment).not.toContainText("Assigned");
 
@@ -145,7 +147,9 @@ test("pay a card from checking, covering what the payment envelope lacks", async
 
   await expect(available(page)).toContainText("$800.00");
   await expect(payment.locator(".envelope-remaining")).toHaveText("$0.00");
-  await expect(payment).toContainText("Available to pay $0.00");
+  // Available to pay shows once: the amount on the right.
+  await expect(payment.locator(".envelope-left")).toHaveText("$0.00 available to pay");
+  await expect(payment).not.toContainText("Available to pay");
   await expect(payment).toContainText("Remaining debt $100.00");
   await goTo(page, "Accounts");
   await expect(accountRow(page, "Visa")).toContainText("-$100.00");
@@ -183,4 +187,33 @@ test("a payment nothing can cover is not suggested as Uncategorized", async ({ p
   );
   await expect(cover).not.toContainText("Uncategorized");
   await expect(cover.getByRole("button", { name: "Cover and save" })).toBeDisabled();
+});
+
+test("the card payments group is pinned first and holds only card envelopes", async ({ page }) => {
+  await signInWithHousehold(page);
+  await addGroupWithEnvelopes(page, "Bills", ["Rent"]);
+  await addAccount(page, { name: "Visa", owed: "50" });
+
+  // On Budget it comes first, though it was made last, and has no +.
+  await goTo(page, "Budget");
+  const sections = page.locator("section.budget-group");
+  await expect(sections.first()).toHaveAttribute("aria-label", "Credit card payments");
+  const cards = page.getByRole("region", { name: "Credit card payments" });
+  await expect(cards.getByRole("button", { name: /^Add envelope to/ })).toHaveCount(0);
+
+  // In Settings it is pinned above the groups that can be dragged.
+  await goTo(page, "Settings");
+  const groups = page.getByRole("region", { name: "Envelope groups" });
+  await expect(groups.getByRole("list", { name: "Pinned group" })).toContainText(
+    "Credit card payments",
+  );
+  await expect(groups.getByRole("button", { name: "Move Credit card payments" })).toHaveCount(0);
+  const sortable = groups.getByRole("list", { name: "Envelope groups" });
+  await expect(sortable).toContainText("Bills");
+  await expect(sortable).not.toContainText("Credit card payments");
+
+  // An ordinary envelope cannot move into it.
+  await goTo(page, "Budget");
+  const sheet = await openEnvelope(page, "Rent");
+  await expect(sheet.getByLabel("Group for Rent").locator("option")).toHaveText(["Bills"]);
 });

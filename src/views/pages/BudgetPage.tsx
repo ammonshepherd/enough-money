@@ -97,7 +97,7 @@ export function BudgetPage({
       </button>
     </section>
   );
-  const groups = page.groups.map((group) => (
+  const groupSection = (group: (typeof page.groups)[number]) => (
     <GroupSection
       key={group.id}
       group={group}
@@ -110,7 +110,12 @@ export function BudgetPage({
       desktop={desktop}
       selectedId={desktop ? openId : null}
     />
-  ));
+  );
+  const groups = page.groups.map(groupSection);
+  // Desktop: the card payments group is its own box above the table, with
+  // its own columns (v0.42.2).
+  const cardGroup = page.groups.find((group) => group.cards);
+  const tableGroups = page.groups.filter((group) => !group.cards);
   const unusedToggle = view.unusedCount > 0 && (
     <p className="unused-toggle">
       <button className="text-button" type="button" onClick={page.toggleUnused}>
@@ -193,18 +198,32 @@ export function BudgetPage({
 
       {desktop ? (
         <div className="budget-work">
-          <div className="envelope-table">
-            {page.groups.length > 0 && (
-              <div className="envelope-colhead" aria-hidden="true">
-                <span>Envelope</span>
-                <span>Planned</span>
-                <span>Assigned</span>
-                <span>Spent</span>
-                <span>Remaining</span>
+          <div className="budget-tables">
+            {cardGroup && (
+              <div className="envelope-table card-table">
+                <div className="envelope-colhead" aria-hidden="true">
+                  <span>Card</span>
+                  <span>Available to pay</span>
+                  <span>Remaining debt</span>
+                </div>
+                {groupSection(cardGroup)}
               </div>
             )}
-            {groups}
-            {unusedToggle}
+            {(tableGroups.length > 0 || unusedToggle) && (
+              <div className="envelope-table">
+                {tableGroups.length > 0 && (
+                  <div className="envelope-colhead" aria-hidden="true">
+                    <span>Envelope</span>
+                    <span>Planned</span>
+                    <span>Assigned</span>
+                    <span>Spent</span>
+                    <span>Remaining</span>
+                  </div>
+                )}
+                {tableGroups.map(groupSection)}
+                {unusedToggle}
+              </div>
+            )}
           </div>
           <SidePanel
             label={

@@ -6,6 +6,7 @@
  * `uncategorizedSpent` are positive magnitudes of money going out; use
  * `spentFromAmounts` to turn signed transaction amounts into one.
  */
+import { cardGroupId, orderedGroups } from "./groupOrder";
 import { assertCents, type Cents } from "./money";
 import { addMonths, isMonth, monthOf, type Month } from "./month";
 import type { Allocation, BudgetData, Envelope, IsoDate, Transaction } from "./types";
@@ -615,6 +616,8 @@ function balanceThrough(accountId: string, data: BudgetData, month: Month): Cent
 export interface GroupRows {
   id: string;
   name: string;
+  /** The cards' payment envelopes' group: always first, only those envelopes (groupOrder.ts). */
+  cards: boolean;
   envelopes: EnvelopeRow[];
 }
 
@@ -767,9 +770,11 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
     return row;
   };
 
-  const groups = [...data.groups].sort(byPosition).map((group) => ({
+  const cardGroup = cardGroupId(data);
+  const groups = orderedGroups(data).map((group) => ({
     id: group.id,
     name: group.name,
+    cards: group.id === cardGroup,
     envelopes: data.envelopes
       .filter((e) => e.groupId === group.id)
       .sort(byPosition)

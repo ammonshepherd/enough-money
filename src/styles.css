@@ -1173,11 +1173,14 @@ a:focus-visible {
 
 /* Credit card payments (v0.42.2): those envelopes work differently, so the
    group sits apart in a slate-blue frame, its bar blue with a card icon. */
-.budget-group.card-group {
+.budget-group.card-group,
+.card-table {
   --bb-card-blue: #1f4766;
   --bb-card-tint: #e3edf6;
   --bb-card-line: #c9dbea;
+}
 
+.budget-group.card-group {
   overflow: hidden;
   margin: 14px 8px;
   border: 1.5px solid var(--bb-card-line);
@@ -1923,6 +1926,29 @@ div.sheet-field .sheet-field-value {
   inline-size: 1.25rem;
   block-size: 1.25rem;
   fill: currentColor;
+}
+
+/* Settings: the card payments group is pinned first, so a card icon stands
+   where its handle would be (v0.42.2). */
+.drag-handle.pinned {
+  color: #1f4766;
+  cursor: default;
+}
+
+.drag-handle.pinned:hover {
+  background: none;
+}
+
+.drag-handle.pinned svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.pinned-group + .sortable-list > li:first-child {
+  border-block-start: 1px solid var(--border);
 }
 
 .group-envelopes {
@@ -3037,6 +3063,13 @@ body:has(.app-shell.desktop) {
   box-shadow: 0 6px 20px rgba(75, 42, 104, 0.06);
 }
 
+/* The card payments box sits above the envelope table, a gap between. */
+.budget-tables {
+  display: grid;
+  gap: 1.25rem;
+  min-inline-size: 0;
+}
+
 .envelope-colhead {
   position: sticky;
   inset-block-start: var(--desktop-band);
@@ -3081,14 +3114,6 @@ body:has(.app-shell.desktop) {
 .desktop .group-total {
   grid-column: 5;
   text-align: end;
-}
-
-/* No room at the sides on desktop, so the card payments group has no
-   frame: only the gap and its blue bar set it apart. */
-.desktop .budget-group.card-group {
-  margin-inline: 0;
-  border: 0;
-  border-radius: 0;
 }
 
 .desktop .add-envelope-button {
@@ -3197,6 +3222,58 @@ body:has(.app-shell.desktop) {
 
 .desktop .envelope > .error-message {
   grid-column: 1 / -1;
+}
+
+/* Desktop card payments (v0.42.2): its own box with its own columns,
+   Card | Available to pay | Remaining debt; the frame is the box itself. */
+.card-table {
+  --env-cols: minmax(9rem, 1fr) 9.5rem 9.5rem;
+
+  border-color: var(--bb-card-line);
+}
+
+.card-table .envelope-colhead {
+  padding-inline-end: 0.5rem;
+  border-block-end-color: var(--bb-card-line);
+}
+
+.card-table .envelope-colhead span:nth-child(3) {
+  padding-inline-end: 8px;
+}
+
+.desktop .card-table .budget-group.card-group {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.card-table .group-heading {
+  padding-inline-end: 0.5rem;
+}
+
+.card-table .group-heading h2 {
+  grid-column: 1 / 2;
+}
+
+.card-table .group-total {
+  grid-column: 2;
+  padding-inline-end: 8px;
+}
+
+.card-table .envelope {
+  padding-inline-end: 0.5rem;
+}
+
+.card-table .envelope-left {
+  grid-column: 2;
+}
+
+.card-table .envelope-cells .cell {
+  grid-column: 3;
+}
+
+.card-table .envelope-extra {
+  grid-column: 2 / 4;
 }
 
 .desktop .envelope-table > .unused-toggle {

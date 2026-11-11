@@ -1,3 +1,4 @@
+import { envelopeGroups } from "../models/groupOrder";
 import { useMemo, useState } from "react";
 import {
   buildBudgetMonth,
@@ -141,10 +142,8 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
       setOffer({ month, show: false });
     },
 
-    /** Every group, in order (to move an envelope to). */
-    allGroups: [...data.groups]
-      .sort((a, b) => a.position - b.position || a.name.localeCompare(b.name))
-      .map(({ id, name }) => ({ id, name })),
+    /** The groups an envelope can move to, in order (never the card group). */
+    allGroups: envelopeGroups(data).map(({ id, name }) => ({ id, name })),
 
     /** What the envelope sheet shows; null once the envelope is gone (deleted). */
     detail: (envelopeId: string) => {

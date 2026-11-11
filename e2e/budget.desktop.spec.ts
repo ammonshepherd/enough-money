@@ -222,3 +222,22 @@ test("Add transaction opens its form in the panel on Budget", async ({ page }) =
   await page.keyboard.press("Escape");
   await expect(form).toHaveCount(0);
 });
+
+test("card payments are their own box above the envelope table", async ({ page }) => {
+  await signInWithHousehold(page);
+  await addGroupWithEnvelopes(page, "Bills", ["Rent"]);
+  await addAccount(page, { name: "Visa", owed: "50" });
+  await goTo(page, "Budget");
+
+  const cardBox = page.locator(".card-table");
+  await expect(cardBox.locator(".envelope-colhead")).toHaveText(
+    "CardAvailable to payRemaining debt",
+  );
+  await expect(cardBox).toContainText("Visa payment");
+  await expect(cardBox).not.toContainText("Rent");
+  // Available to pay shows once, and Remaining debt beside it.
+  const visa = envelope(page, "Visa payment");
+  await expect(visa.locator(".envelope-left")).toHaveText("$0.00 available to pay");
+  await expect(visa.locator(".cell.debt")).toContainText("$50.00");
+  await expect(page.locator(".envelope-table:not(.card-table)")).toContainText("Rent");
+});

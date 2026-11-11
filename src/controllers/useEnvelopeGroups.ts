@@ -1,3 +1,4 @@
+import { cardGroupId, orderedGroups } from "../models/groupOrder";
 import type { BudgetData } from "../models/types";
 import { requireName } from "./input";
 import type { Budget } from "./useBudget";
@@ -21,7 +22,8 @@ export function useEnvelopeGroups(budget: Budget, data: BudgetData) {
   return {
     ...envelopeEdits(budget, data),
 
-    groups: [...data.groups].sort(byPosition).map((group) => ({
+    /** Every group, the card group first (see groupOrder.ts). */
+    groups: orderedGroups(data).map((group) => ({
       ...group,
       envelopes: data.envelopes.filter((e) => e.groupId === group.id).sort(byPosition),
     })),
@@ -38,8 +40,16 @@ export function useEnvelopeGroups(budget: Budget, data: BudgetData) {
       await budget.change((store) => store.renameGroup(groupId, groupName));
     },
 
-    /** `groupIds`: every group, top first. Shown at once, then saved. */
-    reorderGroups: async (groupIds: string[]) => {
+    /** The card group's id: pinned first, never dragged, holds only card envelopes. */
+    cardGroupId: cardGroupId(data),
+
+    /**
+     * `ids`: every group but the card group, top first. Shown at once, then
+     * saved, with the card group kept first.
+     */
+    reorderGroups: async (ids: string[]) => {
+      const cards = cardGroupId(data);
+      const groupIds = cards ? [cards, ...ids.filter((id) => id !== cards)] : ids;
       await budget.change(
         (store) => store.reorderGroups(data.household.id, groupIds),
         (d) => ({ ...d, groups: withOrder(d.groups, groupIds) }),

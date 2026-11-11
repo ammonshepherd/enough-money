@@ -92,12 +92,11 @@ export function EnvelopeItem({
         {!desktop && leftAmount}
       </div>
 
+      {/* A card's Available to pay is its amount on the right (on a desktop,
+          its first column); line 2 shows only what it cannot yet pay. */}
+      {desktop && card && leftAmount}
       {card ? (
-        <div className="envelope-cells two">
-          <span className="cell">
-            <span className="cell-label">Available to pay</span>{" "}
-            <Money cents={envelope.envelopeMoney} />
-          </span>
+        <div className={desktop ? "envelope-cells" : "envelope-cells two"}>
           <span className={card.uncovered > 0 ? "cell debt" : "cell"}>
             <span className="cell-label">Remaining debt</span> <Money cents={card.uncovered} />
           </span>
@@ -134,7 +133,7 @@ export function EnvelopeItem({
           </span>
         </div>
       )}
-      {desktop && leftAmount}
+      {desktop && !card && leftAmount}
 
       {(envelope.refunded > 0 || envelope.shortfall > 0) && (
         <p className="envelope-extra">

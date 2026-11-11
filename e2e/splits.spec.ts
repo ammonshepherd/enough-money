@@ -163,7 +163,9 @@ test("a card purchase can be split; money into a card cannot", async ({ page }) 
   // The whole purchase moves into the card's payment envelope.
   await expect(remaining(page, "Groceries")).toHaveText("$50.00");
   await expect(remaining(page, "Fun")).toHaveText("$80.00");
-  await expect(envelope(page, "Visa payment")).toContainText("Available to pay $70.00");
+  await expect(envelope(page, "Visa payment").locator(".envelope-left")).toHaveText(
+    "$70.00 available to pay",
+  );
 
   // An inflow on the card is a card credit: no envelopes, so no split.
   const credit = await openAddTransaction(page);

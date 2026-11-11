@@ -358,8 +358,8 @@ describe("envelopeLeft and groupLeft", () => {
       row("fun", { remaining: 0, envelopeMoney: 1_000 }),
       row("pay", { remaining: 500, envelopeMoney: 8_000, card }),
     ];
-    expect(groupLeft({ id: "g", name: "G", envelopes })).toBe(10_500);
-    expect(groupLeft({ id: "e", name: "Empty", envelopes: [] })).toBe(0);
+    expect(groupLeft({ id: "g", name: "G", cards: false, envelopes })).toBe(10_500);
+    expect(groupLeft({ id: "e", name: "Empty", cards: false, envelopes: [] })).toBe(0);
   });
 });
 
