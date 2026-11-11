@@ -195,7 +195,8 @@ non-card budget balances − all envelope money (P included)`.
   (chevron; open, the bar shows no numbers; collapsed, it shows "N envelopes"
   and the group's total left, `groupLeft` in `budgetMath.ts`) and a + button
   (which also opens a collapsed group); the group of card payment envelopes
-  sits apart in a slate-blue frame with a card icon on its bar (v0.42.2,
+  sits apart in a slate-blue frame (none on a desktop) with a card icon on
+  its bar (v0.42.2,
   found by its envelopes, not its name). Collapsed groups are remembered per
   device and user in localStorage (`src/models/collapsedGroups.ts`, by group
   id; never in Supabase); envelopes are added

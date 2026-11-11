@@ -3083,12 +3083,12 @@ body:has(.app-shell.desktop) {
   text-align: end;
 }
 
-/* The card payments frame keeps the table's columns: no side inset, and
-   the name column may shrink so + is never cut off. */
+/* No room at the sides on desktop, so the card payments group has no
+   frame: only the gap and its blue bar set it apart. */
 .desktop .budget-group.card-group {
-  --env-cols: minmax(0, 1fr) repeat(3, 5.75rem) 7rem 2.5rem;
-
   margin-inline: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .desktop .add-envelope-button {
@@ -3455,10 +3455,6 @@ body:has(.app-shell.desktop) {
 @media (max-width: 74.99rem) {
   :root {
     --env-cols: minmax(8rem, 1fr) repeat(3, 5.25rem) 6.25rem 2.25rem;
-  }
-
-  .desktop .budget-group.card-group {
-    --env-cols: minmax(0, 1fr) repeat(3, 5.25rem) 6.25rem 2.25rem;
   }
 
   .app-shell.desktop > .page-content {

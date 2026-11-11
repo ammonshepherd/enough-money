@@ -385,8 +385,9 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
 - The group holding the cards' payment envelopes ("Credit card payments",
   found by its envelopes, so a rename keeps the look; v0.42.2) sits apart:
   a 14px gap above it and a slate-blue frame (1.5px border, rounded
-  corners, 8px in from the edges) around its bar and rows. Its bar is pale
-  blue with blue text, chevron, + and a card icon after the chevron.
+  corners, 8px in from the edges) around its bar and rows; on a desktop,
+  where there is no room at the sides, no frame, only the gap. Its bar is
+  pale blue with blue text, chevron, + and a card icon after the chevron.
 - "Compact rows" (phone only; in the page menu since v0.36.0, a
   `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved and what is
   left); Planned, Spent (and Assigned on a desktop), Refunded and Short are hidden until it is
