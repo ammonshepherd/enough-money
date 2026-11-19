@@ -1,14 +1,14 @@
 # Enough Money
 
 Enough Money (called Budget Buddy until v0.37.0) is a mobile-first, installable envelope-budgeting web app for a small household, at
-<https://enoughmoney.app>.
+<https://enoughmoney.app/app/> (the landing page is <https://enoughmoney.app>).
 
 The full description of how it works is in [`docs/SPEC.md`](docs/SPEC.md); the decided
 budgeting rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Version
 
-The current application version is **0.37.0** (kept in `package.json`; the app shows it in
+The current application version is **0.43.0** (kept in `package.json`; the app shows it in
 the header, and `docs/SPEC.md` describes that version).
 
 Versions follow:
@@ -32,6 +32,7 @@ src/models/        Types, pure functions (budgetMath.ts holds all budget math) a
 src/controllers/   React hooks that load data and handle user actions
 src/views/         React components; display only
 public/icons/      App icons
+landing/           The landing page at the site root (plain static files; see landing/README.md)
 e2e/               Playwright UI tests (run against the in-memory store)
 integration/       Tests of the Supabase store and its security rules against the test project
 supabase/          Database migrations
@@ -58,9 +59,9 @@ npm run db:seed:test # recreate the test users and their households
 1. Copy `.env.example` to `.env.local` and fill in the publishable key
    (Supabase dashboard → Project Settings → API Keys).
 2. In Supabase → Authentication → URL Configuration, add
-   `http://localhost:5173/` as a redirect URL (and as the Site URL
+   `http://localhost:5173/app/` as a redirect URL (and as the Site URL
    while developing) so email confirmation links come back to the app.
-3. `npm run dev`, open <http://localhost:5173/>, create an account,
+3. `npm run dev`, open <http://localhost:5173/app/>, create an account,
    confirm the email, sign in and name your household.
 
 ### Data stores
@@ -79,11 +80,13 @@ It is skipped until `.env.test` is filled in (copy `.env.test.example`). See
 
 ## Deployment
 
-The app is hosted on Cloudflare at <https://enoughmoney.app> (domain, DNS and hosting
-all in Cloudflare). `.github/workflows/deploy.yml` checks, tests and builds every pull
-request, and on each push to `main` runs `wrangler deploy`, which uploads `dist/` as a
-Worker that only serves files (`wrangler.jsonc`). The build writes `dist/_headers`, which
-Cloudflare sends as security headers.
+The site is hosted on Cloudflare at <https://enoughmoney.app> (domain, DNS and hosting
+all in Cloudflare): the landing page (`landing/`) at the root and the app at `/app/`.
+`.github/workflows/deploy.yml` checks, tests and builds every pull request, and on each
+push to `main` runs `wrangler deploy`, which uploads `dist/` as a Worker that only serves
+files (`wrangler.jsonc`). `npm run build` puts the app in `dist/app/`, copies `landing/`
+to `dist/` and writes `dist/_headers`, which Cloudflare sends as security headers for
+the whole site. `npx wrangler@4.148.0 dev` serves the built site locally.
 
 One-time setup:
 
@@ -98,8 +101,8 @@ One-time setup:
 - **Cloudflare → enoughmoney.app:** leave off anything that injects scripts into pages
   (Web Analytics auto-inject, Rocket Loader, Email Address Obfuscation); the Content
   Security Policy would block it.
-- **Supabase → Authentication → URL Configuration:** `https://enoughmoney.app` as the
-  Site URL and as a redirect URL.
+- **Supabase → Authentication → URL Configuration:** `https://enoughmoney.app/app/` as
+  the Site URL and as a redirect URL.
 
 ## The Budget page
 

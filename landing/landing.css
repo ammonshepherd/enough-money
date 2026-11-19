@@ -1,0 +1,27 @@
+/* Placeholder styles until the landing page is designed. */
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #faf8fc;
+  color: #2a1a38;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+
+h1 {
+  color: #4b2a68;
+  margin: 0.5rem 0;
+}
+
+.open-app {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: #4b2a68;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}

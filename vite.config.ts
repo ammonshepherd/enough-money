@@ -1,12 +1,20 @@
 /// <reference types="vitest/config" />
+import { cpSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import packageJson from "./package.json" with { type: "json" };
 
-// Cloudflare serves the app from the root of https://enoughmoney.app/,
-// so every URL the build produces starts with this path.
-const BASE = "/";
+// The site (decided in v0.43.0): the landing page at https://enoughmoney.app/
+// and the app at https://enoughmoney.app/app/. Every URL the app's build
+// produces starts with this path, and the build goes into an `app` folder
+// inside the site folder (dist/app/, see sitePlugin).
+const BASE = "/app/";
+const APP_OUT_DIR = "dist/app";
+
+// The landing page's files, copied as they are to the site root.
+const LANDING_DIR = "landing";
 
 // The test Supabase project (see docs/testing.md); production is lkaurrcarzzkbqdwqfge.
 const TEST_PROJECT_REF = "kiqbgjgvptgknmboazaq";
@@ -49,8 +57,9 @@ function contentSecurityPolicy(supabaseUrl: string | undefined): string {
 }
 
 /**
- * Cloudflare reads `_headers` from the built files and sends these headers
- * with every response (the file itself is not served). A header can do what
+ * Cloudflare reads `_headers` from the root of the built site and sends these
+ * headers with every response, the landing page's too (the file itself is
+ * not served). A header can do what
  * the <meta> tag cannot: `frame-ancestors 'none'` stops other sites showing
  * the app in a frame. The <meta> tag stays so `vite preview` (the UI tests)
  * applies the same policy.
@@ -66,11 +75,14 @@ function headersFile(policy: string): string {
   ].join("\n");
 }
 
-function securityPlugin(mode: string): Plugin {
+function policyFor(mode: string): string {
   // loadEnv also picks up VITE_ variables set in the shell (CI, Playwright).
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const supabaseUrl = env.VITE_DATA_STORE === "memory" ? undefined : env.VITE_SUPABASE_URL;
-  const policy = contentSecurityPolicy(supabaseUrl);
+  return contentSecurityPolicy(supabaseUrl);
+}
+
+function securityPlugin(policy: string): Plugin {
   return {
     name: "enough-money-security",
     apply: "build",
@@ -81,8 +93,36 @@ function securityPlugin(mode: string): Plugin {
         injectTo: "head-prepend",
       },
     ],
-    generateBundle() {
-      this.emitFile({ type: "asset", fileName: "_headers", source: headersFile(policy) });
+  };
+}
+
+/**
+ * Builds the rest of the site around the app. The app's output folder must
+ * be named `app` (dist/app, or dist-e2e/app for the UI tests); its parent is
+ * the site root, which gets the landing page's files and `_headers`. Old
+ * files in the site root are overwritten, never deleted.
+ */
+function sitePlugin(policy: string): Plugin {
+  let siteRoot = "";
+  let landingDir = "";
+  return {
+    name: "enough-money-site",
+    apply: "build",
+    configResolved(config) {
+      const outDir = path.resolve(config.root, config.build.outDir);
+      if (path.basename(outDir) !== "app") {
+        throw new Error(`Build the app into a folder named "app" (got ${config.build.outDir}).`);
+      }
+      siteRoot = path.dirname(outDir);
+      landingDir = path.resolve(config.root, LANDING_DIR);
+    },
+    writeBundle() {
+      cpSync(landingDir, siteRoot, {
+        recursive: true,
+        // Notes for whoever edits the landing page stay out of the site.
+        filter: (source) => path.basename(source) !== "README.md",
+      });
+      writeFileSync(path.join(siteRoot, "_headers"), headersFile(policy));
     },
   };
 }
@@ -93,15 +133,18 @@ function securityPlugin(mode: string): Plugin {
 // `--mode test`, which loads .env.test (the test database).
 export default defineConfig(({ command, mode }) => {
   if (command === "build") checkBuildEnv(mode);
+  const policy = policyFor(mode);
   return {
     base: BASE,
+    build: { outDir: APP_OUT_DIR },
     define: {
       // Replaced at build time; read through src/models/appInfo.ts.
       __APP_VERSION__: JSON.stringify(packageJson.version),
     },
     plugins: [
       react(),
-      securityPlugin(mode),
+      securityPlugin(policy),
+      sitePlugin(policy),
       VitePWA({
         // Generates the service worker and manifest that sw.js and
         // manifest.webmanifest used to provide by hand.
@@ -121,6 +164,9 @@ export default defineConfig(({ command, mode }) => {
           name: "Enough Money",
           short_name: "Enough Money",
           description: "A simple envelope-style budgeting app.",
+          // Changed from "/" in v0.43.0, so the browser treats it as a new
+          // app: a home screen icon saved before then opens the landing
+          // page, which sends it on to /app/ (landing/legacy-redirect.js).
           start_url: BASE,
           scope: BASE,
           id: BASE,

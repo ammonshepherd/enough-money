@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.42.3.
+Version described: 0.43.0.
 
 ## 1. Purpose
 
@@ -17,8 +17,8 @@ An envelope-budgeting Progressive Web App for one small household. Money in
 checking accounts gets a job in envelopes; spending comes out of envelopes;
 credit card spending is set aside in a payment envelope per card. Bank and card
 CSV exports are imported and reviewed. Works on a phone first, installable,
-hosted on Cloudflare at `https://enoughmoney.app` with Supabase as the back
-end. Called Budget Buddy until v0.37.0; the Supabase projects, test emails
+hosted on Cloudflare at `https://enoughmoney.app/app/` (since v0.43.0; the
+site root is a landing page, `landing/`) with Supabase as the back end. Called Budget Buddy until v0.37.0; the Supabase projects, test emails
 and the backup format name keep the old name.
 
 ## 2. Project structure
@@ -93,11 +93,16 @@ always show what the store holds.
   checks it blocks nothing the app does), the same policy plus
   `frame-ancestors 'none'`, `nosniff`, a referrer policy and a permissions
   policy (no camera, microphone or location) in `dist/_headers`, which
-  Cloudflare sends as headers, and the Vitest projects `unit` and
-  `integration`.
+  Cloudflare sends as headers for the whole site, and the Vitest projects
+  `unit` and `integration`. Base `/app/`; the app builds into `dist/app/`
+  and `sitePlugin` copies `landing/` to `dist/`.
+- `landing/`: the landing page at the site root, plain static files (rules
+  in `landing/README.md`). `legacy-redirect.js` sends old `/#route` links
+  and home screen icons saved before v0.43.0 to `/app/`; `sw.js` retires
+  the service worker the app had at the root before v0.43.0.
 - `wrangler.jsonc`: Cloudflare hosting, a Worker named `enough-money` with
-  no code that serves `dist/` on the custom domain `enoughmoney.app`; no
-  workers.dev or preview URLs.
+  no code that serves `dist/` on the custom domain `enoughmoney.app`
+  (`/app` redirects to `/app/`); no workers.dev or preview URLs.
 
 ### Commands and CI
 

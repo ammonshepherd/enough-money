@@ -1,11 +1,14 @@
-// Cloudflare hosting: a Worker with no code that serves the built app in
-// dist/ at https://enoughmoney.app. `.github/workflows/deploy.yml` runs
+// Cloudflare hosting: a Worker with no code that serves the built site in
+// dist/ at https://enoughmoney.app: the landing page at / (landing/) and
+// the app at /app/ (dist/app/). `.github/workflows/deploy.yml` runs
 // `wrangler deploy` after the checks pass on main. Cloudflare reads the
 // headers in dist/_headers (written by vite.config.ts).
 {
   "name": "enough-money",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" },
+  // "auto-trailing-slash" (Cloudflare's default, kept explicit) sends
+  // /app to /app/, which serves dist/app/index.html.
+  "assets": { "directory": "./dist", "html_handling": "auto-trailing-slash" },
   // Only the real domain: no public *.workers.dev copy and no preview URLs,
   // since every build talks to the production database.
   "workers_dev": false,

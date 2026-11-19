@@ -1,5 +1,6 @@
 # Checks and builds every pull request; on pushes to main it also deploys
-# dist/ to Cloudflare (https://enoughmoney.app, configured in wrangler.jsonc).
+# dist/ to Cloudflare (https://enoughmoney.app, configured in wrangler.jsonc):
+# the landing page at the root and the app at /app/.
 name: Deploy to Cloudflare
 
 on:
