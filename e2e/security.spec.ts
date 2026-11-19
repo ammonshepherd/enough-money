@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { watchCsp } from "./cspWatch";
 import { accountRow, addAccount, signInWithHousehold } from "./helpers";
@@ -18,8 +19,9 @@ test("Cloudflare gets the same policy as a header, with framing blocked", async 
   const policy = await page
     .locator('meta[http-equiv="Content-Security-Policy"]')
     .getAttribute("content");
-  // vite preview serves _headers as a plain file; Cloudflare reads it instead.
-  const headers = await (await page.request.get("/_headers")).text();
+  // The build writes _headers at the site root (dist-e2e/, beside app/),
+  // where Cloudflare reads it; vite preview serves only the app.
+  const headers = readFileSync("dist-e2e/_headers", "utf8");
   expect(headers).toContain(`Content-Security-Policy: ${policy}; frame-ancestors 'none'`);
   expect(headers).toContain("X-Content-Type-Options: nosniff");
 });

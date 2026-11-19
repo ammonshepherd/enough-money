@@ -29,16 +29,30 @@ always describes the app as of that version (including §9, not built yet).
   only serves static files (`wrangler.jsonc`: no workers.dev or preview
   URLs, since every build uses the production database). The GitHub Actions
   workflow `deploy.yml` checks and builds every PR and, on pushes to `main`,
-  runs `wrangler deploy` (pinned version) after the checks pass. Vite `base`
-  is `/`; the PWA manifest scope/start_url/id match. Supabase URL and anon
-  key are injected at build time from repository Actions variables;
-  `CLOUDFLARE_API_TOKEN` (secret) and `CLOUDFLARE_ACCOUNT_ID` (variable)
-  deploy. Supabase Auth Site URL and redirect URL must include
-  `https://enoughmoney.app`. Public sign-up and every provider but email
-  stay off. The built page carries a Content Security Policy
-  (`vite.config.ts`), as a `<meta>` tag and in `dist/_headers` (sent as a
-  header by Cloudflare, with `frame-ancestors 'none'`); a new outside
-  resource must be added to it. Cloudflare features that inject scripts
+  runs `wrangler deploy` (pinned version) after the checks pass.
+- Site layout (decided in v0.43.0): the landing page is at
+  `https://enoughmoney.app/` and the app at `https://enoughmoney.app/app/`.
+  Vite `base` is `/app/` and the app builds into `dist/app/` (the build
+  refuses an output folder not named `app`); the PWA manifest
+  scope/start_url are `/app/`, but its `id` stays `/` (the app's identity
+  from before v0.43.0, so Chrome moves existing installs to `/app/`
+  instead of treating it as a new app; never change it). `landing/` holds the landing page as plain
+  static files that `sitePlugin` in `vite.config.ts` copies to the site root
+  (`landing/README.md` has its rules). Two landing files keep pre-v0.43.0
+  users working and must stay: `legacy-redirect.js` (first script on the
+  landing page) sends `/#route` links and home screen icons saved at `/`
+  to `/app/`, and `sw.js` retires the old service worker registered at
+  the root. The UI tests build into `dist-e2e/app/` and `vite preview`
+  serves it at `/app/`.
+- Supabase URL and anon key are injected at build time from repository
+  Actions variables; `CLOUDFLARE_API_TOKEN` (secret) and
+  `CLOUDFLARE_ACCOUNT_ID` (variable) deploy. Supabase Auth Site URL must be
+  `https://enoughmoney.app/app/`, and the redirect URLs must include it.
+  Public sign-up and every provider but email stay off. The whole site
+  (landing page included) carries one Content Security Policy
+  (`vite.config.ts`), on the app as a `<meta>` tag and site-wide in
+  `dist/_headers` (sent as a header by Cloudflare, with
+  `frame-ancestors 'none'`); a new outside resource must be added to it. Cloudflare features that inject scripts
   (Web Analytics auto-inject, Rocket Loader, email obfuscation) stay off.
   Actions are pinned to commit hashes.
 
@@ -489,7 +503,7 @@ asks to use (e.g. the icon zip) are inspected first, then copied into place.
 (purpose "any") and a separate `icon-maskable-512.png` (purpose "maskable") in
 the manifest (`vite.config.ts`), and `icon.svg` as the header logo (transparent,
 so no frame or shadow). `e2e/navigation.spec.ts` checks every icon loads under
-the base path.
+the base path (`/app/icons/`; the landing page uses them from there too).
 
 The logo (decided in v0.37.1) is a realistic gold coin with a calligraphic
 lowercase "e" dollar sign pressed into it, its two stubs flaring into the

@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { choosePageMenu, goTo, signInWithHousehold, openAllAccounts } from "./helpers";
 
@@ -82,16 +83,17 @@ test("signing out returns to the sign-in page", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
 });
 
-test("assets and manifest are served from the site root", async ({ page }) => {
+test("assets and manifest are served from /app/", async ({ page }) => {
   await page.goto("./");
   const logo = page.locator(".brand img");
-  await expect(logo).toHaveAttribute("src", "/icons/icon.svg");
+  await expect(logo).toHaveAttribute("src", "/app/icons/icon.svg");
   expect(await logo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
-  expect(manifestHref).toBe("/manifest.webmanifest");
+  expect(manifestHref).toBe("/app/manifest.webmanifest");
   const manifest = await (await page.request.get(manifestHref!)).json();
-  expect(manifest).toMatchObject({ start_url: "/", scope: "/" });
+  // The id stays "/" from before v0.43.0, so installs keep their identity.
+  expect(manifest).toMatchObject({ start_url: "/app/", scope: "/app/", id: "/" });
 
   // Every app icon, in the manifest and in <head>, loads from the base path.
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([
@@ -105,12 +107,26 @@ test("assets and manifest are served from the site root", async ({ page }) => {
     .locator('link[rel="icon"], link[rel="apple-touch-icon"]')
     .evaluateAll((links) => links.map((link) => link.getAttribute("href")!));
   expect(headIcons).toEqual([
-    "/icons/favicon.svg",
-    "/icons/favicon-32.png",
-    "/icons/favicon.ico",
-    "/icons/apple-touch-icon.png",
+    "/app/icons/favicon.svg",
+    "/app/icons/favicon-32.png",
+    "/app/icons/favicon.ico",
+    "/app/icons/apple-touch-icon.png",
   ]);
-  for (const href of [...headIcons, ...manifest.icons.map((i: { src: string }) => `/${i.src}`)]) {
+  for (const href of [
+    ...headIcons,
+    ...manifest.icons.map((i: { src: string }) => `/app/${i.src}`),
+  ]) {
     expect((await page.request.get(href)).status(), href).toBe(200);
   }
+});
+
+test("the build puts the landing page at the site root, beside app/", () => {
+  // vite preview serves only the app, so this checks the files Cloudflare gets.
+  const landing = readFileSync("dist-e2e/index.html", "utf8");
+  expect(landing).toContain('<script src="/legacy-redirect.js"></script>');
+  expect(landing).toContain('href="/app/"');
+  for (const file of ["legacy-redirect.js", "sw.js", "_headers", "app/index.html", "app/sw.js"]) {
+    expect(existsSync(`dist-e2e/${file}`), file).toBe(true);
+  }
+  expect(existsSync("dist-e2e/README.md")).toBe(false);
 });
