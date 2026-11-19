@@ -164,12 +164,16 @@ export default defineConfig(({ command, mode }) => {
           name: "Enough Money",
           short_name: "Enough Money",
           description: "A simple envelope-style budgeting app.",
-          // Changed from "/" in v0.43.0, so the browser treats it as a new
-          // app: a home screen icon saved before then opens the landing
-          // page, which sends it on to /app/ (landing/legacy-redirect.js).
+          // Changed from "/" in v0.43.0. The id stays "/" (where the app
+          // lived until then) and does not follow the base: it is only the
+          // app's identity, so Chrome treats this as the same installed app
+          // and moves an existing home screen icon to /app/ itself instead
+          // of offering a second install. Until it does (and on iOS, which
+          // ignores the id), the old icon opens the landing page, which
+          // sends it on to /app/ (landing/legacy-redirect.js).
           start_url: BASE,
           scope: BASE,
-          id: BASE,
+          id: "/",
           display: "standalone",
           background_color: "#faf8fc",
           theme_color: "#4b2a68",

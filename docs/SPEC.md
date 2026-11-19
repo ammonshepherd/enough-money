@@ -79,10 +79,11 @@ always show what the store holds.
 - `VITE_DATA_STORE=memory` — the in-memory store (UI tests).
 - `.env.test` — the test project (`--mode test`, seed script, database tests);
   see `docs/testing.md`.
-- `vite.config.ts`: `base: "/"`, `vite-plugin-pwa` with
+- `vite.config.ts`: `base: "/app/"`, `vite-plugin-pwa` with
   `registerType: "prompt"` (a new build waits for the new version banner,
   §5 App shell), manifest (name/short name "Enough Money",
-  `start_url`/`scope`/`id` = base, `display: standalone`, background `#faf8fc`,
+  `start_url`/`scope` = base, `id` = `/` (kept from before v0.43.0 so
+  installs keep their identity), `display: standalone`, background `#faf8fc`,
   theme `#4b2a68`, icons per CLAUDE.md), `__APP_VERSION__` from `package.json`,
   a build check (no secret-looking `VITE_` variable; production never points
   at the test project), a Content Security Policy `<meta>` added to the built

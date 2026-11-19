@@ -92,7 +92,8 @@ test("assets and manifest are served from /app/", async ({ page }) => {
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
   expect(manifestHref).toBe("/app/manifest.webmanifest");
   const manifest = await (await page.request.get(manifestHref!)).json();
-  expect(manifest).toMatchObject({ start_url: "/app/", scope: "/app/", id: "/app/" });
+  // The id stays "/" from before v0.43.0, so installs keep their identity.
+  expect(manifest).toMatchObject({ start_url: "/app/", scope: "/app/", id: "/" });
 
   // Every app icon, in the manifest and in <head>, loads from the base path.
   expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual([

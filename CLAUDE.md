@@ -34,7 +34,9 @@ always describes the app as of that version (including §9, not built yet).
   `https://enoughmoney.app/` and the app at `https://enoughmoney.app/app/`.
   Vite `base` is `/app/` and the app builds into `dist/app/` (the build
   refuses an output folder not named `app`); the PWA manifest
-  scope/start_url/id are `/app/`. `landing/` holds the landing page as plain
+  scope/start_url are `/app/`, but its `id` stays `/` (the app's identity
+  from before v0.43.0, so Chrome moves existing installs to `/app/`
+  instead of treating it as a new app; never change it). `landing/` holds the landing page as plain
   static files that `sitePlugin` in `vite.config.ts` copies to the site root
   (`landing/README.md` has its rules). Two landing files keep pre-v0.43.0
   users working and must stay: `legacy-redirect.js` (first script on the
