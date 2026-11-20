@@ -185,6 +185,51 @@ export type Database = {
           },
         ]
       }
+      envelope_goals: {
+        Row: {
+          amount: number
+          archived_at: string | null
+          category_id: string
+          created_at: string
+          goal_date: string
+          household_id: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          archived_at?: string | null
+          category_id: string
+          created_at?: string
+          goal_date: string
+          household_id: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          archived_at?: string | null
+          category_id?: string
+          created_at?: string
+          goal_date?: string
+          household_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envelope_goals_household_id_category_id_fkey"
+            columns: ["household_id", "category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["household_id", "id"]
+          },
+          {
+            foreignKeyName: "envelope_goals_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_members: {
         Row: {
           household_id: string

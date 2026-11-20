@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.43.0.
+Version described: 0.44.0.
 
 ## 1. Purpose
 
@@ -149,6 +149,7 @@ visitors get nothing.
 | `income_rules`            | `pattern` (2–100 chars), `account_id` (null = any account).                                                                                                                                                                                                             |
 | `tags`                    | name (1–30 chars, trimmed; unique per household ignoring case), `color` (grey, red, orange, yellow, green, teal, blue, purple or pink). Deleting one takes it off its transactions.                                                                                     |
 | `transaction_tags`        | (transaction, tag), each pair once; at most 20 tags per transaction (checked by the save functions). Cascades when either is deleted.                                                                                                                                   |
+| `envelope_goals`          | envelope, `amount` (> 0), `goal_date`, `archived_at` (null = active). At most one active goal per envelope (partial unique index); never on a card's payment envelope (trigger). Cascades when the envelope is deleted. Display only (v0.44.0).                         |
 
 Database checks (constraint triggers, deferred to commit where noted):
 `is_transfer = (transfer_id is not null)`; a transfer is exactly two rows in
@@ -189,6 +190,19 @@ carry readable messages shown to the user; `23503` shows "It is still in use".
 ## 4. Budget rules beyond CLAUDE.md
 
 These are implemented in `budgetMath.ts` and the controllers:
+
+- **Envelope goals** (v0.44.0, `goalProgress` in `budgetMath.ts`, display
+  only like Planned: a goal changes no other number). A goal is an amount
+  to have in an envelope by a date (`envelope_goals`, `src/models/goals.ts`).
+  Progress counts the envelope's money (Saved + Remaining) in the month
+  shown, never below $0.00. Left = goal − that money (never below $0.00).
+  Met when left is $0.00 (whatever the date); past when the date is before
+  today and not met; otherwise per month = left ÷ months from today's month
+  through the goal's month (this month counts), per day = left ÷ days from
+  today through the goal date, per week = left ÷ those days in sevens
+  (rounded up); each rounded up to the cent, so assigning it reaches the
+  goal. A goal is set with a date from today on (the app's check; the
+  database takes any date, since goal dates pass).
 
 - **Assign limit:** assigning in month M is limited to the smallest Available to
   Assign of M and every later month with data (`assignableIn`), never below 0.
@@ -461,6 +475,16 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   - Saved: purple with sparkles and "Move some into Remaining…" (opens "Amount
     to move into Remaining" + Move, i.e. Release from Saved); at $0.00 a quiet
     "Nothing saved yet" panel;
+  - the goal (v0.44.0, not on a card's payment envelope; see §4 Envelope
+    goals): "Set a goal…" opens Goal amount and "Reach it by" (a date, today
+    or later) with Save goal and Cancel. Once set: a ring filled to the
+    envelope's money (Saved + Remaining, this month) against the goal, the
+    amount, "by ⟨Mar 31, 2027⟩", "$X saved · N%", then "$Y to go" with
+    what to assign a month, a week and a day and "N months · N weeks · N
+    days left", and Edit goal (the form, with Remove goal). Met: a full
+    green ring with a tick, "Goal reached" and Archive goal (kept, no
+    longer shown; "Set a goal…" again). Past its date unmet: "$Y short,
+    date passed" (orange) with no per-period figures;
   - "This month's transactions": date, payee, account, this envelope's amount
     (a split shows "part of a $X split"), its tags as pills (v0.39.0); each is a button ("Edit ⟨payee⟩,
     ⟨amount⟩, ⟨date⟩") that opens the transaction edit dialog over the sheet,
@@ -851,11 +875,13 @@ Tags; Backup.
   months, transactions (`reconciled`, `voided`, `import_key`, `source`,
   `transfer_id`, `is_income`, `created_at`), allocations, income rules,
   tags and transaction tags (files from before v0.39.0 have no tag lists
-  and restore with none; still version 1).
+  and restore with none; still version 1), and envelope goals, archived
+  ones too (`envelope_goals`; files from before v0.44.0 have none).
   "Restore from a backup" reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
   envelopes/import keys per account, tag names ignoring case, tags per
-  transaction (≤ 20), links, one payment envelope per card and
+  transaction (≤ 20), links, goals (amount above $0.00, one active per
+  envelope, never on a payment envelope), one payment envelope per card and
   none allocated to, transfer pairs, split sums and signs, Income and card
   credits) and shows what it holds. Restore only works while the household
   has no budget data (otherwise the file can still be checked); every row

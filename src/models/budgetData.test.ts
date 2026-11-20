@@ -38,6 +38,7 @@ function household(): BudgetData {
     household: { id: "h", name: "Home" },
     incomeRules: [],
     tags: [],
+    goals: [],
     accounts: [
       {
         id: "checking",

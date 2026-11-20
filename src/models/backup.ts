@@ -7,7 +7,7 @@
  * would lose: reconciled and voided marks, import keys (so later bank CSV
  * imports still skip rows already imported), where a row came from (`source`),
  * transfer links, splits, closed accounts, each card's payment envelope, the
- * saved CSV column mappings, tags and when rows were created (ties in a day keep
+ * saved CSV column mappings, tags, envelope goals and when rows were created (ties in a day keep
  * their order). The SQL functions export_backup / restore_backup read and
  * write it; see supabase/migrations/20261020105751_backup_restore.sql.
  *
@@ -104,6 +104,15 @@ export interface BackupTransactionTag {
   tag_id: string;
 }
 
+/** An envelope's goal (archived ones too). */
+export interface BackupEnvelopeGoal {
+  category_id: string;
+  amount: number;
+  goal_date: string;
+  archived_at: string | null;
+  created_at: string | null;
+}
+
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: typeof BACKUP_VERSION;
@@ -122,6 +131,8 @@ export interface Backup {
   /** Missing in files made before v0.39.0 (no tags then). */
   tags?: BackupTag[];
   transaction_tags?: BackupTransactionTag[];
+  /** Missing in files made before v0.44.0 (no goals then). */
+  envelope_goals?: BackupEnvelopeGoal[];
 }
 
 /** Largest amount the database accepts (its bigint checks). */
@@ -264,6 +275,14 @@ export function validateBackup(value: unknown): Backup {
     tag_id: id,
   });
 
+  const goals = optionalRows<BackupEnvelopeGoal>(value, "envelope_goals", {
+    category_id: id,
+    amount: (v) => amount(v) && (v as number) > 0,
+    goal_date: date,
+    archived_at: timestamp,
+    created_at: timestamp,
+  });
+
   const unique = <T>(list: T[], key: (row: T) => string, what: string) => {
     const seen = new Set<string>();
     for (const row of list) {
@@ -372,6 +391,20 @@ export function validateBackup(value: unknown): Backup {
     }
   }
 
+  // Goals: on ordinary envelopes, at most one active each.
+  const activeGoals = new Set<string>();
+  for (const g of goals) {
+    const envelope = envelopeById.get(g.category_id);
+    if (!envelope) return fail("a goal belongs to a missing envelope.");
+    if (envelope.card_account_id !== null) {
+      fail(`envelope “${envelope.name}” pays a card and cannot have a goal.`);
+    }
+    if (g.archived_at === null || g.archived_at === undefined) {
+      if (activeGoals.has(g.category_id)) fail(`envelope “${envelope.name}” has two goals.`);
+      activeGoals.add(g.category_id);
+    }
+  }
+
   // Tags on transactions.
   const tagIds = new Set(tags.map((t) => t.id));
   const tagCount = new Map<string, number>();
@@ -447,6 +480,10 @@ export function withFreshIds(
     transaction_tags: (backup.transaction_tags ?? []).map((x) => ({
       transaction_id: fresh(x.transaction_id),
       tag_id: fresh(x.tag_id),
+    })),
+    envelope_goals: (backup.envelope_goals ?? []).map((g) => ({
+      ...g,
+      category_id: fresh(g.category_id),
     })),
   };
 }

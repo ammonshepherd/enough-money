@@ -4,6 +4,7 @@ import {
   canAssign,
   checkSpend,
   givable,
+  goalProgress,
   laterReserve,
   laterReleaseCuts,
   computeEnvelopeHistory,
@@ -401,5 +402,58 @@ describe("laterReleaseCuts", () => {
   it("is null when no later month needs it", () => {
     expect(laterReleaseCuts(history(0), "2026-11", 6_000)).toBeNull();
     expect(laterReleaseCuts(history(0), "2026-12", 6_000)).toBeNull();
+  });
+});
+
+describe("goalProgress", () => {
+  const goal = { amount: 120_000, date: "2027-03-31" };
+
+  it("spreads what is left over the months, weeks and days to the goal date", () => {
+    const p = goalProgress(goal, 20_000, "2026-11-19");
+    expect(p).toMatchObject({ status: "open", goal: 120_000, have: 20_000, left: 100_000 });
+    expect(p.fraction).toBeCloseTo(1 / 6);
+    // November (this month) through March; Nov 19 through Mar 31; 133 days in sevens.
+    expect([p.months, p.days, p.weeks]).toEqual([5, 133, 19]);
+    // Rounded up to the cent, so assigning them reaches the goal.
+    expect([p.perMonth, p.perWeek, p.perDay]).toEqual([20_000, 5_264, 752]);
+  });
+
+  it("is met once the envelope money reaches the goal, whatever the date", () => {
+    for (const today of ["2026-11-19", "2027-05-01"]) {
+      expect(goalProgress(goal, 130_000, today)).toMatchObject({
+        status: "met",
+        left: 0,
+        fraction: 1,
+        perMonth: 0,
+        perWeek: 0,
+        perDay: 0,
+      });
+    }
+  });
+
+  it("is past once the date has gone by unmet, with nothing per period", () => {
+    expect(goalProgress(goal, 50_000, "2027-04-01")).toMatchObject({
+      status: "past",
+      left: 70_000,
+      days: 0,
+      perMonth: 0,
+      perDay: 0,
+    });
+  });
+
+  it("asks for all of it on the goal date itself", () => {
+    expect(goalProgress(goal, 100_000, "2027-03-31")).toMatchObject({
+      status: "open",
+      months: 1,
+      weeks: 1,
+      days: 1,
+      perMonth: 20_000,
+      perWeek: 20_000,
+      perDay: 20_000,
+    });
+  });
+
+  it("counts a short envelope as holding nothing", () => {
+    expect(goalProgress(goal, -500, "2026-11-19")).toMatchObject({ have: 0, left: 120_000 });
   });
 });

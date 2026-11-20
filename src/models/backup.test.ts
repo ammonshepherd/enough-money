@@ -95,6 +95,22 @@ function sample(): Backup {
       { transaction_id: "split", tag_id: "trip" },
       { transaction_id: "out", tag_id: "work" },
     ],
+    envelope_goals: [
+      {
+        category_id: "fun",
+        amount: 50_000,
+        goal_date: "2030-06-30",
+        archived_at: "2030-02-01T00:00:00Z",
+        created_at: null,
+      },
+      {
+        category_id: "fun",
+        amount: 80_000,
+        goal_date: "2030-12-31",
+        archived_at: null,
+        created_at: null,
+      },
+    ],
   };
 }
 
@@ -249,6 +265,23 @@ describe("validateBackup with tags", () => {
   });
 });
 
+describe("validateBackup with goals", () => {
+  it("reads a file made before goals as having none", () => {
+    const old: Partial<Backup> = sample();
+    delete old.envelope_goals;
+    expect(() => validateBackup(old)).not.toThrow();
+    expect(withFreshIds(old as Backup).envelope_goals).toEqual([]);
+  });
+
+  it("checks goals like the database", () => {
+    refuses((b) => (b.envelope_goals![1]!.amount = 0), "bad amount");
+    refuses((b) => (b.envelope_goals![1]!.goal_date = "2030-13-01"), "bad goal_date");
+    refuses((b) => (b.envelope_goals![1]!.category_id = "gone"), "missing envelope");
+    refuses((b) => (b.envelope_goals![1]!.category_id = "pay"), "cannot have a goal");
+    refuses((b) => (b.envelope_goals![0]!.archived_at = null), "has two goals");
+  });
+});
+
 describe("withFreshIds", () => {
   it("replaces every id and keeps every link", () => {
     let n = 0;
@@ -278,6 +311,11 @@ describe("withFreshIds", () => {
     expect(fresh.transaction_tags![0]).toEqual({
       transaction_id: fresh.transactions[1]!.id,
       tag_id: fresh.tags![0]!.id,
+    });
+    expect(fresh.envelope_goals![1]).toMatchObject({
+      category_id: fresh.categories[1]!.id,
+      amount: 80_000,
+      archived_at: null,
     });
     // Everything else is kept.
     expect(fresh.transactions[1]).toMatchObject({
@@ -324,6 +362,7 @@ describe("helpers", () => {
       transactions: [],
       incomeRules: [],
       tags: [],
+      goals: [],
     };
     expect(isEmptyHousehold(empty)).toBe(true);
     expect(isEmptyHousehold({ ...empty, groups: [{ id: "g", name: "G", position: 0 }] })).toBe(

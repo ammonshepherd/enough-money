@@ -61,3 +61,13 @@ export function formatDay(date: IsoDate, today?: IsoDate): string {
   const otherYear = today !== undefined && today.slice(0, 4) !== date.slice(0, 4);
   return `${weekday} ${formatShortDay(date)}${otherYear ? `, ${year}` : ""}`;
 }
+
+/** "2027-03-31" → "Mar 31, 2027" (goal dates). */
+export function formatLongDay(date: IsoDate): string {
+  const [year, mon, day] = date.split("-").map(Number) as [number, number, number];
+  return new Date(year, mon - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
