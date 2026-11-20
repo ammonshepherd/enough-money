@@ -266,6 +266,37 @@ export function storeRuleTests(makeStore: StoreFactory) {
     await store.reorderEnvelopes(ids.group, [ids.b, ids.a]);
   });
 
+  it("keeps one active goal per envelope, never on a card's payment envelope", async () => {
+    const { store, householdId, ids } = await setUp(makeStore);
+    const goalOf = async (envelopeId: string) =>
+      (await store.load())!.goals.filter((g) => g.envelopeId === envelopeId);
+    await store.setGoal(householdId, ids.a, { amount: 120_000, date: "2027-03-31" });
+    await store.setGoal(householdId, ids.a, { amount: 150_000, date: "2027-06-30" });
+    let goals = await goalOf(ids.a);
+    expect(goals).toHaveLength(1);
+    expect(goals[0]).toMatchObject({ amount: 150_000, date: "2027-06-30", archivedAt: null });
+
+    await store.archiveGoal(goals[0]!.id);
+    await rejects(store.archiveGoal(goals[0]!.id), /Goal not found/);
+    await store.setGoal(householdId, ids.a, { amount: 5_000, date: "2027-01-31" });
+    goals = await goalOf(ids.a);
+    expect(goals).toHaveLength(2);
+    expect(goals.filter((g) => g.archivedAt === null)).toMatchObject([{ amount: 5_000 }]);
+
+    await rejects(
+      store.setGoal(householdId, ids.visaPayment, { amount: 5_000, date: "2027-01-31" }),
+      /payment envelope cannot have a goal/,
+    );
+    await rejects(store.setGoal(householdId, ids.b, { amount: 0, date: "2027-01-31" }), /amount/);
+
+    await store.setGoal(householdId, ids.b, { amount: 1_000, date: "2027-01-31" });
+    await store.deleteGoal((await goalOf(ids.b))[0]!.id);
+    expect(await goalOf(ids.b)).toEqual([]);
+    // Deleting the envelope takes its goals with it.
+    await store.deleteEnvelope(ids.a);
+    expect(await goalOf(ids.a)).toEqual([]);
+  });
+
   it("keeps tag names unique per household, ignoring case, with a known colour", async () => {
     const { store, householdId, prefix } = await setUp(makeStore);
     const trip = await store.addTag(householdId, { name: `  ${prefix}   T1 `, color: "blue" });

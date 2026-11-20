@@ -63,6 +63,7 @@ function budget(transactions: BudgetData["transactions"] = []): BudgetData {
     household: { id: "h", name: "Home" },
     incomeRules: [],
     tags: [],
+    goals: [],
     accounts: [account()],
     groups: [],
     envelopes: [],

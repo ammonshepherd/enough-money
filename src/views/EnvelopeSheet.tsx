@@ -8,6 +8,7 @@ import { formatShortDay } from "../models/month";
 import { PadAmount } from "./AssignPad";
 import { EditableTitle, ErrorMessage, Money, SingleFieldForm, SpentAmount } from "./components";
 import { AmountInput } from "./AmountInput";
+import { GoalPanel } from "./GoalPanel";
 import { TagChips } from "./Tags";
 
 type Detail = NonNullable<ReturnType<Page["detail"]>>;
@@ -17,7 +18,7 @@ const STAR = "M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z";
 /**
  * Everything about one envelope this month, in a sheet at the bottom of the
  * screen: its group (to move it) and name (to rename), what is left and its money flow, the plan, Planned and Assigned to
- * edit, Saved with "Move some into Remaining…", and its transactions (tap one
+ * edit, Saved with "Move some into Remaining…", its goal, and its transactions (tap one
  * to edit it).
  */
 export function EnvelopeSheet({
@@ -190,6 +191,14 @@ export function EnvelopeSheet({
           <ErrorMessage error={error} />
 
           <SavedPanel saved={row.saved} onMove={(text) => page.release(row.id, text)} />
+
+          <GoalPanel
+            envelopeName={row.name}
+            goal={detail.goal}
+            onSave={(amount, date) => page.setGoal(row.id, amount, date)}
+            onArchive={page.archiveGoal}
+            onDelete={page.deleteGoal}
+          />
 
           <section className="sheet-activity" aria-label={`${row.name} transactions`}>
             <h3>This month&apos;s transactions</h3>

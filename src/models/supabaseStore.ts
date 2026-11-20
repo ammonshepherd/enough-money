@@ -8,6 +8,7 @@ import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
 import { fetchAll } from "./fetchAll";
+import { checkGoalDetails } from "./goals";
 import { asTagColor, cleanTagDetails, duplicateTagMessage } from "./tags";
 import { asImportFormat } from "./transactionImport";
 
@@ -78,65 +79,76 @@ export function createSupabaseStore(
       // Each query is paged, so each ends its order on a unique key: rows
       // tied on the earlier columns then keep their place between pages.
       const exact = { count: "exact" } as const;
-      const [accounts, groups, envelopes, months, transactions, rules, tags] = await Promise.all([
-        fetchAll(
-          (from, to) =>
-            db()
-              .from("accounts")
-              .select("*", exact)
-              .order("created_at")
-              .order("id")
-              .range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) => db().from("category_groups").select("*", exact).order("id").range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) => db().from("categories").select("*", exact).order("id").range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) =>
-            db()
-              .from("category_months")
-              .select("*", exact)
-              .order("category_id")
-              .order("month")
-              .range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) =>
-            db()
-              .from("transactions")
-              .select(
-                "*, transaction_allocations(category_id, amount), transaction_tags(tag_id)",
-                exact,
-              )
-              .order("date", { ascending: false })
-              .order("created_at", { ascending: false })
-              .order("id", { ascending: false })
-              .range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) =>
-            db()
-              .from("income_rules")
-              .select("id, pattern, account_id", exact)
-              .order("created_at")
-              .order("id")
-              .range(from, to),
-          check,
-        ),
-        fetchAll(
-          (from, to) =>
-            db().from("tags").select("id, name, color", exact).order("id").range(from, to),
-          check,
-        ),
-      ]);
+      const [accounts, groups, envelopes, months, transactions, rules, tags, goals] =
+        await Promise.all([
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("accounts")
+                .select("*", exact)
+                .order("created_at")
+                .order("id")
+                .range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db().from("category_groups").select("*", exact).order("id").range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) => db().from("categories").select("*", exact).order("id").range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("category_months")
+                .select("*", exact)
+                .order("category_id")
+                .order("month")
+                .range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("transactions")
+                .select(
+                  "*, transaction_allocations(category_id, amount), transaction_tags(tag_id)",
+                  exact,
+                )
+                .order("date", { ascending: false })
+                .order("created_at", { ascending: false })
+                .order("id", { ascending: false })
+                .range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("income_rules")
+                .select("id, pattern, account_id", exact)
+                .order("created_at")
+                .order("id")
+                .range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db().from("tags").select("id, name, color", exact).order("id").range(from, to),
+            check,
+          ),
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("envelope_goals")
+                .select("id, category_id, amount, goal_date, archived_at", exact)
+                .order("id")
+                .range(from, to),
+            check,
+          ),
+        ]);
 
       return {
         household: household.data,
@@ -190,6 +202,13 @@ export function createSupabaseStore(
           tagIds: t.transaction_tags.map((x) => x.tag_id),
         })),
         tags: tags.map((g) => ({ id: g.id, name: g.name, color: asTagColor(g.color) })),
+        goals: goals.map((g) => ({
+          id: g.id,
+          envelopeId: g.category_id,
+          amount: g.amount,
+          date: g.goal_date,
+          archivedAt: g.archived_at,
+        })),
       };
     },
 
@@ -378,6 +397,53 @@ export function createSupabaseStore(
         p_tag_ids: input.tagIds,
       });
       check(error);
+    },
+
+    async setGoal(householdId, envelopeId, goal) {
+      const { amount, date } = checkGoalDetails(goal);
+      const active = await db()
+        .from("envelope_goals")
+        .select("id")
+        .eq("category_id", envelopeId)
+        .is("archived_at", null)
+        .maybeSingle();
+      check(active.error);
+      if (active.data) {
+        check(
+          (
+            await db()
+              .from("envelope_goals")
+              .update({ amount, goal_date: date })
+              .eq("id", active.data.id)
+          ).error,
+        );
+      } else {
+        check(
+          (
+            await db().from("envelope_goals").insert({
+              household_id: householdId,
+              category_id: envelopeId,
+              amount,
+              goal_date: date,
+            })
+          ).error,
+        );
+      }
+    },
+
+    async archiveGoal(goalId) {
+      const { data, error } = await db()
+        .from("envelope_goals")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", goalId)
+        .is("archived_at", null)
+        .select("id");
+      check(error);
+      if (!data?.length) throw new UserFacingError("Goal not found");
+    },
+
+    async deleteGoal(goalId) {
+      check((await db().from("envelope_goals").delete().eq("id", goalId)).error);
     },
 
     async addTag(householdId, tag) {

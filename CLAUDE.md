@@ -424,6 +424,17 @@ non-card budget balances − all envelope money (P included)`.
   all must match) and by typed words; added to or taken off ticked rows
   with the bar's Tags (`tag_transactions`). Saving with tags left out
   keeps them (`TransactionInput.tagIds`, `TransferSide.tagIds`).
+- Envelope goals (decided in v0.44.0, `src/models/goals.ts`, math in
+  `goalProgress` in `budgetMath.ts`): an amount to have in an envelope by a
+  date, stored in `envelope_goals` (its own table, not per month). Display
+  only, like Planned: a goal changes no other number. At most one active
+  goal per envelope; never on a card's payment envelope (a trigger). The
+  envelope sheet shows a ring of the envelope's money (Saved + Remaining)
+  against the goal and what is left to assign a month, a week and a day
+  (rounded up to the cent; the current month counts as time left). Met: a
+  full ring, "Goal reached" and Archive goal (kept with `archived_at`, no
+  longer shown; a new goal can be set). Past its date unmet: "$X short,
+  date passed", no per-period figures. Set with a date from today on.
 - A card payment the cover prompt cannot cover is never suggested as Uncategorized
   (that would hide the cash it spent): assign or add income first.
 
@@ -450,13 +461,13 @@ The PR #4 prototype was replaced in v0.2.0 by the migrations in
 `supabase/migrations/` (applied to the dev project; file names match the
 project's migration history). Tables: households, household_members, accounts,
 category_groups, categories (= envelopes), category_months, transactions,
-transaction_allocations, income_rules, tags, transaction_tags. Every table has household-scoped RLS; multi-row
+transaction_allocations, income_rules, tags, transaction_tags, envelope_goals. Every table has household-scoped RLS; multi-row
 writes go through SQL functions (`create_household`, `save_transaction`,
 `adjust_category_month`, `move_between_envelopes`,
 `import_envelope_plan`, `import_transactions`, `save_transfer`, `mark_income`,
 `set_reconciled`, `tag_transactions`, `reorder_category_groups`, `reorder_categories`,
 `export_backup`, `restore_backup`). Triggers create, rename and protect
-each credit card's payment envelope and reject allocations to it. Imported transactions carry an
+each credit card's payment envelope and reject allocations (and goals) to it. Imported transactions carry an
 `import_key` (unique per account) for duplicate prevention; each account keeps
 its CSV column mapping in `import_format`. Budget math stays in
 `budgetMath.ts`, not SQL. Inspect the live schema before writing a migration,

@@ -60,6 +60,21 @@ export interface EnvelopeMonthRecord {
   planned: Cents;
 }
 
+/**
+ * An amount to have in an envelope (Saved + Remaining) by a date. Display
+ * only, like Planned: it changes no other number. An envelope has at most one
+ * active goal; an archived one is kept but no longer shown. A card's payment
+ * envelope never has one.
+ */
+export interface EnvelopeGoal {
+  id: string;
+  envelopeId: string;
+  amount: Cents;
+  date: IsoDate;
+  /** Set when the goal was archived (after it was met). */
+  archivedAt: string | null;
+}
+
 /** The part of a transaction given to one envelope. */
 export interface Allocation {
   envelopeId: string;
@@ -110,4 +125,6 @@ export interface BudgetData {
   incomeRules: IncomeRule[];
   /** The household's transaction tags (see tags.ts). */
   tags: Tag[];
+  /** Envelope goals, archived ones included (see goals.ts). */
+  goals: EnvelopeGoal[];
 }

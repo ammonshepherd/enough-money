@@ -942,3 +942,73 @@ export function coverSources(
     .flatMap((g) => g.envelopes)
     .filter((e) => e.id !== excludeId && givable(e) >= amount);
 }
+
+/**
+ * How an envelope stands against its goal (display only, like Planned: it
+ * changes no other number). Progress counts the envelope's money
+ * (Saved + Remaining).
+ *
+ * - "met": the money reaches the goal amount (whatever the date).
+ * - "past": the goal date is before today and the goal is not met.
+ * - "open": still time; `perMonth`, `perWeek` and `perDay` are what is left
+ *   to reach (`left`) spread over the time left, each rounded up to the cent
+ *   so assigning them reaches the goal. The time left counts this month
+ *   (months from today's month through the goal's month), and days from
+ *   today through the goal date; weeks are those days in sevens, rounded up.
+ */
+export interface GoalProgress {
+  status: "open" | "met" | "past";
+  goal: Cents;
+  /** The envelope money that counts towards the goal (never below 0). */
+  have: Cents;
+  /** What is still to reach: goal − have, never below 0. */
+  left: Cents;
+  /** have ÷ goal, from 0 to 1. */
+  fraction: number;
+  months: number;
+  weeks: number;
+  days: number;
+  perMonth: Cents;
+  perWeek: Cents;
+  perDay: Cents;
+}
+
+const dayNumber = (date: IsoDate) => {
+  const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  return Date.UTC(y, m - 1, d) / 86_400_000;
+};
+
+const monthNumber = (month: Month) => {
+  const [y, m] = month.split("-").map(Number) as [number, number];
+  return y * 12 + m;
+};
+
+export function goalProgress(
+  goal: { amount: Cents; date: IsoDate },
+  envelopeMoney: Cents,
+  today: IsoDate,
+): GoalProgress {
+  assertCents(goal.amount, "goal");
+  assertCents(envelopeMoney, "envelope money");
+  const have = Math.max(0, envelopeMoney);
+  const left = Math.max(0, goal.amount - have);
+  const fraction = goal.amount > 0 ? Math.min(1, have / goal.amount) : 1;
+  const days = Math.max(0, dayNumber(goal.date) - dayNumber(today) + 1);
+  const months = Math.max(0, monthNumber(monthOf(goal.date)) - monthNumber(monthOf(today)) + 1);
+  const weeks = Math.ceil(days / 7);
+  const status = left === 0 ? "met" : days === 0 ? "past" : "open";
+  const per = (count: number) => (status === "open" && count > 0 ? Math.ceil(left / count) : 0);
+  return {
+    status,
+    goal: goal.amount,
+    have,
+    left,
+    fraction,
+    months,
+    weeks,
+    days,
+    perMonth: per(months),
+    perWeek: per(weeks),
+    perDay: per(days),
+  };
+}

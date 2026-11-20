@@ -1822,6 +1822,168 @@ div.sheet-field .sheet-field-value {
   color: #6e5a85;
 }
 
+/* Envelope goal (v0.44.0): a ring, the amount and date, and the pace to reach it. */
+.goal-panel {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--bb-purple-line);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.goal-panel.empty {
+  padding: 0;
+  border: 0;
+}
+
+.goal-set {
+  block-size: 2.75rem;
+  border: 1px dashed var(--bb-purple-line);
+  border-radius: 0.875rem;
+  color: var(--bb-purple);
+  background: var(--bb-purple-tint);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.goal-summary {
+  display: flex;
+  gap: 0.875rem;
+  align-items: center;
+}
+
+.goal-ring {
+  flex: none;
+}
+
+.goal-ring-track {
+  stroke: var(--bb-purple-tint);
+}
+
+.goal-ring-fill {
+  stroke: var(--accent);
+}
+
+.goal-ring-fill.met {
+  stroke: #2e8b57;
+}
+
+.goal-ring-tick {
+  stroke: #2e8b57;
+}
+
+.goal-text {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.goal-label {
+  color: var(--bb-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.goal-amount {
+  color: var(--bb-ink);
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.goal-date,
+.goal-have,
+.goal-left {
+  color: #4b4256;
+  font-size: 0.8125rem;
+}
+
+.goal-status {
+  margin: 0;
+  color: var(--bb-ink);
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.goal-panel.met .goal-status {
+  color: #1f6b42;
+}
+
+.goal-panel.past .goal-status {
+  color: var(--bb-over);
+}
+
+.goal-pace {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.goal-pace dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.375rem;
+  margin: 0;
+}
+
+.goal-pace dl > div {
+  display: grid;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.625rem;
+  background: var(--bb-purple-tint);
+}
+
+.goal-pace dt {
+  order: 2;
+  color: var(--bb-muted);
+  font-size: 0.75rem;
+}
+
+.goal-pace dd {
+  order: 1;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-left {
+  margin: 0;
+}
+
+.goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.goal-archive {
+  min-block-size: 2.5rem;
+  padding-inline: 1rem;
+  border: 0;
+  border-radius: 0.625rem;
+  color: #fff;
+  background: #2e8b57;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.goal-form h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.goal-form .primary-button {
+  inline-size: auto;
+  padding-inline: 1.25rem;
+}
+
 .sheet-activity h3 {
   margin: 0 0 0.375rem;
   color: var(--bb-muted);

@@ -15,6 +15,7 @@ import {
 } from "./backup";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { nameKey } from "./envelopePlan";
+import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { MAX_SPLIT_LINES } from "./splits";
 import {
   MAX_TAGS_PER_TRANSACTION,
@@ -134,6 +135,7 @@ export function createMemoryStore(): DataStore {
         transactions: [],
         incomeRules: [],
         tags: [],
+        goals: [],
       };
     },
 
@@ -205,6 +207,7 @@ export function createMemoryStore(): DataStore {
       }
       b.envelopes = b.envelopes.filter((e) => e.id !== envelopeId);
       b.envelopeMonths = b.envelopeMonths.filter((r) => r.envelopeId !== envelopeId);
+      b.goals = b.goals.filter((g) => g.envelopeId !== envelopeId);
     },
     async deleteGroup(groupId) {
       const b = budget();
@@ -415,6 +418,23 @@ export function createMemoryStore(): DataStore {
       account.importFormat = structuredClone(format);
       return added;
     },
+    async setGoal(_householdId, envelopeId, goal) {
+      const b = budget();
+      const clean = checkGoalDetails(goal);
+      checkGoalEnvelope(b.envelopes, envelopeId);
+      const active = b.goals.find((g) => g.envelopeId === envelopeId && g.archivedAt === null);
+      if (active) Object.assign(active, clean);
+      else b.goals.push({ id: id(), envelopeId, ...clean, archivedAt: null });
+    },
+    async archiveGoal(goalId) {
+      const goal = budget().goals.find((g) => g.id === goalId && g.archivedAt === null);
+      if (!goal) throw new UserFacingError("Goal not found");
+      goal.archivedAt = new Date().toISOString();
+    },
+    async deleteGoal(goalId) {
+      const b = budget();
+      b.goals = b.goals.filter((g) => g.id !== goalId);
+    },
     async addTag(_householdId, tag) {
       const tagId = id();
       budget().tags.push({ id: tagId, ...checkTag(tag) });
@@ -619,6 +639,13 @@ export function createMemoryStore(): DataStore {
         transaction_tags: b.transactions.flatMap((t) =>
           t.tagIds.map((tagId) => ({ transaction_id: t.id, tag_id: tagId })),
         ),
+        envelope_goals: b.goals.map((g) => ({
+          category_id: g.envelopeId,
+          amount: g.amount,
+          goal_date: g.date,
+          archived_at: g.archivedAt,
+          created_at: null,
+        })),
       };
     },
     async restoreBackup(_householdId, backup) {
@@ -684,6 +711,13 @@ export function createMemoryStore(): DataStore {
           accountId: r.account_id,
         })),
         tags: (file.tags ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color })),
+        goals: (file.envelope_goals ?? []).map((g) => ({
+          id: id(),
+          envelopeId: g.category_id,
+          amount: g.amount,
+          date: g.goal_date,
+          archivedAt: g.archived_at,
+        })),
       };
     },
   };

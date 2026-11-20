@@ -45,6 +45,7 @@ describe("remainingParts", () => {
       household: { id: "h", name: "Home" },
       incomeRules: [],
       tags: [],
+      goals: [],
       accounts: [
         {
           id: "checking",

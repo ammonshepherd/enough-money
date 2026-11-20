@@ -5,6 +5,7 @@
  */
 import type { Backup } from "./backup";
 import type { EnvelopePlanRow, PlannedAmount } from "./envelopePlan";
+import type { GoalDetails } from "./goals";
 import type { Cents } from "./money";
 import type { Month } from "./month";
 import type { ImportedTransaction, ImportFormat } from "./transactionImport";
@@ -105,6 +106,16 @@ export interface DataStore {
    * the month.
    */
   importEnvelopePlan(householdId: string, month: Month, rows: EnvelopePlanRow[]): Promise<void>;
+
+  /**
+   * Sets an envelope's goal: changes its active goal, or adds one when it has
+   * none. Never on a card's payment envelope. Display only: no budget math.
+   */
+  setGoal(householdId: string, envelopeId: string, goal: GoalDetails): Promise<void>;
+  /** Archives a goal: it is kept but no longer shown, and the envelope can have a new one. */
+  archiveGoal(goalId: string): Promise<void>;
+  /** Removes a goal for good. */
+  deleteGoal(goalId: string): Promise<void>;
 
   saveTransaction(householdId: string, input: TransactionInput): Promise<void>;
   /**

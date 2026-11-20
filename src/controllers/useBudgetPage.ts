@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import {
   buildBudgetMonth,
   canMoveIn,
+  goalProgress,
   groupLeft,
   givable,
   movableFrom,
@@ -20,7 +21,8 @@ import {
 } from "../models/envelopeDetail";
 import { monthHasPlan, planToCopy, type PlanSource } from "../models/envelopePlan";
 import { formatCents, roundMoney, type Cents } from "../models/money";
-import { addMonths, currentMonth, formatMonth, type Month } from "../models/month";
+import { activeGoal, checkGoalDetails } from "../models/goals";
+import { addMonths, currentMonth, formatMonth, todayIso, type Month } from "../models/month";
 import { budgetHref } from "../models/routes";
 import type { BudgetData } from "../models/types";
 import { requireCents, requireName } from "./input";
@@ -98,6 +100,12 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
     );
   };
 
+  /** The envelope's active goal and how it stands (never on a card's payment envelope). */
+  const goalOf = (row: EnvelopeRow) => {
+    const goal = row.card ? null : activeGoal(data.goals, row.id);
+    return goal && { ...goal, progress: goalProgress(goal, row.envelopeMoney, todayIso()) };
+  };
+
   // Moves only in this month and later: a past move would change later months' Saved.
   const canMove = canMoveIn(month, currentMonth());
   const movable = (envelopeId: string) => (canMove ? movableFrom(envelope(envelopeId)) : 0);
@@ -157,7 +165,26 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
         plan: planCheck(row),
         parts: remainingParts(row),
         activity: envelopeActivity(data, envelopeId, month),
+        goal: goalOf(row),
       };
+    },
+
+    /**
+     * Sets the envelope's goal: an amount (typed, rounded to the cent) to have
+     * by a date (today or later). Display only: no other number changes.
+     */
+    setGoal: async (envelopeId: string, amountText: string, date: string) => {
+      const amount = roundMoney(amountText);
+      if (amount === null) throw new UserFacingError("Goal: enter an amount like 1200.00");
+      const goal = checkGoalDetails({ amount, date }, todayIso());
+      await budget.change((store) => store.setGoal(householdId, envelopeId, goal));
+    },
+    /** Archives a met goal: kept, no longer shown. */
+    archiveGoal: async (goalId: string) => {
+      await budget.change((store) => store.archiveGoal(goalId));
+    },
+    deleteGoal: async (goalId: string) => {
+      await budget.change((store) => store.deleteGoal(goalId));
     },
 
     /**
