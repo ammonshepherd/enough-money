@@ -9,10 +9,15 @@
 //   on iOS always, on Android until Chrome moves the install to /app/
 //   (the manifest id stays "/", see vite.config.ts).
 //
+// The landing page's own sections (#why, #how-it-works, #faq) are not app
+// routes: a reload or a shared link to one stays on the landing page.
+//
 // It must stay a separate file loaded first in <head>: the Content Security
 // Policy forbids inline scripts.
 (function () {
-  var hasAppRoute = window.location.hash.length > 1;
+  var LANDING_SECTIONS = ["#why", "#how-it-works", "#faq"];
+  var hash = window.location.hash;
+  var hasAppRoute = hash.length > 1 && LANDING_SECTIONS.indexOf(hash) === -1;
   var installed =
     window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   if (hasAppRoute || installed) window.location.replace("/app/" + window.location.hash);

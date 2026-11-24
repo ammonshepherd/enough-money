@@ -28,3 +28,4 @@ playwright-report/
 test-results/
 dist-e2e/
 dist-e2e-db/
+landing-screenshots/out/

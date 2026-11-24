@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.45.0.
+Version described: 0.45.1.
 
 ## 1. Purpose
 
@@ -98,8 +98,15 @@ always show what the store holds.
   `unit` and `integration`. Base `/app/`; the app builds into `dist/app/`
   and `sitePlugin` copies `landing/` to `dist/`.
 - `landing/`: the landing page at the site root, plain static files (rules
-  in `landing/README.md`). `legacy-redirect.js` sends old `/#route` links
-  and home screen icons saved before v0.43.0 to `/app/`; `sw.js` retires
+  in `landing/README.md`). Since v0.45.1 it holds the content: a hero
+  ("Enough Money." and "No matter how much money you make, it is
+  enough."), "Why it's different" (envelopes can't go negative, no
+  autopilot, leftover money becomes Saved, debt stays in view), "How it
+  works" (set up once, then every month, as numbered cards with
+  pictures), an FAQ and a closing band, each picture a phone screenshot
+  in `landing/images/` (see Commands). `legacy-redirect.js` sends old
+  `/#route` links and home screen icons saved before v0.43.0 to `/app/`,
+  but leaves the page's own sections (`#why`, `#how-it-works`, `#faq`); `sw.js` retires
   the service worker the app had at the root before v0.43.0.
 - `wrangler.jsonc`: Cloudflare hosting, a Worker named `enough-money` with
   no code that serves `dist/` on the custom domain `enoughmoney.app`
@@ -109,7 +116,13 @@ always show what the store holds.
 
 `npm run dev | build | preview | typecheck | lint | format | format:check |
 test (= test:unit) | test:ui | test:integration | test:ui:db | db:seed:test |
-backup`. `npm run backup` (`scripts/backup-database.ts`) saves production's
+backup | landing:screenshots`. `npm run landing:screenshots` reseeds the test
+project, builds like `test:ui:db`, and takes the landing page's pictures
+signed in as test user A at 390×844 (2× pixels;
+`playwright.landing.config.ts`, `landing-screenshots/`, saving nothing),
+then `scripts/landing-images.ts` makes them 600px-wide WebP files in
+`landing/images/` (needs `cwebp`). Retake them when a pictured screen
+changes. `npm run backup` (`scripts/backup-database.ts`) saves production's
 data as the Settings → Export JSON (the `export_backup` function, run as the
 household's owner through the Supabase CLI login, no password) in
 `.backups/` (ignored by git), keeping the 5 newest. Run before every merge.
