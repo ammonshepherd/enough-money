@@ -111,6 +111,10 @@ function sample(): Backup {
         created_at: null,
       },
     ],
+    payees: [
+      { name: "Corner Café", created_at: null },
+      { name: "Market", created_at: "2030-01-05T10:00:00Z" },
+    ],
   };
 }
 
@@ -282,6 +286,24 @@ describe("validateBackup with goals", () => {
   });
 });
 
+describe("validateBackup with payees", () => {
+  it("keeps a file made before payees without a list", () => {
+    const old: Partial<Backup> = sample();
+    delete old.payees;
+    expect(() => validateBackup(old)).not.toThrow();
+    // Restoring then lists the typed transactions' payees (see restore_backup).
+    expect(withFreshIds(old as Backup).payees).toBeUndefined();
+  });
+
+  it("checks payees like the database", () => {
+    refuses((b) => (b.payees![0]!.name = " Market"), "bad name");
+    refuses((b) => (b.payees![0]!.name = ""), "bad name");
+    refuses((b) => (b.payees![0]!.name = "x".repeat(201)), "bad name");
+    refuses((b) => (b.payees![1]!.name = "corner café"), "a payee name appears twice");
+    refuses((b) => ((b as unknown as Record<string, unknown>).payees = "no"), "payees list");
+  });
+});
+
 describe("withFreshIds", () => {
   it("replaces every id and keeps every link", () => {
     let n = 0;
@@ -363,6 +385,7 @@ describe("helpers", () => {
       incomeRules: [],
       tags: [],
       goals: [],
+      payees: [],
     };
     expect(isEmptyHousehold(empty)).toBe(true);
     expect(isEmptyHousehold({ ...empty, groups: [{ id: "g", name: "G", position: 0 }] })).toBe(
@@ -371,5 +394,6 @@ describe("helpers", () => {
     expect(isEmptyHousehold({ ...empty, tags: [{ id: "t", name: "T", color: "red" }] })).toBe(
       false,
     );
+    expect(isEmptyHousehold({ ...empty, payees: [{ id: "p", name: "Market" }] })).toBe(false);
   });
 });

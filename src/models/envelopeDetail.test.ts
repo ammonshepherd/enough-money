@@ -46,6 +46,7 @@ describe("remainingParts", () => {
       incomeRules: [],
       tags: [],
       goals: [],
+      payees: [],
       accounts: [
         {
           id: "checking",

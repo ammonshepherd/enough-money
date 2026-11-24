@@ -408,7 +408,7 @@ non-card budget balances − all envelope money (P included)`.
 - Backup (decided in v0.28.0, `src/models/backup.ts`): Settings exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings, income rules and tags) and restores such a file only into an empty
+  CSV mappings, income rules, tags, goals and payees) and restores such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).
@@ -435,6 +435,17 @@ non-card budget balances − all envelope money (P included)`.
   full ring, "Goal reached" and Archive goal (kept with `archived_at`, no
   longer shown; a new goal can be set). Past its date unmet: "$X short,
   date passed", no per-period figures. Set with a date from today on.
+- Saved payees (decided in v0.45.0, `src/models/payees.ts`): the
+  household's payee names (`payees`, unique ignoring case), suggested in
+  the transaction form's Payee field (`PayeePicker`: names containing the
+  text, starting with it first, then most used; at most 8). Transactions
+  keep their payee as text (no link). A database trigger lists a payee
+  when a typed transaction is saved or a transaction's payee changes;
+  imported bank descriptions and transfers are never listed. Picking a
+  payee fills only Payee (no envelope, direction or amount). Settings →
+  Payees renames (every transaction with the name too; a name in use
+  merges the two, `rename_payee`) and deletes (off the list only). No
+  budget math.
 - A card payment the cover prompt cannot cover is never suggested as Uncategorized
   (that would hide the cash it spent): assign or add income first.
 
@@ -461,13 +472,14 @@ The PR #4 prototype was replaced in v0.2.0 by the migrations in
 `supabase/migrations/` (applied to the dev project; file names match the
 project's migration history). Tables: households, household_members, accounts,
 category_groups, categories (= envelopes), category_months, transactions,
-transaction_allocations, income_rules, tags, transaction_tags, envelope_goals. Every table has household-scoped RLS; multi-row
+transaction_allocations, income_rules, tags, transaction_tags, envelope_goals, payees. Every table has household-scoped RLS; multi-row
 writes go through SQL functions (`create_household`, `save_transaction`,
 `adjust_category_month`, `move_between_envelopes`,
 `import_envelope_plan`, `import_transactions`, `save_transfer`, `mark_income`,
-`set_reconciled`, `tag_transactions`, `reorder_category_groups`, `reorder_categories`,
+`set_reconciled`, `tag_transactions`, `rename_payee`, `reorder_category_groups`, `reorder_categories`,
 `export_backup`, `restore_backup`). Triggers create, rename and protect
-each credit card's payment envelope and reject allocations (and goals) to it. Imported transactions carry an
+each credit card's payment envelope and reject allocations (and goals) to it;
+another lists typed payees (`remember_payee`). Imported transactions carry an
 `import_key` (unique per account) for duplicate prevention; each account keeps
 its CSV column mapping in `import_format`. Budget math stays in
 `budgetMath.ts`, not SQL. Inspect the live schema before writing a migration,

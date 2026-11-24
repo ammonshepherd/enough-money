@@ -117,6 +117,10 @@ export interface DataStore {
   /** Removes a goal for good. */
   deleteGoal(goalId: string): Promise<void>;
 
+  /**
+   * Adds or updates a transaction. A new one's payee, or a changed payee,
+   * joins the saved payees (see payees.ts).
+   */
   saveTransaction(householdId: string, input: TransactionInput): Promise<void>;
   /**
    * Saves both sides of a transfer at once. Sides with an id update that
@@ -148,6 +152,14 @@ export interface DataStore {
    * left alone. Resolves to how many changed.
    */
   tagTransactions(transactionIds: string[], tagId: string, on: boolean): Promise<number>;
+
+  /**
+   * Renames a saved payee and every transaction with its name (ignoring
+   * case). A name another payee has already merges the two into one.
+   */
+  renamePayee(payeeId: string, name: string): Promise<void>;
+  /** Takes a payee off the saved list; its transactions keep their payee. */
+  deletePayee(payeeId: string): Promise<void>;
 
   addIncomeRule(householdId: string, rule: NewIncomeRule): Promise<void>;
   deleteIncomeRule(ruleId: string): Promise<void>;

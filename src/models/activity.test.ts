@@ -68,6 +68,7 @@ const budget = (transactions: Transaction[], accounts?: Account[]): BudgetData =
   incomeRules: [],
   tags: [],
   goals: [],
+  payees: [],
 });
 
 const groceries = (amount: number) => [{ envelopeId: "groceries", amount }];

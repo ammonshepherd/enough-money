@@ -13,6 +13,7 @@ import { MAX_SPLIT_LINES, type SplitLine } from "../../models/splits";
 import { ErrorMessage, Money } from "../components";
 import { EnvelopePicker, type PickerOption } from "../EnvelopePicker";
 import { AmountInput } from "../AmountInput";
+import { PayeePicker } from "../PayeePicker";
 import { TagPicker } from "../Tags";
 
 /** The transaction form itself (TransactionEntry adds the cover prompt). */
@@ -100,10 +101,11 @@ export function TransactionEditor({
           onChange={(amount) => update({ amount })}
         />
       </label>
-      <label className="field field-payee">
-        Payee
-        <input value={form.payee} onChange={(e) => update({ payee: e.target.value })} />
-      </label>
+      <PayeePicker
+        value={form.payee}
+        suggest={entry.suggestPayees}
+        onChange={(payee) => update({ payee })}
+      />
       {!tracking && (
         <EnvelopePicker
           label="Envelope"

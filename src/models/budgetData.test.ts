@@ -39,6 +39,7 @@ function household(): BudgetData {
     incomeRules: [],
     tags: [],
     goals: [],
+    payees: [],
     accounts: [
       {
         id: "checking",
