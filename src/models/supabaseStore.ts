@@ -9,6 +9,7 @@ import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
 import { fetchAll } from "./fetchAll";
 import { checkGoalDetails } from "./goals";
+import { cleanPayeeName } from "./payees";
 import { asTagColor, cleanTagDetails, duplicateTagMessage } from "./tags";
 import { asImportFormat } from "./transactionImport";
 
@@ -79,7 +80,7 @@ export function createSupabaseStore(
       // Each query is paged, so each ends its order on a unique key: rows
       // tied on the earlier columns then keep their place between pages.
       const exact = { count: "exact" } as const;
-      const [accounts, groups, envelopes, months, transactions, rules, tags, goals] =
+      const [accounts, groups, envelopes, months, transactions, rules, tags, goals, payees] =
         await Promise.all([
           fetchAll(
             (from, to) =>
@@ -148,6 +149,10 @@ export function createSupabaseStore(
                 .range(from, to),
             check,
           ),
+          fetchAll(
+            (from, to) => db().from("payees").select("id, name", exact).order("id").range(from, to),
+            check,
+          ),
         ]);
 
       return {
@@ -209,6 +214,7 @@ export function createSupabaseStore(
           date: g.goal_date,
           archivedAt: g.archived_at,
         })),
+        payees: payees.map((p) => ({ id: p.id, name: p.name })),
       };
     },
 
@@ -468,6 +474,18 @@ export function createSupabaseStore(
       if (error?.code === "23505") throw new UserFacingError(duplicateTagMessage(name));
       check(error);
       if (!data?.length) throw new UserFacingError("Tag not found");
+    },
+
+    async renamePayee(payeeId, name) {
+      const { error } = await db().rpc("rename_payee", {
+        p_id: payeeId,
+        p_name: cleanPayeeName(name),
+      });
+      check(error);
+    },
+
+    async deletePayee(payeeId) {
+      check((await db().from("payees").delete().eq("id", payeeId)).error);
     },
 
     async deleteTag(tagId) {

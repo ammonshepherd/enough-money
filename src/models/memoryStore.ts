@@ -16,6 +16,7 @@ import {
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { nameKey } from "./envelopePlan";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
+import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
 import { MAX_SPLIT_LINES } from "./splits";
 import {
   MAX_TAGS_PER_TRANSACTION,
@@ -91,6 +92,11 @@ export function createMemoryStore(): DataStore {
     checkTagNameFree(budget().tags, clean.name, exceptId);
     return clean;
   };
+  /** Like the SQL remember_payee trigger: lists a payee not listed yet (ignoring case). */
+  const rememberPayee = (name: string) => {
+    const b = budget();
+    if (!findPayee(b.payees, name)) b.payees.push({ id: id(), name: name.trim() });
+  };
   const envelopeMonth = (envelopeId: string, month: string) => {
     const b = budget();
     if (!b.envelopes.some((e) => e.id === envelopeId)) {
@@ -136,6 +142,7 @@ export function createMemoryStore(): DataStore {
         incomeRules: [],
         tags: [],
         goals: [],
+        payees: [],
       };
     },
 
@@ -361,6 +368,7 @@ export function createMemoryStore(): DataStore {
       const index = b.transactions.findIndex((t) => t.id === tx.id);
       if (index >= 0) b.transactions[index] = tx;
       else b.transactions.unshift(tx);
+      if (remembersPayee(tx, previous)) rememberPayee(tx.payee);
       b.transactions.sort((x, y) => y.date.localeCompare(x.date));
     },
     async importTransactions(accountId, format, rows) {
@@ -444,6 +452,25 @@ export function createMemoryStore(): DataStore {
       const existing = budget().tags.find((t) => t.id === tagId);
       if (!existing) throw new UserFacingError("Tag not found");
       Object.assign(existing, checkTag(tag, tagId));
+    },
+    async renamePayee(payeeId, name) {
+      const b = budget();
+      const clean = cleanPayeeName(name);
+      const payee = b.payees.find((p) => p.id === payeeId);
+      if (!payee) throw new UserFacingError("Payee not found");
+      const old = payeeKey(payee.name);
+      // Like rename_payee: another payee with the name stays, and this one goes.
+      const keep = findPayee(b.payees, clean, payeeId) ?? payee;
+      b.payees = b.payees.filter((p) => p === keep || p !== payee);
+      keep.name = clean;
+      for (const tx of b.transactions) {
+        const key = payeeKey(tx.payee);
+        if (key === old || key === payeeKey(clean)) tx.payee = clean;
+      }
+    },
+    async deletePayee(payeeId) {
+      const b = budget();
+      b.payees = b.payees.filter((p) => p.id !== payeeId);
     },
     async deleteTag(tagId) {
       const b = budget();
@@ -646,6 +673,7 @@ export function createMemoryStore(): DataStore {
           archived_at: g.archivedAt,
           created_at: null,
         })),
+        payees: b.payees.map((p) => ({ name: p.name, created_at: null })),
       };
     },
     async restoreBackup(_householdId, backup) {
@@ -718,7 +746,24 @@ export function createMemoryStore(): DataStore {
           date: g.goal_date,
           archivedAt: g.archived_at,
         })),
+        payees: [],
       };
+      // Like restore_backup: the file's own list, else the typed payees.
+      if (file.payees) {
+        data.payees = file.payees.map((p) => ({ id: id(), name: p.name }));
+      } else {
+        for (const t of file.transactions) {
+          if (
+            remembersPayee(
+              { payee: t.payee, isTransfer: t.is_transfer },
+              undefined,
+              t.source === "csv",
+            )
+          ) {
+            rememberPayee(t.payee);
+          }
+        }
+      }
     },
   };
 }

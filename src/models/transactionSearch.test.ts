@@ -76,6 +76,7 @@ const budget = (transactions: Transaction[]): BudgetData => ({
   incomeRules: [],
   tags: [],
   goals: [],
+  payees: [],
 });
 
 const to = (envelopeId: string, amount: number) => [{ envelopeId, amount }];

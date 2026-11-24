@@ -418,4 +418,115 @@ export function storeRuleTests(makeStore: StoreFactory) {
       /at most 20 tags/,
     );
   });
+
+  it("remembers typed payees, never imported bank rows or transfers", async () => {
+    const { store, householdId, ids, side, prefix } = await setUp(makeStore);
+    const typed = (payee: string, id?: string) =>
+      store.saveTransaction(householdId, {
+        id,
+        accountId: ids.checking,
+        date: "2026-10-05",
+        amount: -1_000,
+        payee,
+        memo: "",
+        isIncome: false,
+        allocations: [],
+      });
+    const listed = async () =>
+      (await store.load())!.payees.map((p) => p.name).filter((n) => n.startsWith(prefix));
+
+    await typed(`${prefix} Shop `);
+    await typed(`${prefix} SHOP`);
+    expect(await listed()).toEqual([`${prefix} Shop`]);
+
+    await store.importTransactions(
+      ids.checking,
+      {
+        version: 1,
+        hasHeader: true,
+        headers: ["date", "description", "amount"],
+        columnCount: 3,
+        date: 0,
+        dateOrder: "YMD",
+        description: 1,
+        memo: -1,
+        amount: { kind: "signed", column: 2, flip: false },
+        bankId: -1,
+      },
+      [
+        {
+          date: "2026-10-07",
+          amount: -2_500,
+          payee: `${prefix} POS BANK ROW`,
+          memo: "",
+          importKey: `p-${prefix}`,
+          isIncome: false,
+          matchId: null,
+        },
+      ],
+    );
+    await store.saveTransfer({
+      transferId: null,
+      sides: [
+        { ...side(ids.checking, -3_000), payee: `${prefix} Move` },
+        { ...side(ids.savings, 3_000), payee: `${prefix} Move` },
+      ],
+    });
+    expect(await listed()).toEqual([`${prefix} Shop`]);
+
+    // Fixing an imported row's payee in the form lists the new name.
+    const imported = (await store.load())!.transactions.find(
+      (t) => t.payee === `${prefix} POS BANK ROW`,
+    )!;
+    await typed(`${prefix} Bank`, imported.id);
+    expect((await listed()).sort()).toEqual([`${prefix} Bank`, `${prefix} Shop`]);
+  });
+
+  it("renames a payee on its transactions, merges same names and deletes from the list only", async () => {
+    const { store, householdId, ids, prefix } = await setUp(makeStore);
+    const typed = (payee: string) =>
+      store.saveTransaction(householdId, {
+        accountId: ids.checking,
+        date: "2026-10-05",
+        amount: -1_000,
+        payee,
+        memo: "",
+        isIncome: false,
+        allocations: [],
+      });
+    await typed(`${prefix} Old`);
+    await typed(`${prefix} old`);
+    await typed(`${prefix} Other`);
+    const state = async () => {
+      const data = (await store.load())!;
+      const mine = (name: string) => name.startsWith(prefix);
+      return {
+        payees: data.payees.filter((p) => mine(p.name)),
+        names: data.transactions
+          .filter((t) => t.accountId === ids.checking && mine(t.payee))
+          .map((t) => t.payee)
+          .sort(),
+      };
+    };
+    const idOf = async (name: string) => (await state()).payees.find((p) => p.name === name)!.id;
+
+    await store.renamePayee(await idOf(`${prefix} Old`), ` ${prefix} New `);
+    let now = await state();
+    expect(now.payees.map((p) => p.name).sort()).toEqual([`${prefix} New`, `${prefix} Other`]);
+    expect(now.names).toEqual([`${prefix} New`, `${prefix} New`, `${prefix} Other`]);
+
+    // Renaming to another payee's name (any case) merges them into one.
+    await store.renamePayee(await idOf(`${prefix} New`), `${prefix} OTHER`);
+    now = await state();
+    expect(now.payees.map((p) => p.name)).toEqual([`${prefix} OTHER`]);
+    expect(now.names).toEqual(Array(3).fill(`${prefix} OTHER`));
+
+    await rejects(store.renamePayee(now.payees[0]!.id, "   "), /name/);
+    await rejects(store.renamePayee(crypto.randomUUID(), `${prefix} X`), /Payee not found/);
+
+    await store.deletePayee(now.payees[0]!.id);
+    now = await state();
+    expect(now.payees).toEqual([]);
+    expect(now.names).toEqual(Array(3).fill(`${prefix} OTHER`));
+  });
 }

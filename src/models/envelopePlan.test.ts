@@ -10,6 +10,7 @@ function household(): BudgetData {
     incomeRules: [],
     tags: [],
     goals: [],
+    payees: [],
     accounts: [],
     groups: [{ id: "bills", name: "Bills", position: 0 }],
     envelopes: [{ id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null }],

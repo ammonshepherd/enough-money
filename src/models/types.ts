@@ -5,6 +5,7 @@
  */
 import type { Cents } from "./money";
 import type { IncomeRule } from "./incomeRules";
+import type { Payee } from "./payees";
 import type { Tag } from "./tags";
 import type { ImportFormat } from "./transactionImport";
 
@@ -127,4 +128,6 @@ export interface BudgetData {
   tags: Tag[];
   /** Envelope goals, archived ones included (see goals.ts). */
   goals: EnvelopeGoal[];
+  /** The household's saved payees, suggested in the transaction form (see payees.ts). */
+  payees: Payee[];
 }
