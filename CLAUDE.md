@@ -38,7 +38,11 @@ always describes the app as of that version (including §9, not built yet).
   from before v0.43.0, so Chrome moves existing installs to `/app/`
   instead of treating it as a new app; never change it). `landing/` holds the landing page as plain
   static files that `sitePlugin` in `vite.config.ts` copies to the site root
-  (`landing/README.md` has its rules). Two landing files keep pre-v0.43.0
+  (`landing/README.md` has its rules). Its pictures (`landing/images/`) come
+  from the test database via `npm run landing:screenshots`; its wording
+  says money is assigned to envelopes and that an envelope never runs
+  short (a transaction waits until the envelope has enough), never
+  "give every dollar a job" or "cover a shortfall". Two landing files keep pre-v0.43.0
   users working and must stay: `legacy-redirect.js` (first script on the
   landing page) sends `/#route` links and home screen icons saved at `/`
   to `/app/`, and `sw.js` retires the old service worker registered at

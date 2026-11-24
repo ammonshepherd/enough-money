@@ -29,6 +29,22 @@ v0.43.0). This README is not copied.
 - Colours: purple `#4b2a68` (theme), background `#faf8fc`; the logo is
   `/app/icons/icon.svg`.
 
+## Pictures
+
+`images/` holds phone screenshots of the app with the test database's
+sample household. Retake them all when a pictured screen changes:
+`npm run landing:screenshots` (needs `.env.test` and `cwebp`, from
+`brew install webp`). It reseeds the test project, photographs the app
+(`landing-screenshots/shots.spec.ts`, saving nothing) and writes
+600px-wide WebP files here. A new picture: add a `shot(…)` to that spec.
+
+## Sections and the old-link redirect
+
+`legacy-redirect.js` forwards any `#…` address to the app, except the
+landing page's own sections listed in it (`#why`, `#how-it-works`,
+`#faq`). A new in-page link needs its id added there;
+`e2e/landing.spec.ts` checks this.
+
 ## Previewing
 
 `npm run build`, then `npx wrangler@4.148.0 dev` serves `dist/` the way
