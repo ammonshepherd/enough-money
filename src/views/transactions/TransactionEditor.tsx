@@ -26,6 +26,7 @@ export function TransactionEditor({
   onNeedsCover,
   onCancel,
   onDelete,
+  focusAmount = false,
 }: {
   entry: Entry;
   heading: string;
@@ -37,6 +38,8 @@ export function TransactionEditor({
   onNeedsCover: (plan: CoverPlan) => void;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
+  /** Mark Amount to take the focus when the form opens (`focusMarked`). */
+  focusAmount?: boolean;
 }) {
   const save = useAsyncAction(entry.prepare);
   const remove = useAsyncAction(async () => onDelete?.());
@@ -93,6 +96,7 @@ export function TransactionEditor({
         <AmountInput
           value={form.amount}
           placeholder="0.00"
+          data-autofocus={focusAmount || undefined}
           onChange={(amount) => update({ amount })}
         />
       </label>

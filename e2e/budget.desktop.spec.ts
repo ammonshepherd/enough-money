@@ -208,7 +208,7 @@ test("Add transaction opens its form in the panel on Budget", async ({ page }) =
   await panel(page).getByRole("button", { name: "Add transaction" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const form = panel(page).getByRole("form", { name: "Add a transaction" });
-  await expect(form.getByLabel("Payee")).toBeFocused();
+  await expect(form.getByLabel("Amount", { exact: true })).toBeFocused();
   // Cancel goes back to what the panel held.
   await form.getByRole("button", { name: "Cancel" }).click();
   await expect(form).toHaveCount(0);

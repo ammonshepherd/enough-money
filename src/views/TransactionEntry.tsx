@@ -9,6 +9,7 @@ import {
 } from "../controllers/useTransactionEntry";
 import type { BudgetData } from "../models/types";
 import { Sheet } from "./components";
+import { focusMarked } from "./focusMarked";
 import { PlusIcon } from "./icons";
 import { CoverCard } from "./transactions/CoverCard";
 import { TransactionEditor } from "./transactions/TransactionEditor";
@@ -25,6 +26,7 @@ export function TransactionEntry({
   onDone,
   onCancel,
   onDelete,
+  focusAmount = false,
 }: {
   budget: Budget;
   data: BudgetData;
@@ -34,6 +36,8 @@ export function TransactionEntry({
   onCancel: () => void;
   /** Set when editing: shows a Delete button. */
   onDelete?: () => Promise<void>;
+  /** Adding: Amount takes the focus when the form opens. */
+  focusAmount?: boolean;
 }) {
   const entry = useTransactionEntry(budget, data);
   const [form, setForm] = useState(initial);
@@ -71,6 +75,7 @@ export function TransactionEntry({
       onNeedsCover={setPlan}
       onCancel={onCancel}
       onDelete={onDelete}
+      focusAmount={focusAmount}
     />
   );
 }
@@ -106,6 +111,7 @@ export function TransactionDialog({
           heading={heading}
           onDone={onClose}
           onCancel={onClose}
+          focusAmount={!onDelete}
           onDelete={
             onDelete &&
             (async () => {
@@ -164,7 +170,7 @@ export function AddTransactionButton({
 /**
  * Adding a transaction in the desktop panel on the right: the form, starting
  * in the open account (any open account can be picked). Saving, Cancel and
- * Escape close it; Payee has the focus to start.
+ * Escape close it; Amount has the focus to start.
  */
 export function PanelAddTransaction({
   budget,
@@ -182,7 +188,7 @@ export function PanelAddTransaction({
   const [initial] = useState(() => blankTransactionForm(data, accountId));
 
   useEffect(() => {
-    box.current?.querySelector<HTMLInputElement>(".field-payee input")?.focus();
+    focusMarked(box.current);
   }, []);
 
   return (
@@ -203,6 +209,7 @@ export function PanelAddTransaction({
         heading="Add a transaction"
         onDone={onClose}
         onCancel={onClose}
+        focusAmount
       />
     </div>
   );

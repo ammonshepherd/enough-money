@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.44.0.
+Version described: 0.44.1.
 
 ## 1. Purpose
 
@@ -337,8 +337,8 @@ signed out, everything is as above.
   toggle; on the collapsed rail it is a round + under the toggle, which
   opens the panel. It opens "Add a transaction" in the panel
   (`PanelAddTransaction`): the usual form, stacked, starting in the open
-  account (its Account picker offers every open account), with Payee
-  focused. Save (after any cover prompt, shown in the panel), Cancel or
+  account (its Account picker offers every open account), with Amount
+  focused (v0.44.1). Save (after any cover prompt, shown in the panel), Cancel or
   Escape closes it, and the panel goes back to what it held; choosing an
   envelope, a transaction or a tool closes it too. The button hides while
   its form is open. There is no floating + button.
@@ -776,7 +776,9 @@ picker it shows is gone).
 ### Transaction dialog (add and edit)
 
 Fields: Outflow/Inflow, Amount (> 0), Payee, Envelope, Account, Date (default
-today), Memo, Tags; in a tracking account there is no Envelope and Memo is called
+today), Memo, Tags. Adding (dialog or desktop panel), Amount has the focus
+with its text selected, ready to type (v0.44.1; `focusMarked` in
+`src/views/focusMarked.ts`); in a tracking account there is no Envelope and Memo is called
 Notes. Adding, the Account picker lists every open account (budget accounts,
 then tracking ones; choosing a tracking account drops the envelope), and a
 new transaction starts in the open account, else the first open budget
