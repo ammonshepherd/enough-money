@@ -313,6 +313,35 @@ export type Database = {
           },
         ]
       }
+      payees: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payees_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string
@@ -520,6 +549,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      rename_payee: { Args: { p_id: string; p_name: string }; Returns: string }
       reorder_categories: {
         Args: { p_category_ids: string[]; p_group_id: string }
         Returns: undefined

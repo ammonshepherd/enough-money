@@ -12,6 +12,7 @@ import {
 } from "../models/budgetMath";
 import { UserFacingError, type DataStore, type TransactionInput } from "../models/dataStore";
 import { isMonth, monthOf, type Month, todayIso } from "../models/month";
+import { payeeUseCounts, suggestPayees } from "../models/payees";
 import { formatCents, parseCents, type Cents } from "../models/money";
 import {
   fillRest,
@@ -213,6 +214,7 @@ export type TransactionEntryState = ReturnType<typeof useTransactionEntry>;
 
 export function useTransactionEntry(budget: Budget, data: BudgetData) {
   const envelopeNames = useMemo(() => new Map(data.envelopes.map((e) => [e.id, e.name])), [data]);
+  const payeeUses = useMemo(() => payeeUseCounts(data.transactions), [data]);
   const householdId = data.household.id;
 
   const openAccounts = data.accounts.filter((a) => !a.closedAt);
@@ -340,6 +342,8 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
 
   return {
     openAccounts,
+    /** The saved payees to suggest for what is typed in Payee (see payees.ts). */
+    suggestPayees: (typed: string) => suggestPayees(data.payees, payeeUses, typed),
     /** Every household tag, for the form's Tags field. */
     tags: data.tags,
     /** Adds a tag typed in the form (in the next free colour); resolves to its id. */

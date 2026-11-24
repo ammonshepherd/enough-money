@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.44.2.
+Version described: 0.45.1.
 
 ## 1. Purpose
 
@@ -98,7 +98,7 @@ always show what the store holds.
   `unit` and `integration`. Base `/app/`; the app builds into `dist/app/`
   and `sitePlugin` copies `landing/` to `dist/`.
 - `landing/`: the landing page at the site root, plain static files (rules
-  in `landing/README.md`). Since v0.44.2 it holds the content: a hero
+  in `landing/README.md`). Since v0.45.1 it holds the content: a hero
   ("Enough Money." and "No matter how much money you make, it is
   enough."), "Why it's different" (envelopes can't go negative, no
   autopilot, leftover money becomes Saved, debt stays in view), "How it
@@ -163,6 +163,7 @@ visitors get nothing.
 | `tags`                    | name (1–30 chars, trimmed; unique per household ignoring case), `color` (grey, red, orange, yellow, green, teal, blue, purple or pink). Deleting one takes it off its transactions.                                                                                     |
 | `transaction_tags`        | (transaction, tag), each pair once; at most 20 tags per transaction (checked by the save functions). Cascades when either is deleted.                                                                                                                                   |
 | `envelope_goals`          | envelope, `amount` (> 0), `goal_date`, `archived_at` (null = active). At most one active goal per envelope (partial unique index); never on a card's payment envelope (trigger). Cascades when the envelope is deleted. Display only (v0.44.0).                         |
+| `payees`                  | name (1–200 chars, trimmed; unique per household ignoring case). The saved payees the form suggests (v0.45.0); transactions keep their payee as text, with no link to this table. Filled by a trigger (below); deleting one changes no transaction.                     |
 
 Database checks (constraint triggers, deferred to commit where noted):
 `is_transfer = (transfer_id is not null)`; a transfer is exactly two rows in
@@ -190,6 +191,7 @@ SQL functions (all `security invoker` except `create_household`):
 | `reorder_category_groups(household, ids)`                      | Saves the order of the household's groups; the list must name every group once.                                                                                                                                                                                                                                                                 |
 | `reorder_categories(group, ids)`                               | Saves the order of a group's envelopes; the list must name every envelope of the group once.                                                                                                                                                                                                                                                    |
 | `export_backup(household)`                                     | Returns the whole household as one backup JSON object (one statement, so a consistent snapshot); see "Backup" under Settings.                                                                                                                                                                                                                   |
+| `rename_payee(payee, name)`                                    | Renames a saved payee and every transaction whose payee is its name (ignoring case and outer spaces). A name another payee has (ignoring case) merges them: that one stays, spelled as typed, and both payees' transactions take the spelling. Returns the id left.                                                                             |
 | `restore_backup(household, backup)`                            | Loads a backup into an empty household, all or nothing (cards inserted closed so the trigger-made payment envelopes can be swapped for the exported ones); renames the household.                                                                                                                                                               |
 
 Triggers also: keep an account's `type` and `on_budget` as added;
@@ -197,7 +199,10 @@ create/rename/protect each card's payment envelope (in the
 group that holds the other cards' payment envelopes, else "Credit card
 payments"; named "⟨card⟩ payment" and renamed only with its card); release a transfer's other
 side when one side is deleted (a typed-in side is deleted, an imported one kept
-as Uncategorized). Errors with codes `23514`, `23505`, `P0002`, `22023`, `42501`
+as Uncategorized); list a transaction's payee in `payees` (`remember_payee`,
+v0.45.0) when a typed (`source='manual'`) transaction is added or any
+transaction's payee changes, never for a transfer or a blank payee, and
+leaving a name already listed (ignoring case) as it is. Errors with codes `23514`, `23505`, `P0002`, `22023`, `42501`
 carry readable messages shown to the user; `23503` shows "It is still in use".
 
 ## 4. Budget rules beyond CLAUDE.md
@@ -800,6 +805,17 @@ transaction and only budget accounts otherwise, so a saved transaction never
 moves between the two. Then Save (adding) / Save
 changes, Cancel, and (editing) Delete transaction / Delete transfer.
 
+Payee (v0.45.0, `PayeePicker`): free text (≤ 200 characters) whose saved
+payees drop down under it (a combobox, "Suggestions") once something is
+typed: up to 8 names containing the text, ignoring case, those starting
+with it first, then the most used (by how many transactions carry the
+name), then A–Z; a name exactly as typed is left out (`suggestPayees` in
+`src/models/payees.ts`). Tap one, or use the arrows and Enter; nothing is
+highlighted at first, so Enter saves the form as usual. Escape closes the
+list only. Picking a payee fills only the Payee field (no envelope,
+direction or amount). Saving lists a new payee (see the trigger in §3);
+imported bank descriptions are not listed until edited in the form.
+
 Envelopes are chosen with the envelope picker (`EnvelopePicker`, used for the
 Envelope field, split lines, the cover prompt and the Assign dialog): a text
 field (a combobox) whose matches drop down under it, grouped under their group
@@ -852,7 +868,7 @@ the matching inflow in ⟨account⟩.", "Also updates the ⟨account⟩ side.").
 In order: household name and "Signed in as ⟨email⟩"; About (version); Sign out
 (a desktop only; on a phone it is in the page menu since v0.36.0);
 Envelope groups; Import transactions; Income rules; Import envelope plan;
-Tags; Backup.
+Tags; Payees; Backup.
 
 - **Envelope groups:** list with envelope counts. The card payments group
   (when there is one) is pinned first with a card icon in place of a handle
@@ -880,6 +896,17 @@ Tags; Backup.
   they stay); then "New tag" + Colour (preset to the next free colour) +
   Add tag. Names are trimmed (inner spaces squeezed), 1–30 characters and
   unique ignoring case ("There is already a tag called “⟨name⟩”.").
+- **Payees** (v0.45.0, `usePayees`, `PayeeSettings`): a short
+  explanation; "Find a payee" (filters by part of the name, ignoring
+  case); the saved payees alphabetically, 50 at a time ("Show N more (M
+  left)"), each with "N transactions" (or "No transactions"), Rename and
+  Delete. Rename works in place (Name, "Also renames it on its N
+  transactions.", Save, Cancel; Escape cancels) and renames the payee on
+  every transaction with its name (`rename_payee`); a name another payee
+  has (ignoring case) asks first ("“X” is already a payee. Merge “Y” into
+  it? N transactions will be named “X”.") and merges the two. Delete asks
+  ("Stop suggesting “X”? Its N transactions keep the name.") and only
+  takes it off the list; typing the name again lists it again.
 - **Backup** (`src/models/backup.ts`, `useBackup`, `BackupSection`): "Export
   all data" saves `enough-money-backup-YYYY-MM-DD.json` (format
   `budget-buddy-backup`, its name from before the rename; version 1) and
@@ -891,10 +918,13 @@ Tags; Backup.
   `transfer_id`, `is_income`, `created_at`), allocations, income rules,
   tags and transaction tags (files from before v0.39.0 have no tag lists
   and restore with none; still version 1), and envelope goals, archived
-  ones too (`envelope_goals`; files from before v0.44.0 have none).
+  ones too (`envelope_goals`; files from before v0.44.0 have none), and
+  saved payees (`payees`: name and `created_at`; a file from before
+  v0.45.0 has none and restores with the payees of its typed transactions,
+  as the trigger lists them).
   "Restore from a backup" reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
-  envelopes/import keys per account, tag names ignoring case, tags per
+  envelopes/import keys per account, tag and payee names ignoring case, tags per
   transaction (≤ 20), links, goals (amount above $0.00, one active per
   envelope, never on a payment envelope), one payment envelope per card and
   none allocated to, transfer pairs, split sums and signs, Income and card
@@ -1030,13 +1060,14 @@ Decided or wanted, but not in the app:
   desktop (Collapse all groups, Go to this month and Edit groups are phone
   only); more page menu options (show unused envelopes, start or upload a
   plan at any time).
-- Payee suggestions: a saved list of the household's payees, offered as
-  matches while typing a payee in the transaction form (as
-  `EnvelopePicker` does for envelopes), and edited in Settings (rename,
-  merge, delete). Not decided yet: whether the list fills itself from
-  past transactions and imports or only from typed payees, whether a
-  payee remembers its last envelope, and whether renaming one changes its
-  past transactions.
+- Payees: rules that turn a bank description into a payee at import
+  (e.g. "POS WALMART #1234" → "Walmart", like income rules); adding a
+  payee in Settings without a transaction. Decided against for now
+  (v0.45.0): picking a payee does not fill the envelope, direction or
+  amount.
+- Settings: one list of options on the main Settings page (perhaps under
+  another name), each opening its own settings page, instead of every
+  section on one long page.
 - Location-based payee suggestions: when adding a transaction, offer the
   payees saved near where the phone is, with each payee's places edited in
   Settings. Needs the browser's location, which the site's permissions

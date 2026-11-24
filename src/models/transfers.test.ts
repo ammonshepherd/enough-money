@@ -42,6 +42,7 @@ function budget(transactions: Transaction[]): BudgetData {
     incomeRules: [],
     tags: [],
     goals: [],
+    payees: [],
     accounts: [account("checking"), account("visa")],
     groups: [],
     envelopes: [],

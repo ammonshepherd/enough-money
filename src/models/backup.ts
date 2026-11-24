@@ -7,7 +7,7 @@
  * would lose: reconciled and voided marks, import keys (so later bank CSV
  * imports still skip rows already imported), where a row came from (`source`),
  * transfer links, splits, closed accounts, each card's payment envelope, the
- * saved CSV column mappings, tags, envelope goals and when rows were created (ties in a day keep
+ * saved CSV column mappings, tags, envelope goals, saved payees and when rows were created (ties in a day keep
  * their order). The SQL functions export_backup / restore_backup read and
  * write it; see supabase/migrations/20261020105751_backup_restore.sql.
  *
@@ -17,6 +17,7 @@
  */
 import { UserFacingError } from "./dataStore";
 import { isMonth, monthOf, type Month } from "./month";
+import { MAX_PAYEE_NAME, payeeKey } from "./payees";
 import { MAX_TAGS_PER_TRANSACTION, MAX_TAG_NAME, TAG_COLORS, tagKey, type TagColor } from "./tags";
 import type { BudgetData } from "./types";
 
@@ -113,6 +114,12 @@ export interface BackupEnvelopeGoal {
   created_at: string | null;
 }
 
+/** A saved payee (the list the transaction form suggests from). */
+export interface BackupPayee {
+  name: string;
+  created_at: string | null;
+}
+
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: typeof BACKUP_VERSION;
@@ -133,6 +140,11 @@ export interface Backup {
   transaction_tags?: BackupTransactionTag[];
   /** Missing in files made before v0.44.0 (no goals then). */
   envelope_goals?: BackupEnvelopeGoal[];
+  /**
+   * Missing in files made before v0.45.0: restoring one lists the payees of
+   * its typed transactions, as the database does when they are saved.
+   */
+  payees?: BackupPayee[];
 }
 
 /** Largest amount the database accepts (its bigint checks). */
@@ -283,6 +295,12 @@ export function validateBackup(value: unknown): Backup {
     created_at: timestamp,
   });
 
+  const payees = optionalRows<BackupPayee>(value, "payees", {
+    name: (v) =>
+      typeof v === "string" && v === v.trim() && v.length >= 1 && v.length <= MAX_PAYEE_NAME,
+    created_at: timestamp,
+  });
+
   const unique = <T>(list: T[], key: (row: T) => string, what: string) => {
     const seen = new Set<string>();
     for (const row of list) {
@@ -300,6 +318,7 @@ export function validateBackup(value: unknown): Backup {
   unique(tags, (t) => t.id, "a tag id");
   unique(tags, (t) => tagKey(t.name), "a tag name");
   unique(tagLinks, (x) => `${x.transaction_id} ${x.tag_id}`, "a tag on one transaction");
+  unique(payees, (p) => payeeKey(p.name), "a payee name");
   unique(
     transactions.filter((t) => t.import_key !== null),
     (t) => `${t.account_id} ${t.import_key}`,
@@ -524,7 +543,8 @@ export function isEmptyHousehold(data: BudgetData): boolean {
     data.envelopeMonths.length === 0 &&
     data.transactions.length === 0 &&
     data.incomeRules.length === 0 &&
-    data.tags.length === 0
+    data.tags.length === 0 &&
+    data.payees.length === 0
   );
 }
 
