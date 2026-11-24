@@ -9,6 +9,7 @@ import {
 import { useAsyncAction } from "../controllers/useAsyncAction";
 import { formatCents, formatSignedCents, type Cents } from "../models/money";
 import { PencilIcon } from "./icons";
+import { focusMarked } from "./focusMarked";
 import { AmountInput } from "./AmountInput";
 
 /**
@@ -51,7 +52,11 @@ export function Sheet({
   // A <dialog> opens with showModal(), which React has no prop for.
   useEffect(() => {
     const element = dialog.current;
-    if (open && !element?.open) element?.showModal();
+    if (open && !element?.open) {
+      element?.showModal();
+      // showModal focuses the first field; a field marked data-autofocus wins.
+      focusMarked(element);
+    }
     if (!open && element?.open) element.close();
   }, [open]);
 

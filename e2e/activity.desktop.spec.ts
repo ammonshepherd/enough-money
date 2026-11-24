@@ -42,7 +42,7 @@ test("Add transaction opens the form in the panel, not in the list", async ({ pa
   await expect(page.locator(".activity-table form")).toHaveCount(0);
   // The button hides while its form is open.
   await expect(addButton(page)).toHaveCount(0);
-  await expect(newRow(page).getByLabel("Payee")).toBeFocused();
+  await expect(newRow(page).getByLabel("Amount", { exact: true })).toBeFocused();
 
   await newRow(page).getByLabel("Payee").fill("Corner Market");
   await newRow(page).getByLabel("Amount").fill("12.50");

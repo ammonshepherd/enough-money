@@ -41,8 +41,11 @@ test("add a transaction from the Budget page without leaving it", async ({ page 
   await expect(available(page)).toContainText("$500.00");
 
   // Escape and Cancel close it without saving.
+  // Amount has the focus, ready to type into.
   dialog = await openAddTransaction(page);
-  await dialog.getByLabel("Amount").fill("10");
+  await expect(dialog.getByLabel("Amount")).toBeFocused();
+  await page.keyboard.type("1000");
+  await expect(dialog.getByLabel("Amount")).toHaveValue("10.00");
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   dialog = await openAddTransaction(page);
