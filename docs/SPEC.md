@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.46.0.
+Version described: 0.46.1.
 
 ## 1. Purpose
 
@@ -872,13 +872,15 @@ Named Settings until v0.46.0 (`src/views/pages/ManagePage.tsx`). A list of
 options, each opening its own page at its own address (`#manage/tags`).
 The list, under the heading "Manage" and the Credit card debt strip:
 
-- The household: its name and "Signed in as ⟨email⟩", with a pencil
-  ("Rename household") that turns it into a form in place (Household name,
-  Save, Cancel; Escape cancels; 1–100 characters once trimmed,
-  `useHousehold`, `renameHousehold`).
 - Groups, each a small uppercase heading over a rounded list. Every option
   is a row with an icon, its name, one short line saying what it does, and
   a chevron:
+  - **Settings** (v0.46.1; rows that open no page, so no chevron): the
+    household's name over "Household name", with a pencil ("Rename
+    household") that turns the row into a form in place (Household name,
+    Save, Cancel; Escape cancels; 1–100 characters once trimmed,
+    `useHousehold`, `renameHousehold`); then the email signed in over
+    "Signed in as".
   - **Budget:** Envelope groups ("Add, rename and order groups and
     envelopes"), Import envelope plan ("Upload Planned amounts for a
     month").

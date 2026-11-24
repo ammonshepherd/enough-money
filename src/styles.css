@@ -4763,20 +4763,14 @@ body:has(.app-shell.desktop) {
   gap: 1rem;
 }
 
-/* The household's name and who is signed in, with its pencil. */
-.manage-household {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 1.1rem;
-  background: var(--surface);
-}
-
+/* Manage → Settings: the household's name, with its pencil; renaming puts
+   the form beside the icon. */
 .manage-household .form {
   grid-column: 2 / -1;
+}
+
+.manage-household:has(.form) {
+  align-items: start;
 }
 
 .manage-group h2 {
