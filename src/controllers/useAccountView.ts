@@ -159,7 +159,7 @@ export function useAccountView(
     toReview: review.list.map(reviewRow),
     toReviewIn: review.inflow,
     toReviewOut: review.outflow,
-    /** Inflows to review that an income rule matches (see Settings → Income rules). */
+    /** Inflows to review that an income rule matches (see Manage → Income rules). */
     ruleMatches: inflowsMatchingRules(data)
       .filter((tx) => accountId === null || tx.accountId === accountId)
       .map((tx) => tx.id),

@@ -251,6 +251,19 @@ export function storeRuleTests(makeStore: StoreFactory) {
     expect(income(ids.checking)).toBe(true);
   });
 
+  it("renames the household, never to a blank name", async () => {
+    const { store, householdId } = await setUp(makeStore);
+    const before = (await store.load())!.household.name;
+    await rejects(store.renameHousehold(householdId, "   "), /name/);
+    try {
+      await store.renameHousehold(householdId, `${before} (renamed)`);
+      expect((await store.load())!.household.name).toBe(`${before} (renamed)`);
+    } finally {
+      // The test database's household keeps its name for the other tests.
+      await store.renameHousehold(householdId, before);
+    }
+  });
+
   it("refuses to delete what is still in use", async () => {
     const { store, ids, save } = await setUp(makeStore);
     await save(ids.checking, -1_000, [[ids.a, -1_000]]);

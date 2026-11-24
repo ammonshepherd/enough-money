@@ -13,7 +13,8 @@ export const BudgetIcon = () => (
 );
 export const AccountsIcon = () => <Icon path="M4 7.5h16v12H4zM4 7.5l2-3h12l2 3M4 10h16M8 15h3" />;
 export const ActivityIcon = () => <Icon path="M5 5h14v14H5zM8 9h8M8 12h8M8 15h5" />;
-export const SettingsIcon = () => (
+/** A gear: the Manage page (its tab and sidebar link). */
+export const ManageIcon = () => (
   <Icon path="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0-5v2m0 13v2M3.5 12h2m13 0h2M5.99 5.99l1.41 1.42m9.2 9.18 1.41 1.42m0-12.02-1.41 1.42m-9.2 9.18-1.41 1.42" />
 );
 export const InstallIcon = () => (
@@ -68,3 +69,31 @@ export const EnvelopeIcon = () => (
 );
 /** A payment card: the Credit card payments group bar on Budget. */
 export const CardIcon = () => <Icon path="M3 6h18v12H3zM3 10h18M6.5 14.5h4" />;
+
+// Manage's list: one small drawing per option.
+/** Stacked folders: envelope groups. */
+export const GroupsIcon = () => <Icon path="M3 7h6l2 2h10v10H3zM3 7V5h6l2 2" />;
+/** A sheet with rows: an envelope plan CSV. */
+export const PlanIcon = () => <Icon path="M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 15.5h7M9 19h4" />;
+/** A coin with an arrow in: deposits marked Income. */
+export const IncomeIcon = () => (
+  <Icon path="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 7v10M8.5 13.5 12 17l3.5-3.5" />
+);
+/** A luggage-style label: tags. */
+export const TagIcon = () => <Icon path="M3 3h8l10 10-8 8L3 11zM7.5 7.5h.01" />;
+/** A person: payees. */
+export const PersonIcon = () => (
+  <Icon path="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" />
+);
+/** A tray with an arrow out: export a backup. */
+export const ExportIcon = () => (
+  <Icon path="M12 15V3m0 0-4 4m4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+);
+/** Info in a circle: About. */
+export const InfoIcon = () => (
+  <Icon path="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 11v6M12 7.5h.01" />
+);
+/** A circular arrow: restore a backup. */
+export const RestoreIcon = () => <Icon path="M4 4v6h6M4.5 15a8 8 0 1 0 1.9-8.3L4 10" />;
+/** A door with an arrow out: sign out. */
+export const SignOutIcon = () => <Icon path="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" />;

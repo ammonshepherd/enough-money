@@ -1,16 +1,21 @@
 import { readFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
-import { addAccount, addTransaction, goTo, signInWithHousehold, accountRow } from "./helpers";
+import {
+  addAccount,
+  addTransaction,
+  goTo,
+  openManage,
+  signInWithHousehold,
+  accountRow,
+} from "./helpers";
 
 test("export everything, then restore it into a new empty household", async ({ page }) => {
   await signInWithHousehold(page);
   await addAccount(page, { name: "Checking", balance: "100", date: "2030-01-01" });
   await addTransaction(page, { amount: "12.34", payee: "Corner Shop" });
 
-  await goTo(page, "Settings");
+  await openManage(page, "Backup");
   const card = page.getByRole("region", { name: "Backup" });
-  // This household has data: a file can be checked but not restored.
-  await expect(card).toContainText("only be restored into an empty household");
 
   const downloading = page.waitForEvent("download");
   await card.getByRole("button", { name: "Export all data" }).click();
@@ -27,9 +32,14 @@ test("export everything, then restore it into a new empty household", async ({ p
   ]);
   await expect(card.getByRole("status")).toContainText("1 account");
 
-  await card.getByLabel("Backup file").setInputFiles(path);
-  await expect(card).toContainText("holds Test Home");
-  await expect(card.getByRole("button", { name: "Restore this backup" })).toHaveCount(0);
+  // Restore sits apart, in Manage's danger zone. This household has data:
+  // a file can be checked but not restored.
+  await openManage(page, "Restore from a backup");
+  const restore = page.getByRole("region", { name: "Restore from a backup" });
+  await expect(restore).toContainText("only be restored into an empty household");
+  await restore.getByLabel("Backup file").setInputFiles(path);
+  await expect(restore).toContainText("holds Test Home");
+  await expect(restore.getByRole("button", { name: "Restore this backup" })).toHaveCount(0);
 
   // A reload empties the in-memory store: a brand-new household.
   await page.reload();
@@ -38,8 +48,8 @@ test("export everything, then restore it into a new empty household", async ({ p
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByLabel("Household name").fill("Fresh");
   await page.getByRole("button", { name: "Create" }).click();
-  await goTo(page, "Settings");
-  const fresh = page.getByRole("region", { name: "Backup" });
+  await openManage(page, "Restore from a backup");
+  const fresh = page.getByRole("region", { name: "Restore from a backup" });
   await expect(fresh).toContainText("This household is empty");
   await fresh.getByLabel("Backup file").setInputFiles(path);
   await fresh.getByRole("button", { name: "Restore this backup" }).click();
@@ -48,16 +58,16 @@ test("export everything, then restore it into a new empty household", async ({ p
   await goTo(page, "Accounts");
   await expect(accountRow(page, "Checking")).toBeVisible();
   // Restored, the household is no longer empty.
-  await goTo(page, "Settings");
-  await expect(page.getByRole("region", { name: "Backup" })).toContainText(
+  await openManage(page, "Restore from a backup");
+  await expect(page.getByRole("region", { name: "Restore from a backup" })).toContainText(
     "only be restored into an empty household",
   );
 });
 
 test("a file that is not a backup is explained", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
-  const card = page.getByRole("region", { name: "Backup" });
+  await openManage(page, "Restore from a backup");
+  const card = page.getByRole("region", { name: "Restore from a backup" });
   await card
     .getByLabel("Backup file")
     .setInputFiles({ name: "x.json", mimeType: "application/json", buffer: Buffer.from("[1]") });

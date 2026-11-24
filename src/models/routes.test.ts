@@ -5,14 +5,15 @@ import {
   locationHash,
   parseLocation,
   routeHref,
-  settingsHref,
-  settingsSection,
+  legacySettingsHash,
+  manageHref,
+  manageSection,
 } from "./routes";
 
 describe("parseLocation", () => {
   it("reads known routes regardless of case or a leading slash", () => {
     expect(parseLocation("#accounts")).toEqual({ route: "accounts", month: null, account: null });
-    expect(parseLocation("#/Settings")).toEqual({ route: "settings", month: null, account: null });
+    expect(parseLocation("#/Manage")).toEqual({ route: "manage", month: null, account: null });
   });
 
   it("reads the Budget month and ignores invalid ones", () => {
@@ -26,7 +27,7 @@ describe("parseLocation", () => {
       month: null,
       account: null,
     });
-    expect(parseLocation("#settings/2026-10").month).toBeNull();
+    expect(parseLocation("#manage/2026-10").month).toBeNull();
   });
 
   it("reads what Accounts has open, with or without the month", () => {
@@ -66,10 +67,10 @@ describe("parseLocation", () => {
 });
 
 describe("links", () => {
-  it("link Budget and Accounts with the month, Settings without", () => {
+  it("link Budget and Accounts with the month, Manage without", () => {
     expect(routeHref("accounts", "2026-10")).toBe("#accounts/2026-10");
     expect(routeHref("budget", "2026-10")).toBe("#budget/2026-10");
-    expect(routeHref("settings", "2026-10")).toBe("#settings");
+    expect(routeHref("manage", "2026-10")).toBe("#manage");
   });
 
   it("link to what Accounts has open", () => {
@@ -85,18 +86,29 @@ describe("links", () => {
   });
 });
 
-describe("settings sections", () => {
-  it("links to the envelope groups on Settings", () => {
-    expect(settingsHref()).toBe("#settings");
-    expect(settingsHref("groups")).toBe("#settings/groups");
-    expect(parseLocation(settingsHref("groups"))).toEqual({
-      route: "settings",
+describe("Manage pages", () => {
+  it("link to each page on Manage", () => {
+    expect(manageHref()).toBe("#manage");
+    expect(manageHref("tags")).toBe("#manage/tags");
+    expect(parseLocation(manageHref("groups"))).toEqual({
+      route: "manage",
       month: null,
       account: null,
     });
-    expect(settingsSection("#settings/groups")).toBe("groups");
-    expect(settingsSection("#Settings/Groups")).toBe("groups");
-    expect(settingsSection("#settings")).toBeNull();
-    expect(settingsSection("#budget/groups")).toBeNull();
+    expect(manageSection("#manage/income-rules")).toBe("income-rules");
+    expect(manageSection("#Manage/Tags/")).toBe("tags");
+    expect(manageSection("#manage")).toBeNull();
+    expect(manageSection("#manage/nope")).toBeNull();
+    expect(manageSection("#budget/groups")).toBeNull();
+  });
+
+  it("read old Settings links as Manage and rewrite them", () => {
+    expect(parseLocation("#settings")).toEqual({ route: "manage", month: null, account: null });
+    expect(manageSection("#settings/groups")).toBe("groups");
+    expect(legacySettingsHash("#settings")).toBe("#manage");
+    expect(legacySettingsHash("#/Settings/groups")).toBe("#manage/groups");
+    expect(legacySettingsHash("#settings/nope")).toBe("#manage");
+    expect(legacySettingsHash("#manage/groups")).toBeNull();
+    expect(legacySettingsHash("#settingsx")).toBeNull();
   });
 });

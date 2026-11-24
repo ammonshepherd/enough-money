@@ -82,10 +82,10 @@ test("Budget: collapse all groups, go to this month, edit groups", async ({ page
   await choosePageMenu(page, "Go to this month");
   await expect(page.locator(".budget-month span")).toHaveText(thisMonth!);
 
-  // Edit groups opens Settings at the envelope groups.
+  // Edit groups opens Manage's envelope groups.
   menu = await openPageMenu(page);
   await menuOption(menu, "Edit groups").click();
-  await expect(page).toHaveURL(/#settings\/groups$/);
+  await expect(page).toHaveURL(/#manage\/groups$/);
   await expect(page.getByRole("heading", { name: "Envelope groups" })).toBeInViewport();
 });
 
@@ -149,9 +149,9 @@ test("Accounts: fold dates, collapse the info pane, sort income first", async ({
   await page.keyboard.press("Escape");
 });
 
-test("Settings: Sign out is in the menu", async ({ page }) => {
+test("Manage: Sign out is in the menu", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   const menu = await openPageMenu(page);
   await expect(menu.locator("[role^='menuitem']")).toHaveText(["Sign out"]);
   await menuOption(menu, "Sign out").click();

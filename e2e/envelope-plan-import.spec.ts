@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { envelope, goTo, signInWithHousehold } from "./helpers";
+import { envelope, signInWithHousehold, openManage } from "./helpers";
 
 const csv = (text: string) => ({
   name: "plan.csv",
@@ -7,9 +7,9 @@ const csv = (text: string) => ({
   buffer: Buffer.from(text),
 });
 
-test("import an envelope plan CSV for a month from Settings", async ({ page }) => {
+test("import an envelope plan CSV for a month from Manage", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await openManage(page, "Import envelope plan");
   const card = page.getByRole("region", { name: "Import envelope plan" });
 
   await card.getByLabel("Month").fill("2030-01");
@@ -42,7 +42,7 @@ test("import an envelope plan CSV for a month from Settings", async ({ page }) =
   await expect(envelope(page, "Food, groceries")).toContainText("Planned $450.50");
 
   // Importing again updates Planned for existing envelopes instead of duplicating them.
-  await goTo(page, "Settings");
+  await openManage(page, "Import envelope plan");
   await card.getByLabel("Month").fill("2030-01");
   await card.getByLabel("CSV file").setInputFiles(csv("rent,BILLS,1300"));
   await expect(card.getByRole("status")).toContainText("0 new groups, 0 new envelopes");
@@ -59,7 +59,7 @@ test("import an envelope plan CSV for a month from Settings", async ({ page }) =
 
 test("an unusable file shows why", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await openManage(page, "Import envelope plan");
   const card = page.getByRole("region", { name: "Import envelope plan" });
   await card.getByLabel("CSV file").setInputFiles(csv("category,group\nRent,Bills"));
   await expect(card.getByRole("alert")).toHaveText(

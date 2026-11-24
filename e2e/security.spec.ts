@@ -41,9 +41,11 @@ test("the policy blocks nothing the app itself does", async ({ page }) => {
   await accountRow(page, "Checking").click();
   await expect(page.getByLabel("Search transactions")).toBeVisible();
 
-  // Settings: drag-and-drop lists set inline styles.
-  await nav.getByRole("link", { name: "Settings" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
+  // Manage → Envelope groups: drag-and-drop lists set inline styles.
+  await nav.getByRole("link", { name: "Manage" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Manage" })).toBeVisible();
+  await page.getByRole("link", { name: /^Envelope groups/ }).click();
+  await expect(page.getByRole("region", { name: "Envelope groups" })).toBeVisible();
 
   expect(await violations()).toEqual([]);
 });

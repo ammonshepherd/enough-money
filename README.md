@@ -8,8 +8,8 @@ budgeting rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Version
 
-The current application version is **0.45.1** (kept in `package.json`; the app shows it in
-the header, and `docs/SPEC.md` describes that version).
+The current application version is **0.46.0** (kept in `package.json`; the app shows it on
+Manage → About and in the desktop sidebar, and `docs/SPEC.md` describes that version).
 
 Versions follow:
 
@@ -111,7 +111,7 @@ stays fixed at the top while the envelopes scroll under it; tap it to assign som
 envelope. It disappears when there is nothing left to assign ($0.00) and turns red as
 **Over Assigned** when you have assigned more than you have. The month picker sits
 just above it. Each group has a **+** button to add an envelope; groups are added,
-renamed, reordered and deleted in **Settings → Envelope groups**. Tap an envelope's
+renamed, reordered and deleted in **Manage → Envelope groups**. Tap an envelope's
 name to open it (release from Saved, rename, move, delete), tap Planned or Assigned to
 change them (on a phone Assigned opens a number pad that also takes "+50"), and tap
 what is left to move money to another envelope.
@@ -143,7 +143,7 @@ page shows how many transactions wait, and Accounts lists them under **To review
 Available to Assign = opening balances + income − assigned
 ```
 
-**Income rules** (Settings) mark paychecks for you: a deposit whose description contains
+**Income rules** (Manage) mark paychecks for you: a deposit whose description contains
 a rule's text (ignoring case), optionally only in one account, is marked Income when you
 import it. The import preview says how many rows a rule marked. A new rule can also mark
 the inflows already waiting for review, and To review has **Apply income rules**. Rules
@@ -214,8 +214,7 @@ Uncategorized bank row.
 
 ## Transaction import
 
-Settings → **Import transactions** (or **Import CSV** on an open account): choose an
-account and a CSV downloaded from the bank or card website. Banks format these differently, so the app:
+Open an account on **Accounts** and tap **Import CSV**: choose a CSV downloaded from the bank or card website. Banks format these differently, so the app:
 
 1. **Detects** the columns from the header names (Date / Posted Date, Description / Payee,
    Amount or separate Debit and Credit columns, Transaction ID) and the date style
@@ -232,7 +231,7 @@ Imported transactions arrive Uncategorized.
 
 ## Envelope plan import
 
-Settings → **Import envelope plan** takes a CSV for one month with the columns
+Manage → **Import envelope plan** takes a CSV for one month with the columns
 `category, group, planned amount` (header optional; with a header, columns may be in
 any order). It previews the rows, lists invalid ones with their line numbers, then in
 one step creates missing groups and envelopes (names match ignoring case) and sets

@@ -93,7 +93,7 @@ export function nextTagColor(tags: Tag[]): TagColor {
   return order.find((c) => !used.has(c)) ?? order[tags.length % order.length]!;
 }
 
-/** How many transactions carry each tag (for Settings). */
+/** How many transactions carry each tag (for Manage → Tags). */
 export function tagUseCounts(transactions: Transaction[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const tx of transactions) {

@@ -27,14 +27,10 @@ function describe(summary: BackupSummary): string {
   return `${counts}; ${plural(months.length, "month")} with transactions or plans (${range})`;
 }
 
-/** Settings → Backup: export everything to a file, or restore one into an empty household. */
-export function BackupSection({ budget, data }: { budget: Budget; data: BudgetData }) {
+/** Manage → Backup: export everything to one file. */
+export function BackupExport({ budget, data }: { budget: Budget; data: BudgetData }) {
   const backup = useBackup(budget, data);
   const exportAll = useAsyncAction(backup.exportAll);
-  const restore = useAsyncAction(backup.restore);
-  // Changing the key empties the file input after a restore or a cancel.
-  const [inputKey, setInputKey] = useState(0);
-  const { chosen } = backup;
 
   return (
     <section className="list-card" aria-labelledby="backup-title">
@@ -62,8 +58,29 @@ export function BackupSection({ budget, data }: { budget: Budget; data: BudgetDa
           Saved {backup.exported.fileName}: {describe(backup.exported.summary)}.
         </p>
       )}
+      <p className="empty-state">
+        To load a backup file, use Restore from a backup at the bottom of Manage.
+      </p>
+    </section>
+  );
+}
 
-      <h3>Restore from a backup</h3>
+/**
+ * Manage → Restore from a backup (in the danger zone): load a file into an
+ * empty household. Any file can be chosen to see what it holds.
+ */
+export function BackupRestore({ budget, data }: { budget: Budget; data: BudgetData }) {
+  const backup = useBackup(budget, data);
+  const restore = useAsyncAction(backup.restore);
+  // Changing the key empties the file input after a restore or a cancel.
+  const [inputKey, setInputKey] = useState(0);
+  const { chosen } = backup;
+
+  return (
+    <section className="list-card" aria-labelledby="restore-title">
+      <div className="section-heading">
+        <h2 id="restore-title">Restore from a backup</h2>
+      </div>
       {backup.canRestore ? (
         <p className="empty-state">
           This household is empty, so a backup can be loaded into it. Everything in the file is

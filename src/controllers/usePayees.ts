@@ -22,7 +22,7 @@ export interface RenamePlan {
   mergeInto: PayeeRow | null;
 }
 
-/** Settings → Payees: the household's saved payees, renamed, merged and deleted. */
+/** Manage → Payees: the household's saved payees, renamed, merged and deleted. */
 export function usePayees(budget: Budget, data: BudgetData) {
   const rows = useMemo(() => {
     const counts = payeeUseCounts(data.transactions);

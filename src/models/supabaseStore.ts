@@ -222,6 +222,16 @@ export function createSupabaseStore(
       check((await db().rpc("create_household", { p_name: name })).error);
     },
 
+    async renameHousehold(householdId, name) {
+      const { data, error } = await db()
+        .from("households")
+        .update({ name })
+        .eq("id", householdId)
+        .select("id");
+      check(error);
+      if (!data?.length) throw new UserFacingError("Household not found");
+    },
+
     async addAccount(householdId, account) {
       const { error } = await db()
         .from("accounts")

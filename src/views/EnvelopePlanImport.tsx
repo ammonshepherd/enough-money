@@ -8,7 +8,7 @@ import type { BudgetData } from "../models/types";
 import { ErrorMessage, Money } from "./components";
 
 /**
- * Upload a CSV of envelopes and Planned amounts for one month: a Settings
+ * Upload a CSV of envelopes and Planned amounts for one month: a Manage
  * card where the month is chosen, or (with `month`) the Budget page's sheet
  * for that month, which `onDone` closes after an import.
  */

@@ -1,5 +1,11 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { locationHash, parseLocation, ROUTE_TITLES, type AppLocation } from "../models/routes";
+import {
+  legacySettingsHash,
+  locationHash,
+  parseLocation,
+  ROUTE_TITLES,
+  type AppLocation,
+} from "../models/routes";
 
 function subscribe(onChange: () => void) {
   window.addEventListener("hashchange", onChange);
@@ -18,11 +24,12 @@ export function useHashRoute(): AppLocation {
   const location = parseLocation(hash);
   const { route } = location;
 
-  // An old link (#activity/2026-10) shows its new address (#accounts/all/2026-10),
-  // replacing the old one in the history so Back does not return to it.
-  const legacy = /^#\/?activity/i.test(hash);
+  // An old link (#activity/2026-10, #settings/groups) shows its new address
+  // (#accounts/all/2026-10, #manage/groups), replacing the old one in the
+  // history so Back does not return to it.
+  const legacy = /^#\/?activity/i.test(hash) ? locationHash(location) : legacySettingsHash(hash);
   useEffect(() => {
-    if (legacy) window.history.replaceState(null, "", locationHash(location));
+    if (legacy) window.history.replaceState(null, "", legacy);
   });
 
   // An effect runs after React has updated the screen: the right place to

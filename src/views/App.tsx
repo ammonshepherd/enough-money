@@ -16,17 +16,17 @@ import {
   ROUTE_TITLES,
   ROUTES,
   routeHref,
-  settingsSection,
+  manageSection,
   type AccountsView,
   type Route,
 } from "../models/routes";
 import { store } from "../models/store";
 import { CreateHouseholdPage } from "./CreateHouseholdPage";
 import { ErrorMessage } from "./components";
-import { AccountsIcon, BudgetIcon, ChevronLeftIcon, InstallIcon, SettingsIcon } from "./icons";
+import { AccountsIcon, BudgetIcon, ChevronLeftIcon, InstallIcon, ManageIcon } from "./icons";
 import { AccountsPage } from "./pages/AccountsPage";
 import { BudgetPage } from "./pages/BudgetPage";
-import { SettingsPage } from "./pages/SettingsPage";
+import { ManagePage } from "./pages/ManagePage";
 import { SignInPage } from "./SignInPage";
 import { MenuSlotProvider } from "./PageMenu";
 import { AddTransactionButton } from "./TransactionEntry";
@@ -38,7 +38,7 @@ const QUICK_ADD: Route[] = ["budget", "accounts"];
 const NAV_ICONS: Record<Route, () => JSX.Element> = {
   budget: BudgetIcon,
   accounts: AccountsIcon,
-  settings: SettingsIcon,
+  manage: ManageIcon,
 };
 
 type Install = (() => Promise<void>) | null;
@@ -47,7 +47,7 @@ type Install = (() => Promise<void>) | null;
  * The app frame: header, then sign-in, household setup, or the budget itself.
  * Signed in on a wide window (desktop), a sidebar takes the header's place.
  * On a phone the header's top right holds the page's menu (see PageMenu);
- * the version is on Settings.
+ * the version is on Manage.
  */
 export function App() {
   const session = useSession(store);
@@ -132,7 +132,7 @@ function SignedInApp({
   const opened = location.route === "accounts" ? location.account : null;
 
   // The Add transaction button: round and floating on a phone. Not on
-  // Settings. On a desktop it heads the panel on the right (each page's own).
+  // Manage. On a desktop it heads the panel on the right (each page's own).
   const add =
     !desktop && data && QUICK_ADD.includes(location.route) ? (
       <AddTransactionButton
@@ -199,14 +199,14 @@ function SignedInApp({
         desktop={desktop}
       />
     ),
-    settings: (
-      <SettingsPage
+    manage: (
+      <ManagePage
         budget={budget}
         data={data}
         email={session.email}
         onSignOut={store.signOut}
         desktop={desktop}
-        section={location.route === "settings" ? settingsSection(window.location.hash) : null}
+        section={location.route === "manage" ? manageSection(window.location.hash) : null}
       />
     ),
   };

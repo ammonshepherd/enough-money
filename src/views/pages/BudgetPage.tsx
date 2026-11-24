@@ -5,7 +5,7 @@ import { useCollapsedGroups } from "../../controllers/useCollapsedGroups";
 import { useCompactRows, useSidebar } from "../../controllers/useLayout";
 import { formFromTransaction } from "../../controllers/useTransactionEntry";
 import { currentMonth, type Month } from "../../models/month";
-import { accountsHref, budgetHref, settingsHref } from "../../models/routes";
+import { accountsHref, budgetHref, manageHref } from "../../models/routes";
 import type { BudgetData } from "../../models/types";
 import { Money, Sheet } from "../components";
 import { AssignFromAvailable } from "../AssignFromAvailable";
@@ -161,7 +161,7 @@ export function BudgetPage({
                 Go to this month
               </MenuItem>
             )}
-            <MenuItem onSelect={() => (window.location.hash = settingsHref("groups"))}>
+            <MenuItem onSelect={() => (window.location.hash = manageHref("groups"))}>
               Edit groups
             </MenuItem>
           </PageMenu>
@@ -189,7 +189,7 @@ export function BudgetPage({
 
       {view.groups.length === 0 && (
         <p className="notice compact">
-          No envelopes yet. <a href="#settings">Add an envelope group in Settings</a>, then add
+          No envelopes yet. <a href="#manage/groups">Add an envelope group in Manage</a>, then add
           envelopes to it here with its + button.
         </p>
       )}

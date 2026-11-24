@@ -5,7 +5,7 @@ import { choosePageMenu, goTo, signInWithHousehold, openAllAccounts } from "./he
 test("shows sign-in first, with no version or menu in the header", async ({ page }) => {
   await page.goto("./");
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
-  // The version is on Settings; signed out there is no page menu either.
+  // The version is on Manage; signed out there is no page menu either.
   await expect(page.getByLabel("Application version")).toHaveCount(0);
   await expect(page.locator(".app-header").getByRole("button", { name: / menu$/ })).toHaveCount(0);
   // Public sign-up is off: no way to create an account here.
@@ -17,7 +17,7 @@ test("bottom navigation switches pages and updates the URL hash", async ({ page 
   await signInWithHousehold(page);
   const nav = page.getByRole("navigation", { name: "Primary navigation" });
 
-  await expect(nav.getByRole("link")).toHaveText(["Budget", "Accounts", "Settings"]);
+  await expect(nav.getByRole("link")).toHaveText(["Budget", "Accounts", "Manage"]);
   // The tabs share the bar's width equally, centred.
   const bar = (await nav.boundingBox())!;
   const tabs = await Promise.all((await nav.getByRole("link").all()).map((l) => l.boundingBox()));
@@ -28,7 +28,7 @@ test("bottom navigation switches pages and updates the URL hash", async ({ page 
   ];
   expect(Math.abs(middle - bar.width / 2)).toBeLessThan(2);
   expect(Math.abs(middle - left - (right - middle))).toBeLessThan(2);
-  for (const name of ["Accounts", "Settings", "Budget"]) {
+  for (const name of ["Accounts", "Manage", "Budget"]) {
     await nav.getByRole("link", { name }).click();
     // Budget and Accounts carry the month, so it stays the same between them.
     await expect(page).toHaveURL(new RegExp(`#${name.toLowerCase()}(/\\d{4}-\\d{2})?$`));
@@ -48,7 +48,7 @@ test("Budget and Accounts keep the chosen month in the URL and between them", as
   await page.getByRole("link", { name: "Next month" }).click();
   await expect(page).toHaveURL(/#accounts\/all\/2030-02$/);
   await expect(page.locator(".budget-month")).toContainText("February 2030");
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   await goTo(page, "Budget");
   await expect(page).toHaveURL(/#budget\/2030-02$/);
   await expect(page.locator(".budget-month")).toContainText("February 2030");
@@ -74,13 +74,79 @@ test("the old Activity link opens All accounts, and Back closes what is open", a
 
 test("signing out returns to the sign-in page", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   await expect(page.getByText("Signed in as test@example.com")).toBeVisible();
   await expect(page.getByText(/^Version \d+\.\d+\.\d+$/)).toBeVisible();
-  // Sign out is in the page menu, not on the page.
-  await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
+  // Sign out is in the page menu and in Manage's danger zone.
+  await expect(
+    page.getByRole("region", { name: "Danger zone" }).getByRole("button", { name: /^Sign out/ }),
+  ).toBeVisible();
   await choosePageMenu(page, "Sign out");
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+});
+
+test("Manage lists its options; each opens its own page, and Back returns to the list", async ({
+  page,
+}) => {
+  await signInWithHousehold(page);
+  await goTo(page, "Manage");
+  const list = page.getByRole("navigation", { name: "Manage options" });
+  await expect(list.getByRole("heading", { level: 2 })).toHaveText([
+    "Budget",
+    "Transactions",
+    "Household",
+    "Danger zone",
+  ]);
+  await expect(list.getByRole("link").locator("strong")).toHaveText([
+    "Envelope groups",
+    "Import envelope plan",
+    "Income rules",
+    "Tags",
+    "Payees",
+    "Backup",
+    "Restore from a backup",
+  ]);
+  // Bank CSVs are imported from each account, not here.
+  await expect(list).not.toContainText("Import transactions");
+
+  // A phone shows one page at a time, with a way back to the list.
+  await list.getByRole("link", { name: /^Tags/ }).click();
+  await expect(page).toHaveURL(/#manage\/tags$/);
+  await expect(page.getByRole("region", { name: "Tags", exact: true })).toBeVisible();
+  await expect(list).toHaveCount(0);
+  await expect(page.locator(".card-debt")).toHaveCount(0);
+  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await expect(page).toHaveURL(/#manage$/);
+  await expect(list).toBeVisible();
+  await list.getByRole("link", { name: /^Payees/ }).click();
+  await page.goBack();
+  await expect(list).toBeVisible();
+
+  // Old Settings links open Manage and show its new address.
+  await page.evaluate(() => (location.hash = "#settings/groups"));
+  await expect(page).toHaveURL(/#manage\/groups$/);
+  await expect(page.getByRole("region", { name: "Envelope groups" })).toBeVisible();
+});
+
+test("the household is renamed from Manage", async ({ page }) => {
+  await signInWithHousehold(page);
+  await goTo(page, "Manage");
+  const household = page.locator(".manage-household");
+  await expect(household).toContainText("Test Home");
+  await household.getByRole("button", { name: "Rename household" }).click();
+  const form = household.getByRole("form", { name: "Rename household" });
+  // Escape cancels.
+  await form.getByLabel("Household name").fill("Nope");
+  await form.getByLabel("Household name").press("Escape");
+  await expect(household).toContainText("Test Home");
+  await household.getByRole("button", { name: "Rename household" }).click();
+  await form.getByLabel("Household name").fill("   ");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Household name is required");
+  await form.getByLabel("Household name").fill("  The Smiths ");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form).toHaveCount(0);
+  await expect(household).toContainText("The Smiths");
 });
 
 test("assets and manifest are served from /app/", async ({ page }) => {

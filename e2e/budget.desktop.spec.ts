@@ -43,16 +43,16 @@ test("a sidebar takes the place of the header and the bottom bar", async ({ page
   await expect(page.locator(".bottom-nav")).toHaveCount(0);
   await expect(page.locator(".fab")).toHaveCount(0);
 
-  for (const name of ["Accounts", "Settings", "Budget"] as const) {
+  for (const name of ["Accounts", "Manage", "Budget"] as const) {
     await goTo(page, name);
     await expect(page.getByRole("heading", { level: 1, name })).toBeAttached();
   }
-  // Add transaction is in the panel on the right, not the sidebar; none on Settings.
-  for (const name of ["Budget", "Accounts", "Settings"] as const) {
+  // Add transaction is in the panel on the right, not the sidebar; none on Manage.
+  for (const name of ["Budget", "Accounts", "Manage"] as const) {
     await goTo(page, name);
     await expect(sidebar.getByRole("button", { name: "Add transaction" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Add transaction" })).toHaveCount(
-      name === "Settings" ? 0 : 1,
+      name === "Manage" ? 0 : 1,
     );
   }
   await goTo(page, "Budget");

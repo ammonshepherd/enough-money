@@ -30,7 +30,7 @@ export async function addNamedTag(
   return tagId;
 }
 
-/** Settings → Tags: list, add, rename, recolour and delete the household's tags. */
+/** Manage → Tags: list, add, rename, recolour and delete the household's tags. */
 export function useTags(budget: Budget, data: BudgetData) {
   const counts = tagUseCounts(data.transactions);
   return {

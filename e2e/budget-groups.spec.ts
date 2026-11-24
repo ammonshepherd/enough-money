@@ -7,6 +7,7 @@ import {
   goTo,
   signInWithHousehold,
   addAccount,
+  openManage,
 } from "./helpers";
 
 const group = (page: Page, name: string) => page.getByRole("region", { name, exact: true });
@@ -59,7 +60,7 @@ test("a group collapses to a count and its total left, and is remembered", async
   await expect(envelope(page, "Groceries")).toBeHidden();
 
   // Renaming the group keeps it collapsed.
-  await goTo(page, "Settings");
+  await openManage(page, "Envelope groups");
   await page.getByRole("button", { name: /^Bills/ }).click();
   const sheet = page.getByRole("dialog", { name: "Bills" });
   await sheet.getByRole("button", { name: "Rename Bills" }).click();

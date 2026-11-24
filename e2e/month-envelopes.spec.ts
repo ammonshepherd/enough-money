@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addAccount, envelope, editCell, goTo, signInWithHousehold } from "./helpers";
+import { addAccount, envelope, editCell, signInWithHousehold, openManage } from "./helpers";
 
 test("each month shows only the envelopes it uses", async ({ page }) => {
   await signInWithHousehold(page);
@@ -7,7 +7,7 @@ test("each month shows only the envelopes it uses", async ({ page }) => {
   await addAccount(page, { name: "Checking", balance: "1000", date: "2030-01-01" });
 
   // January's plan has Rent and Trip; February's has only Rent.
-  await goTo(page, "Settings");
+  await openManage(page, "Import envelope plan");
   const card = page.getByRole("region", { name: "Import envelope plan" });
   for (const [month, text] of [
     ["2030-01", "Rent,Bills,1200\nTrip,Fun,300"],

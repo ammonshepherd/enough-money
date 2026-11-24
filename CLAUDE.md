@@ -69,7 +69,8 @@ always describes the app as of that version (including §9, not built yet).
 - `src/views/` — React components. Display only; no money math.
 
 Reuse the existing `styles.css`, icons, manifest and page names
-(Budget, Accounts, Settings; Activity merged into Accounts in v0.29.0) from
+(Budget, Accounts, Manage; Activity merged into Accounts in v0.29.0;
+Settings renamed Manage in v0.46.0) from
 v0.0.1 where they still fit.
 
 ## Money
@@ -214,7 +215,7 @@ non-card budget balances − all envelope money (P included)`.
   and the group's total left, `groupLeft` in `budgetMath.ts`) and a + button
   (which also opens a collapsed group). The group of card payment envelopes
   (v0.42.2, `src/models/groupOrder.ts`, found by its envelopes, not its
-  name) is always first, pinned in Settings (never dragged), and holds only
+  name) is always first, pinned in Manage (never dragged), and holds only
   those envelopes (no +, never offered by "Move to…"); its bar is blue with
   a card icon, framed apart on a phone, and on a desktop it is its own box
   above the envelope table (Card, Available to pay, Remaining debt).
@@ -222,7 +223,7 @@ non-card budget balances − all envelope money (P included)`.
   device and user in localStorage (`src/models/collapsedGroups.ts`, by group
   id; never in Supabase); envelopes are added
   with each group's + button; groups are added, renamed, reordered and deleted
-  in Settings (drag handles; tapping a group opens its sheet, where its
+  in Manage → Envelope groups (drag handles; tapping a group opens its sheet, where its
   envelopes are reordered, renamed and moved to another group with "Move
   to…"). Renaming and moving go through `src/controllers/envelopeEdits.ts`.
 - Envelope rows run edge to edge. Line 1: the envelope icon (`EnvelopeIcon`,
@@ -287,19 +288,31 @@ non-card budget balances − all envelope money (P included)`.
   from the panel too (v0.38.1): "Add transaction" heads it on Budget and
   Accounts (a round + on the collapsed rail) and opens the form in the
   panel, starting in the open account; never in the list or the left
-  sidebar. Settings shows its sections in two columns.
+  sidebar. Manage keeps its list on the left and opens an option beside it.
   Below 1000px nothing changes.
 - Page menu (decided in v0.36.0, phone only, `src/views/PageMenu.tsx`):
   the header's top right holds a three-bar menu button instead of the
-  version (Settings → About shows it). Its options follow the page; an
+  version (Manage → About shows it). Its options follow the page; an
   option that is on shows a green tick, and tapping one turns it on or off.
   Budget: Compact rows, Collapse/Expand all groups, Go to this month (in
-  another month), Edit groups (`#settings/groups`). Accounts list: Add
+  another month), Edit groups (`#manage/groups`). Accounts list: Add
   account. An account or All accounts open: Collapse/Expand all dates,
   Collapse info pane (only the balance, or Balance Today, stays;
   remembered per device and user, `layoutPrefs.ts`); an open account also
   sorts: Date, Name, Amount, Envelope, Income/expense, Ascending or
-  Descending. Settings: Sign out. A desktop keeps its own controls.
+  Descending. Manage: Sign out. A desktop keeps its own controls.
+- Manage (decided in v0.46.0, named Settings before, `src/views/pages/ManagePage.tsx`):
+  a list of options, each opening its own page (`#manage/<option>`,
+  `manageSection` in `src/models/routes.ts`; old `#settings…` links are
+  rewritten). The list: the household's name and who is signed in (its
+  pencil renames the household in place), then groups: Budget (Envelope
+  groups, Import envelope plan), Transactions (Income rules, Tags, Payees),
+  Household (Backup, About with the version), and a red Danger zone
+  (Restore from a backup, Sign out). Each row shows its name and one short
+  line saying what it does, no counts. No Import transactions: bank CSVs
+  are imported from each account. A phone shows the list or one page (with
+  a "← Manage" link back); a desktop keeps the list on the left and opens
+  the option beside it (Envelope groups when none is chosen).
 - Debt is shown negative everywhere (decided in v0.42.3, `asDebt` in
   `src/models/money.ts`): card balances, Total Owed, the Credit card debt
   strip, Owed and Remaining debt on a card's payment envelope, "Card
@@ -308,16 +321,16 @@ non-card budget balances − all envelope money (P included)`.
 - Credit card debt (what the cards owe today, `cardDebt` in
   `src/models/accounts.ts`, display only) shows on every page while above
   $0.00: under the month band on Budget and Accounts, at the top of
-  Settings. Its background is one of 30 reds picked once per
+  the Manage list (not its option pages). Its background is one of 30 reds picked once per
   page load (`src/models/cardDebtShades.ts`), with readable text on each.
 - Transactions are added with the floating round + button (bottom right of
-  Budget and Accounts; not Settings; on a desktop, the panel's Add
+  Budget and Accounts; not Manage; on a desktop, the panel's Add
   transaction instead), which opens the transaction form in a
   modal `<dialog>` (`TransactionDialog`), starting in the open account; its
   Account picker offers every open account (v0.37.2).
 - Accounts (Accounts and Activity merged in v0.29.0; the Activity layout
   was decided in v0.21.0, `docs/mockups/activity-screen.html`). Three tabs:
-  Budget, Accounts, Settings. What is open is in the URL (`#accounts`,
+  Budget, Accounts, Manage. What is open is in the URL (`#accounts`,
   `#accounts/all`, `#accounts/<id>`, each with `/YYYY-MM`; old `#activity`
   links open All accounts), so Back closes it; the month is shared with
   Budget. The list: a purple month band (Add account, a sheet, is in the page menu), "All
@@ -409,10 +422,10 @@ non-card budget balances − all envelope money (P included)`.
   new transaction (`OtherSideChoice`); a stale choice falls back to automatic.
   Deleting or un-transferring one side deletes a typed-in other side and
   keeps an imported one as an Uncategorized row.
-- Backup (decided in v0.28.0, `src/models/backup.ts`): Settings exports the
+- Backup (decided in v0.28.0, `src/models/backup.ts`): Manage → Backup exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings, income rules, tags, goals and payees) and restores such a file only into an empty
+  CSV mappings, income rules, tags, goals and payees); Restore from a backup (Manage's danger zone) loads such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).
@@ -421,7 +434,7 @@ non-card budget balances − all envelope money (P included)`.
   nine colours) on whole transactions (`transaction_tags`, at most 20 each;
   a split shares them). Only labels for showing and searching: they change
   no budget math. Each side of a transfer keeps its own tags (`planTransfer`
-  never copies them to the other side). Made in Settings → Tags (rename,
+  never copies them to the other side). Made in Manage → Tags (rename,
   recolour, delete; deleting takes it off its transactions) or by typing in
   the transaction form (`TagPicker`, "Add tag “…”"); shown as pills on
   Accounts rows and in the envelope sheet; searched as chips (any number,
@@ -446,7 +459,7 @@ non-card budget balances − all envelope money (P included)`.
   keep their payee as text (no link). A database trigger lists a payee
   when a typed transaction is saved or a transaction's payee changes;
   imported bank descriptions and transfers are never listed. Picking a
-  payee fills only Payee (no envelope, direction or amount). Settings →
+  payee fills only Payee (no envelope, direction or amount). Manage →
   Payees renames (every transaction with the name too; a name in use
   merges the two, `rename_payee`) and deletes (off the list only). No
   budget math.
@@ -554,7 +567,7 @@ the version, changed files, tests run, remaining limitations, and the PR link.
 - Check visible UI changes with a Playwright screenshot (a throwaway spec,
   deleted afterwards) at phone width before opening the PR.
 - Merge only when asked: run `npm run backup` first (the production
-  database as a Settings → Export JSON file in `.backups/`, ignored by git;
+  database as a Manage → Backup JSON file in `.backups/`, ignored by git;
   it keeps the 5 newest and deletes older ones; it prints only counts),
   wait for the PR's checks, merge with `--delete-branch`,
   pull `main`, then confirm the Cloudflare deploy succeeded and the live bundle

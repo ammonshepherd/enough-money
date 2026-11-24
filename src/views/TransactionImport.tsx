@@ -39,8 +39,9 @@ function importLabel(preview: TransactionImportPreview | null) {
 }
 
 /**
- * Import a bank or card CSV into an account: a Settings card with an account
- * picker, or (with `accountId`) into the account open on Accounts.
+ * Import a bank or card CSV into the account open on Accounts (its Import
+ * CSV). Without `accountId` it shows an account picker: the Settings card
+ * used that until v0.46.0, and nothing does now.
  */
 export function TransactionImport({
   budget,

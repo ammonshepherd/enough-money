@@ -1,5 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { addAccount, available, goTo, signInWithHousehold, openAllAccounts } from "./helpers";
+import {
+  addAccount,
+  available,
+  closeImportCsv,
+  signInWithHousehold,
+  openAllAccounts,
+  openImportCsv,
+  openManage,
+} from "./helpers";
 
 const file = (name: string, text: string) => ({
   name,
@@ -18,7 +26,7 @@ const CHECKING = [
 async function setUp(page: Page) {
   await signInWithHousehold(page);
   await addAccount(page, { name: "Checking", balance: "100", date: "2030-01-01" });
-  await goTo(page, "Settings");
+  await openManage(page, "Income rules");
 }
 
 const rules = (page: Page) => page.getByRole("region", { name: "Income rules" });
@@ -35,8 +43,9 @@ async function addRule(page: Page, text: string, account = "Any account") {
   await expect(rule).toContainText(account);
 }
 
+/** Opens Checking's Import CSV with the file chosen (close it with closeImportCsv). */
 async function importChecking(page: Page) {
-  const card = page.getByRole("region", { name: "Import transactions" });
+  const card = await openImportCsv(page, "Checking");
   await card.getByLabel("Bank CSV file").setInputFiles(file("checking.csv", CHECKING));
   return card;
 }
@@ -66,6 +75,8 @@ test("a rule added later marks the inflows already waiting", async ({ page }) =>
   const card = await importChecking(page);
   await card.getByRole("button", { name: "Import 3 transactions" }).click();
   await expect(card.getByRole("status")).toContainText("Imported 3 transactions");
+  await closeImportCsv(page);
+  await openManage(page, "Income rules");
 
   // A rule too short to be useful is refused.
   await rules(page).getByLabel("Description contains").fill("a");
@@ -84,7 +95,7 @@ test("a rule added later marks the inflows already waiting", async ({ page }) =>
   await expect(available(page)).toContainText("$1,600.00");
 
   // Deleting the rule leaves what it marked alone.
-  await goTo(page, "Settings");
+  await openManage(page, "Income rules");
   await rules(page).getByRole("button", { name: "Delete" }).click();
   await expect(rules(page).getByRole("list", { name: "Income rules" })).toHaveCount(0);
   await page.goto("./#budget/2030-01");
@@ -96,6 +107,8 @@ test("Activity applies the rules to the review list", async ({ page }) => {
   const card = await importChecking(page);
   await card.getByRole("button", { name: "Import 3 transactions" }).click();
   await expect(card.getByRole("status")).toContainText("Imported 3 transactions");
+  await closeImportCsv(page);
+  await openManage(page, "Income rules");
   await addRule(page, "refund");
 
   await openAllAccounts(page);

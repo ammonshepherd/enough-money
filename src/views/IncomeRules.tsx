@@ -5,7 +5,7 @@ import { useIncomeRules } from "../controllers/useIncomeRules";
 import type { BudgetData } from "../models/types";
 import { ErrorMessage } from "./components";
 
-/** Settings card: rules that mark payroll and other deposits as Income. */
+/** Manage → Income rules: rules that mark payroll and other deposits as Income. */
 export function IncomeRules({ budget, data }: { budget: Budget; data: BudgetData }) {
   const page = useIncomeRules(budget, data);
   const [pattern, setPattern] = useState("");
