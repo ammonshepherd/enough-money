@@ -75,7 +75,9 @@ test("the old Activity link opens All accounts, and Back closes what is open", a
 test("signing out returns to the sign-in page", async ({ page }) => {
   await signInWithHousehold(page);
   await goTo(page, "Manage");
-  await expect(page.getByText("Signed in as test@example.com")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Settings" })).toContainText(
+    "test@example.comSigned in as",
+  );
   await expect(page.getByText(/^Version \d+\.\d+\.\d+$/)).toBeVisible();
   // Sign out is in the page menu and in Manage's danger zone.
   await expect(
@@ -92,6 +94,7 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   await goTo(page, "Manage");
   const list = page.getByRole("navigation", { name: "Manage options" });
   await expect(list.getByRole("heading", { level: 2 })).toHaveText([
+    "Settings",
     "Budget",
     "Transactions",
     "Household",
@@ -128,11 +131,15 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   await expect(page.getByRole("region", { name: "Envelope groups" })).toBeVisible();
 });
 
-test("the household is renamed from Manage", async ({ page }) => {
+test("Manage → Settings shows who is signed in and renames the household", async ({ page }) => {
   await signInWithHousehold(page);
   await goTo(page, "Manage");
-  const household = page.locator(".manage-household");
-  await expect(household).toContainText("Test Home");
+  const settings = page.getByRole("region", { name: "Settings" });
+  await expect(settings.getByRole("listitem")).toHaveText([
+    /Test HomeHousehold name/,
+    "test@example.comSigned in as",
+  ]);
+  const household = settings.locator(".manage-household");
   await household.getByRole("button", { name: "Rename household" }).click();
   const form = household.getByRole("form", { name: "Rename household" });
   // Escape cancels.

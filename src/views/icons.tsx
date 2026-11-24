@@ -97,3 +97,9 @@ export const InfoIcon = () => (
 export const RestoreIcon = () => <Icon path="M4 4v6h6M4.5 15a8 8 0 1 0 1.9-8.3L4 10" />;
 /** A door with an arrow out: sign out. */
 export const SignOutIcon = () => <Icon path="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" />;
+/** A house: the household's name (Manage → Settings). */
+export const HomeIcon = () => <Icon path="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5h4v5" />;
+/** A person in a circle: who is signed in (Manage → Settings). */
+export const UserIcon = () => (
+  <Icon path="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 12.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6.5 18a6.5 6.5 0 0 1 11 0" />
+);

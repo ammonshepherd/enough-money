@@ -15,15 +15,16 @@ import {
   ArrowLeftIcon,
   ExportIcon,
   GroupsIcon,
+  HomeIcon,
   IncomeIcon,
   InfoIcon,
-  ManageIcon,
   PencilIcon,
   PersonIcon,
   PlanIcon,
   RestoreIcon,
   SignOutIcon,
   TagIcon,
+  UserIcon,
 } from "../icons";
 import { MenuItem, PageMenu } from "../PageMenu";
 import { PayeeSettings } from "../PayeeSettings";
@@ -158,7 +159,9 @@ export function ManagePage({
       <div className="manage-layout">
         {listShown && (
           <nav className="manage-list" aria-label="Manage options">
-            <Household budget={budget} data={data} email={email} />
+            <OptionGroup title="Settings" options={[]} shown={shown}>
+              <SettingsRows budget={budget} data={data} email={email} />
+            </OptionGroup>
             {GROUPS.map((group) => (
               <OptionGroup
                 key={group.title}
@@ -262,40 +265,62 @@ function OptionGroup({
   );
 }
 
-/** The household's name and who is signed in; its pencil renames the household in place. */
-function Household({ budget, data, email }: { budget: Budget; data: BudgetData; email: string }) {
+/**
+ * The Settings group's rows: the household's name (its pencil renames it in
+ * place) and who is signed in.
+ */
+function SettingsRows({
+  budget,
+  data,
+  email,
+}: {
+  budget: Budget;
+  data: BudgetData;
+  email: string;
+}) {
   const household = useHousehold(budget, data);
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="manage-household">
-      <span className="settings-row-icon" aria-hidden="true">
-        <ManageIcon />
-      </span>
-      {editing ? (
-        <RenameHousehold
-          name={household.name}
-          onSave={household.rename}
-          onDone={() => setEditing(false)}
-        />
-      ) : (
-        <>
-          <span className="settings-row-copy">
-            <strong>{household.name}</strong>
-            <small>Signed in as {email}</small>
-          </span>
-          <button
-            className="pane-icon-button"
-            type="button"
-            aria-label="Rename household"
-            title="Rename household"
-            onClick={() => setEditing(true)}
-          >
-            <PencilIcon />
-          </button>
-        </>
-      )}
-    </div>
+    <>
+      <li className="manage-row manage-household">
+        <span className="settings-row-icon" aria-hidden="true">
+          <HomeIcon />
+        </span>
+        {editing ? (
+          <RenameHousehold
+            name={household.name}
+            onSave={household.rename}
+            onDone={() => setEditing(false)}
+          />
+        ) : (
+          <>
+            <span className="settings-row-copy">
+              <strong>{household.name}</strong>
+              <small>Household name</small>
+            </span>
+            <button
+              className="pane-icon-button"
+              type="button"
+              aria-label="Rename household"
+              title="Rename household"
+              onClick={() => setEditing(true)}
+            >
+              <PencilIcon />
+            </button>
+          </>
+        )}
+      </li>
+      <li className="manage-row manage-user">
+        <span className="settings-row-icon" aria-hidden="true">
+          <UserIcon />
+        </span>
+        <span className="settings-row-copy">
+          <strong>{email}</strong>
+          <small>Signed in as</small>
+        </span>
+      </li>
+    </>
   );
 }
 
