@@ -2,8 +2,10 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   activityRow,
   available,
+  closeImportCsv,
   goTo,
   openActivityMonth,
+  openImportCsv,
   openAddTransaction,
   signInWithHousehold,
   addAccount,
@@ -33,16 +35,15 @@ test("import a bank CSV, skipping invalid, early and duplicate rows", async ({ p
   await signInWithHousehold(page);
   await newAccount(page, "Checking", "1300.00");
 
-  await goTo(page, "Settings");
-  const card = page.getByRole("region", { name: "Import transactions" });
+  let card = await openImportCsv(page, "Checking");
   await card.getByLabel("Bank CSV file").setInputFiles(file("CHECKING.csv", CHECKING));
 
   // Columns were detected; the preview explains every skipped row.
-  const columns = card.locator("details.import-columns");
+  let columns = card.locator("details.import-columns");
   await expect(columns.locator("summary")).toHaveText("Columns: check these");
   await expect(columns.getByLabel("Date", { exact: true })).toHaveValue("2");
   await expect(columns.getByLabel("Bank transaction ID (prevents duplicates)")).toHaveValue("1");
-  const status = card.getByRole("status");
+  let status = card.getByRole("status");
   await expect(status).toContainText(
     "3 new transactions from 2030-01-02 to 2030-01-12: $500.00 in, $318.62 out. 1 row before the opening date skipped. 1 invalid row skipped.",
   );
@@ -54,11 +55,8 @@ test("import a bank CSV, skipping invalid, early and duplicate rows", async ({ p
   await expect(status).toContainText("Imported 3 transactions into Checking");
 
   // They arrive Uncategorized and wait for review: none of them counts toward
-  // Available to Assign until it is decided.
-  // The link opens Activity at the month of the newest imported row.
-  // The link opens the account (the month of the newest imported row).
-  await card.getByRole("link", { name: "Give them envelopes on Accounts" }).click();
-  await expect(page).toHaveURL(/#accounts\/[\w-]+\/2030-01$/);
+  // Available to Assign until it is decided. They are already in the open account.
+  await closeImportCsv(page);
   await expect(page.getByRole("heading", { level: 2, name: "Checking" })).toBeVisible();
   const hardware = activityRow(page, "Withdrawal Debit Card HARDWARE STORE");
   await expect(hardware).toContainText("Uncategorized");
@@ -86,7 +84,9 @@ test("import a bank CSV, skipping invalid, early and duplicate rows", async ({ p
   await expect(accountRow(page, "Checking")).toContainText("$1,481.38");
 
   // The same file again: the saved columns are reused and nothing is imported twice.
-  await goTo(page, "Settings");
+  card = await openImportCsv(page, "Checking");
+  columns = card.locator("details.import-columns");
+  status = card.getByRole("status");
   await card.getByLabel("Bank CSV file").setInputFiles(file("CHECKING.csv", CHECKING));
   await expect(columns.locator("summary")).toHaveText("Columns: using this account’s saved setup");
   await expect(status).toContainText("0 new transactions");
@@ -98,8 +98,7 @@ test("a card export with positive purchases and changed columns", async ({ page 
   await signInWithHousehold(page);
   await newAccount(page, "Card", "0");
 
-  await goTo(page, "Settings");
-  const card = page.getByRole("region", { name: "Import transactions" });
+  const card = await openImportCsv(page, "Card");
   await card
     .getByLabel("Bank CSV file")
     .setInputFiles(
@@ -124,6 +123,7 @@ test("a card export with positive purchases and changed columns", async ({ page 
   await expect(card.getByRole("status")).toContainText("from 2030-01-04 to 2030-01-07");
   await card.getByRole("button", { name: "Import 4 transactions" }).click();
   await expect(card.getByRole("status")).toContainText("Imported 4 transactions into Card");
+  await closeImportCsv(page);
 
   await openActivityMonth(page, "2030-01");
   await expect(activityRow(page, "GROCERY")).toContainText("−$45.10");
@@ -148,8 +148,7 @@ test("bank rows match transactions typed in before the import", async ({ page })
     await expect(dialog).toBeHidden();
   }
 
-  await goTo(page, "Settings");
-  const card = page.getByRole("region", { name: "Import transactions" });
+  const card = await openImportCsv(page, "Checking");
   await card.getByLabel("Bank CSV file").setInputFiles(file("CHECKING.csv", CHECKING));
   const status = card.getByRole("status");
   await expect(status).toContainText(
@@ -169,6 +168,7 @@ test("bank rows match transactions typed in before the import", async ({ page })
   await expect(status).toContainText(
     "Imported 2 transactions into Checking and matched 1 you entered.",
   );
+  await closeImportCsv(page);
 
   // The match kept what was typed; nothing was added twice.
   await openActivityMonth(page, "2030-01");

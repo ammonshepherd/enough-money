@@ -145,6 +145,14 @@ export function createMemoryStore(): DataStore {
         payees: [],
       };
     },
+    async renameHousehold(_householdId, name) {
+      // The database's check on households.name.
+      const length = name.trim().length;
+      if (length < 1 || length > 100) {
+        throw new UserFacingError("A household name must be 1–100 characters");
+      }
+      budget().household.name = name;
+    },
 
     async addAccount(_householdId, { onBudget = true, ...account }) {
       const b = budget();

@@ -7,7 +7,7 @@ import type { BudgetData } from "../models/types";
 import { ErrorMessage } from "./components";
 import { TagChip, TagColorPicker } from "./Tags";
 
-/** Settings card: the household's transaction tags. */
+/** Manage → Tags: the household’s transaction tags. */
 export function TagSettings({ budget, data }: { budget: Budget; data: BudgetData }) {
   const page = useTags(budget, data);
   const [name, setName] = useState("");

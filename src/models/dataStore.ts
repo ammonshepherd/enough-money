@@ -67,6 +67,8 @@ export interface DataStore {
   /** The signed-in user's whole budget, or null if they have no household yet. */
   load(): Promise<BudgetData | null>;
   createHousehold(name: string): Promise<void>;
+  /** Renames the household (1–100 characters once trimmed; Manage → the household's pencil). */
+  renameHousehold(householdId: string, name: string): Promise<void>;
 
   addAccount(householdId: string, account: NewAccount): Promise<void>;
   /** Changes an account's name, opening balance and opening date. */

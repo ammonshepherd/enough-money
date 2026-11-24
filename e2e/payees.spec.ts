@@ -2,10 +2,10 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   activityRow,
   addAccount,
-  goTo,
   openAccount,
   openAddTransaction,
   signInWithHousehold,
+  openManage,
 } from "./helpers";
 
 const payeesSection = (page: Page) => page.getByRole("region", { name: "Payees", exact: true });
@@ -65,7 +65,7 @@ test("typed payees are saved and suggested while typing", async ({ page }) => {
   await expect(dialog).toBeHidden();
   await expect(activityRow(page, "Bakery")).toBeVisible();
 
-  await goTo(page, "Settings");
+  await openManage(page, "Payees");
   await expect(
     payeesSection(page).getByRole("list", { name: "Payees" }).getByRole("listitem"),
   ).toHaveText([
@@ -76,12 +76,12 @@ test("typed payees are saved and suggested while typing", async ({ page }) => {
   ]);
 });
 
-test("Settings renames, merges and deletes payees", async ({ page }) => {
+test("Manage renames, merges and deletes payees", async ({ page }) => {
   await add(page, "Cornr Market", "12.00");
   await add(page, "Corner Market", "8.00");
   await add(page, "Gym", "40.00");
 
-  await goTo(page, "Settings");
+  await openManage(page, "Payees");
   const section = payeesSection(page);
   const list = section.getByRole("list", { name: "Payees" });
 

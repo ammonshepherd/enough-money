@@ -2,7 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   activityRow,
   editActivityRow,
-  goTo,
+  closeImportCsv,
+  openImportCsv,
   openActivityMonth,
   signInWithHousehold,
   addAccount,
@@ -30,7 +31,11 @@ const otherSideChosen = (page: Page) =>
     .getByLabel("Other side")
     .locator("option:checked");
 
-/** Imports a CSV; `asNew` unticks every match with a typed-in transaction first. */
+/**
+ * Imports a CSV from the account's Import CSV, then closes it and returns
+ * what the import said; `asNew` unticks every match with a typed-in
+ * transaction first.
+ */
 async function importCsv(
   page: Page,
   account: string,
@@ -38,9 +43,7 @@ async function importCsv(
   text: string,
   { asNew = false } = {},
 ) {
-  await goTo(page, "Settings");
-  const card = page.getByRole("region", { name: "Import transactions" });
-  await card.getByLabel("Account").selectOption({ label: account });
+  const card = await openImportCsv(page, account);
   await card.getByLabel("Bank CSV file").setInputFiles(file(name, text));
   // The file is read asynchronously: wait for the preview before looking in it
   // (`all()` does not wait, and would find no Match boxes on a slow machine).
@@ -52,7 +55,11 @@ async function importCsv(
     for (const box of await boxes.all()) await box.uncheck();
   }
   await importButton.click();
-  await expect(card.getByRole("status")).toContainText(new RegExp(`(into|in) ${account}`));
+  const status = card.getByRole("status");
+  await expect(status).toContainText(new RegExp(`(into|in) ${account}`));
+  const said = await status.textContent();
+  await closeImportCsv(page);
+  return said;
 }
 
 test("marking an imported row as a Transfer links the other account's bank row", async ({
@@ -224,8 +231,7 @@ const SAVINGS_ROW = "Date,Description,Amount\n01/11/2030,ONLINE TRANSFER,50.00";
 
 test("importing the bank row matches a typed-in transfer side", async ({ page }) => {
   await typeTransferToSavings(page);
-  await importCsv(page, "Savings", "savings.csv", SAVINGS_ROW);
-  await expect(page.getByRole("region", { name: "Import transactions" })).toContainText(
+  expect(await importCsv(page, "Savings", "savings.csv", SAVINGS_ROW)).toContain(
     "Matched 1 transaction you entered in Savings.",
   );
 

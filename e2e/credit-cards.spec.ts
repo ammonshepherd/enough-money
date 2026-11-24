@@ -14,6 +14,7 @@ import {
   addAccount,
   accountRow,
   pickerChoices,
+  openManage,
 } from "./helpers";
 
 test("a credit card account owes money and gets a payment envelope", async ({ page }) => {
@@ -34,7 +35,7 @@ test("a credit card account owes money and gets a payment envelope", async ({ pa
   await expect(available(page)).toContainText("$1,000.00");
   // What the cards owe shows at the top of every page.
   await expect(page.locator(".card-debt")).toHaveText("Credit card debt-$200.00");
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   await expect(page.locator(".card-debt")).toContainText("-$200.00");
   await goTo(page, "Budget");
   const payment = envelope(page, "Visa payment");
@@ -199,8 +200,8 @@ test("the card payments group is pinned first and holds only card envelopes", as
   const cards = page.getByRole("region", { name: "Credit card payments" });
   await expect(cards.getByRole("button", { name: /^Add envelope to/ })).toHaveCount(0);
 
-  // In Settings it is pinned above the groups that can be dragged.
-  await goTo(page, "Settings");
+  // In Manage it is pinned above the groups that can be dragged.
+  await openManage(page, "Envelope groups");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   await expect(groups.getByRole("list", { name: "Pinned group" })).toContainText(
     "Credit card payments",

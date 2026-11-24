@@ -29,7 +29,7 @@ type Done = {
 };
 
 /**
- * Settings → Import transactions: choose an account and a bank CSV, check
+ * Accounts → Import CSV (once also a Settings card): choose an account and a bank CSV, check
  * (or fix) which column is which, review the preview, then import. The
  * column choices start from the account's saved format when the file
  * matches it, otherwise from what detectFormat guesses. Rows that match a

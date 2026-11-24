@@ -13,13 +13,14 @@ import {
   choosePageMenu,
   menuOption,
   openPageMenu,
+  openManage,
 } from "./helpers";
 
 test("the Budget page is envelopes under a sticky Available to Assign", async ({ page }) => {
   await signInWithHousehold(page);
   await expect(page.getByRole("region", { name: "Budget summary" })).toHaveCount(0);
   await expect(page.getByText("Give every dollar a job")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Add an envelope group in Settings" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Add an envelope group in Manage" })).toBeVisible();
 
   const names = Array.from({ length: 15 }, (_, i) => `Envelope ${i + 1}`);
   await addGroupWithEnvelopes(page, "Everyday", names);
@@ -39,9 +40,9 @@ test("the Budget page is envelopes under a sticky Available to Assign", async ({
   await expect(available(page)).toBeInViewport();
 });
 
-test("the + button adds envelopes, and groups are managed in Settings", async ({ page }) => {
+test("the + button adds envelopes, and groups are managed in Manage", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await openManage(page, "Envelope groups");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   for (const name of ["Bills", "Spare"]) {
     await groups.getByLabel("Group name").fill(name);
@@ -58,7 +59,7 @@ test("the + button adds envelopes, and groups are managed in Settings", async ({
 
   // Only an empty group can be deleted, from its sheet.
   page.on("dialog", (dialog) => void dialog.accept()); // confirm()
-  await goTo(page, "Settings");
+  await openManage(page, "Envelope groups");
   const list = groups.getByRole("list", { name: "Envelope groups" });
   await expect(list.getByRole("listitem").filter({ hasText: "Bills" })).toContainText("1 envelope");
   await list.getByRole("button", { name: /^Bills/ }).click();
@@ -145,7 +146,7 @@ test("Compact rows shows only name, Saved and what is left, and is remembered", 
   );
 
   // Still compact after visiting another page.
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   await goTo(page, "Budget");
   await expect(row.locator(".cell.planned")).toBeHidden();
   await choosePageMenu(page, "Compact rows");

@@ -15,7 +15,7 @@ import {
 const plus = (page: import("@playwright/test").Page) =>
   page.getByRole("button", { name: "Add transaction", exact: true });
 
-test("the + button is on Budget and Accounts, not Settings", async ({ page }) => {
+test("the + button is on Budget and Accounts, not Manage", async ({ page }) => {
   await signInWithHousehold(page);
   for (const name of ["Budget", "Accounts"] as const) {
     await goTo(page, name);
@@ -23,7 +23,7 @@ test("the + button is on Budget and Accounts, not Settings", async ({ page }) =>
   }
   await openAllAccounts(page);
   await expect(plus(page)).toBeVisible();
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
   await expect(plus(page)).toHaveCount(0);
 });
 

@@ -11,7 +11,7 @@ const PAGE = 50;
 
 const transactions = (n: number) => `${n} ${n === 1 ? "transaction" : "transactions"}`;
 
-/** Settings card: the household's saved payees (the form's suggestions). */
+/** Manage → Payees: the household’s saved payees (the form's suggestions). */
 export function PayeeSettings({ budget, data }: { budget: Budget; data: BudgetData }) {
   const page = usePayees(budget, data);
   const [query, setQuery] = useState("");

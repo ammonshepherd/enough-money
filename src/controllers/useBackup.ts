@@ -31,7 +31,7 @@ function download(fileName: string, contents: string): void {
 }
 
 /**
- * Settings → Backup: export everything to one JSON file, or restore such a
+ * Manage → Backup: export everything to one JSON file, or restore such a
  * file into this household while it is still empty.
  */
 export function useBackup(budget: Budget, data: BudgetData) {

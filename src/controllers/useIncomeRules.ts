@@ -2,7 +2,7 @@ import { inflowsMatchingRules, readIncomeRule } from "../models/incomeRules";
 import type { BudgetData } from "../models/types";
 import type { Budget } from "./useBudget";
 
-/** Settings → Income rules: list, add and delete rules, and apply them to inflows to review. */
+/** Manage → Income rules: list, add and delete rules, and apply them to inflows to review. */
 export function useIncomeRules(budget: Budget, data: BudgetData) {
   const accountNames = new Map(data.accounts.map((a) => [a.id, a.name]));
   const matching = inflowsMatchingRules(data);

@@ -13,7 +13,7 @@ type Loaded = { fileName: string; text: string };
 type Done = { month: Month; count: number };
 
 /**
- * Settings → Import envelope plan: pick a month and a CSV, see a preview,
+ * Manage → Import envelope plan: pick a month and a CSV, see a preview,
  * then import. The preview is recomputed whenever the month or the saved
  * budget changes, so it always compares against what is stored now.
  * With `fixedMonth` (the Budget page's "Upload a plan CSV") the month is set.

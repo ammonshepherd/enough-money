@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.45.1.
+Version described: 0.46.0.
 
 ## 1. Purpose
 
@@ -123,7 +123,7 @@ signed in as test user A at 390×844 (2× pixels;
 then `scripts/landing-images.ts` makes them 600px-wide WebP files in
 `landing/images/` (needs `cwebp`). Retake them when a pictured screen
 changes. `npm run backup` (`scripts/backup-database.ts`) saves production's
-data as the Settings → Export JSON (the `export_backup` function, run as the
+data as the Manage → Backup JSON (the `export_backup` function, run as the
 household's owner through the Supabase CLI login, no password) in
 `.backups/` (ignored by git), keeping the 5 newest. Run before every merge.
 UI tests build with the memory store into `dist-e2e/` and run against
@@ -190,7 +190,7 @@ SQL functions (all `security invoker` except `create_household`):
 | `set_reconciled(ids, reconciled)`                              | Marks (or unmarks) up to 2000 transactions reconciled with the bank; rows already so are left alone; returns how many changed.                                                                                                                                                                                                                  |
 | `reorder_category_groups(household, ids)`                      | Saves the order of the household's groups; the list must name every group once.                                                                                                                                                                                                                                                                 |
 | `reorder_categories(group, ids)`                               | Saves the order of a group's envelopes; the list must name every envelope of the group once.                                                                                                                                                                                                                                                    |
-| `export_backup(household)`                                     | Returns the whole household as one backup JSON object (one statement, so a consistent snapshot); see "Backup" under Settings.                                                                                                                                                                                                                   |
+| `export_backup(household)`                                     | Returns the whole household as one backup JSON object (one statement, so a consistent snapshot); see "Backup" under Manage.                                                                                                                                                                                                                     |
 | `rename_payee(payee, name)`                                    | Renames a saved payee and every transaction whose payee is its name (ignoring case and outer spaces). A name another payee has (ignoring case) merges them: that one stays, spelled as typed, and both payees' transactions take the spelling. Returns the id left.                                                                             |
 | `restore_backup(household, backup)`                            | Loads a backup into an empty household, all or nothing (cards inserted closed so the trigger-made payment envelopes can be swapped for the exported ones); renames the household.                                                                                                                                                               |
 
@@ -278,7 +278,7 @@ These are implemented in `budgetMath.ts` and the controllers:
 - Max width 30rem, centred; on wider screens it floats as a rounded card.
 - Header: icon + "Enough Money" (links to `#budget`), an Install button when
   the browser offers installing, and, signed in, the page menu at the top
-  right. Since v0.36.0 the header shows no version (Settings → About does;
+  right. Since v0.36.0 the header shows no version (Manage → About does;
   the desktop sidebar still shows it).
 - Page menu (v0.36.0, phone only, `src/views/PageMenu.tsx`): a round button
   with three bars ("⟨Page⟩ menu", `aria-haspopup="menu"`) opens a list under
@@ -289,13 +289,13 @@ These are implemented in `budgetMath.ts` and the controllers:
   and a tap outside. Arrow keys move between options. Options: Budget —
   Compact rows (on/off), Collapse all groups / Expand all groups (Expand
   once every group is collapsed), Go to this month (only in another month),
-  Edit groups (opens `#settings/groups`, scrolled to Envelope groups).
+  Edit groups (opens `#manage/groups`).
   Accounts list — Add account. An account or All accounts open — View:
   Collapse all dates / Expand all dates (only with day headings), Collapse
   info pane (on/off); an open account also Sort by (Date, Name, Amount,
-  Envelope, Income/expense) and Order (Ascending, Descending). Settings —
+  Envelope, Income/expense) and Order (Ascending, Descending). Manage —
   Sign out. A desktop has no page menu: those pages keep their own controls
-  (the sort menus beside the search, Sign out on Settings, Add account in
+  (the sort menus beside the search, Sign out on Manage, Add account in
   the panel).
 - New version banner (`useAppUpdate`, `UpdateBanner`): once a newer deploy
   has downloaded, a white card floats over the top of the screen, signed in
@@ -303,14 +303,17 @@ These are implemented in `budgetMath.ts` and the controllers:
   until the next check) and Refresh (switches to the new version and
   reloads). The open app checks every hour and whenever it comes back on
   screen, besides the browser's own check on load; offline it does nothing.
-- Bottom navigation (fixed): Budget, Accounts, Settings, with icons; the
+- Bottom navigation (fixed): Budget, Accounts, Manage, with icons; the
   current page is highlighted. Page title is "⟨Page⟩ | Enough Money".
 - Hash routes (`src/models/routes.ts`): `#budget`, `#budget/YYYY-MM`,
   `#accounts` (the list), `#accounts/all` (All accounts open),
   `#accounts/<account id>` (one account open), each Accounts route with an
-  optional `/YYYY-MM` at the end, and `#settings`; anything else shows
-  Budget. The old `#activity` and `#activity/YYYY-MM` open All accounts, and
-  the address is rewritten (`history.replaceState`). Without a month, Budget
+  optional `/YYYY-MM` at the end, and `#manage` (the list) or
+  `#manage/<option>` (`groups`, `plan`, `income-rules`, `tags`, `payees`,
+  `backup`, `restore`; `manageSection`); anything else shows Budget. The old
+  `#activity` and `#activity/YYYY-MM` open All accounts, and `#settings` and
+  `#settings/<option>` (before v0.46.0) open Manage; the address is
+  rewritten (`history.replaceState`). Without a month, Budget
   and Accounts show the month last shown on either (else the current month),
   and their nav links carry it (`routeHref`).
 - Floating round + button (bottom right, above the nav) on Budget and
@@ -321,7 +324,7 @@ These are implemented in `budgetMath.ts` and the controllers:
   `src/models/accounts.ts`, display only), every page shows "CREDIT CARD
   DEBT" (14px) and the amount (26px, negative: debt, v0.42.3) in a rounded strip with 12px space
   above and below: under the month band on Budget (above Available to
-  Assign) and Accounts, and at the top of Settings. Its background is one of 30 reds, pale to deep
+  Assign) and Accounts, and at the top of the Manage list (not its option pages). Its background is one of 30 reds, pale to deep
   (`SHADES` in `src/models/cardDebtShades.ts`), picked at random once per
   page load, so it changes with every refresh; the text is near-black or
   white, whichever reads better (at least 4.5:1). Hidden at $0.00 or less.
@@ -401,7 +404,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   month summary only.
 - Notices: "N transactions to review ($X in, $Y out) are not in Available to
   Assign yet. Review them in All accounts."; no accounts → link to Accounts; no
-  groups → link to Settings.
+  groups → link to Manage → Envelope groups.
 - "No plan for ⟨month⟩ yet" (a dashed purple card under the notices), when the
   month opens with every Planned at $0.00: "Copy ⟨last month⟩’s Planned" and
   "Copy ⟨last month⟩’s Spent" (each only when last month has some; they fill
@@ -719,7 +722,7 @@ picker it shows is gone).
 - "No accounts" notice, then the "To review" card when anything waits (from
   any month): totals in and out, rows (tap to edit), "Mark as Income" on
   non-card inflows, "Apply income rules (N matches)", "Mark all N inflows as
-  Income" (confirm), link to Settings income rules.
+  Income" (confirm), link to Manage → Income rules.
 - Days with transactions, newest first: a tinted heading ("THU OCT 15", an
   `<h2>`) with the day's net on the right (signed; transfers left out, so
   $0.00 for a day of only transfers). Within a day, newest first.
@@ -863,12 +866,39 @@ new transaction instead"), and a note saying what will happen ("Links to the
 ⟨account⟩ transaction on DATE (PAYEE), so it is not added twice.", "Also adds
 the matching inflow in ⟨account⟩.", "Also updates the ⟨account⟩ side.").
 
-### Settings
+### Manage
 
-In order: household name and "Signed in as ⟨email⟩"; About (version); Sign out
-(a desktop only; on a phone it is in the page menu since v0.36.0);
-Envelope groups; Import transactions; Income rules; Import envelope plan;
-Tags; Payees; Backup.
+Named Settings until v0.46.0 (`src/views/pages/ManagePage.tsx`). A list of
+options, each opening its own page at its own address (`#manage/tags`).
+The list, under the heading "Manage" and the Credit card debt strip:
+
+- The household: its name and "Signed in as ⟨email⟩", with a pencil
+  ("Rename household") that turns it into a form in place (Household name,
+  Save, Cancel; Escape cancels; 1–100 characters once trimmed,
+  `useHousehold`, `renameHousehold`).
+- Groups, each a small uppercase heading over a rounded list. Every option
+  is a row with an icon, its name, one short line saying what it does, and
+  a chevron:
+  - **Budget:** Envelope groups ("Add, rename and order groups and
+    envelopes"), Import envelope plan ("Upload Planned amounts for a
+    month").
+  - **Transactions:** Income rules ("Mark matching deposits as Income"),
+    Tags ("Labels for your transactions"), Payees ("Names suggested when
+    you add a transaction").
+  - **Household:** Backup ("Save all your data to a file"), then About
+    Enough Money with the version (not a link).
+  - **Danger zone** (red heading, icons and border): Restore from a backup
+    ("Load a backup file into an empty household") and Sign out ("Leave
+    Enough Money on this device"; a phone also has it in the page menu).
+
+Bank CSVs are imported from each account (Accounts → Import CSV, §6); Manage
+has no Import transactions since v0.46.0.
+
+On a phone an option's page replaces the list: a purple "← Manage" link
+(back to `#manage`, as is the Manage tab) above the option's card, no
+Credit card debt strip, and the page scrolls to the top. On a desktop the
+list stays in a left column and the option opens beside it, its
+row highlighted; with none chosen, Envelope groups is open.
 
 - **Envelope groups:** list with envelope counts. The card payments group
   (when there is one) is pinned first with a card icon in place of a handle
@@ -907,8 +937,8 @@ Tags; Payees; Backup.
   it? N transactions will be named “X”.") and merges the two. Delete asks
   ("Stop suggesting “X”? Its N transactions keep the name.") and only
   takes it off the list; typing the name again lists it again.
-- **Backup** (`src/models/backup.ts`, `useBackup`, `BackupSection`): "Export
-  all data" saves `enough-money-backup-YYYY-MM-DD.json` (format
+- **Backup** (`src/models/backup.ts`, `useBackup`, `BackupExport` in
+  `src/views/Backup.tsx`): "Export all data" saves `enough-money-backup-YYYY-MM-DD.json` (format
   `budget-buddy-backup`, its name from before the rename; version 1) and
   says what it holds (counts and the
   months with transactions or a stored Planned/Assigned/Released). The file
@@ -922,7 +952,7 @@ Tags; Payees; Backup.
   saved payees (`payees`: name and `created_at`; a file from before
   v0.45.0 has none and restores with the payees of its typed transactions,
   as the trigger lists them).
-  "Restore from a backup" reads a file, checks every database rule first
+- **Restore from a backup** (danger zone, `BackupRestore`) reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
   envelopes/import keys per account, tag and payee names ignoring case, tags per
   transaction (≤ 20), links, goals (amount above $0.00, one active per
@@ -932,8 +962,7 @@ Tags; Payees; Backup.
   has no budget data (otherwise the file can still be checked); every row
   gets a fresh id (`withFreshIds`) and the household takes the backup's name.
   Collapsed groups and layout preferences (localStorage) are not included.
-- **Desktop:** the sections in two columns under the heading; Import
-  transactions (and its preview) spans both. Group sheets stay sheets.
+- **Desktop:** group sheets stay sheets.
 
 ## 6. Bank CSV import
 
@@ -1016,7 +1045,7 @@ Envelopes not in the file are left alone.
 Decided or wanted, but not in the app:
 
 - Desktop: keyboard shortcuts; a group's envelopes beside the group list in
-  Settings instead of a sheet; the accounts list kept as a left column
+  Manage → Envelope groups instead of a sheet; the accounts list kept as a left column
   while an account is open.
 
 - Import and matching: matching a transaction typed after its bank row was
@@ -1056,21 +1085,18 @@ Decided or wanted, but not in the app:
 - Inviting a second household member.
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
-  envelope icon, `EnvelopeIcon`; Settings shows none); the page menu on a
+  envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a
   desktop (Collapse all groups, Go to this month and Edit groups are phone
   only); more page menu options (show unused envelopes, start or upload a
   plan at any time).
 - Payees: rules that turn a bank description into a payee at import
   (e.g. "POS WALMART #1234" → "Walmart", like income rules); adding a
-  payee in Settings without a transaction. Decided against for now
+  payee in Manage without a transaction. Decided against for now
   (v0.45.0): picking a payee does not fill the envelope, direction or
   amount.
-- Settings: one list of options on the main Settings page (perhaps under
-  another name), each opening its own settings page, instead of every
-  section on one long page.
 - Location-based payee suggestions: when adding a transaction, offer the
   payees saved near where the phone is, with each payee's places edited in
-  Settings. Needs the browser's location, which the site's permissions
+  Manage. Needs the browser's location, which the site's permissions
   policy blocks today (`dist/_headers`), and a decision on what location
   data is stored (in Supabase, per household) and when it is asked for.
 - Accounts lists: search and sort on All accounts (an open account has

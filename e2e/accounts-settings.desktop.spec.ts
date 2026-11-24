@@ -58,20 +58,27 @@ test("Accounts adds in the panel; an open account edits and imports there", asyn
   await expect(panel(page)).toHaveAccessibleName("Add an account");
 });
 
-test("Settings shows its sections in two columns", async ({ page }) => {
+test("Manage keeps its list on the left and opens each option beside it", async ({ page }) => {
   await signInWithHousehold(page);
-  await goTo(page, "Settings");
+  await goTo(page, "Manage");
+  const list = page.getByRole("navigation", { name: "Manage options" });
+  // With nothing chosen, Envelope groups is open beside the list.
   const groups = page.getByRole("region", { name: "Envelope groups" });
-  const rules = page.getByRole("region", { name: "Income rules" });
-  const plan = page.getByRole("region", { name: "Import envelope plan" });
-  const imports = page.getByRole("region", { name: "Import transactions" });
-  const [g, r, p, i] = await Promise.all(
-    [groups, rules, plan, imports].map(async (l) => (await l.boundingBox())!),
+  await expect(groups).toBeVisible();
+  await expect(list.getByRole("link", { name: /^Envelope groups/ })).toHaveAttribute(
+    "aria-current",
+    "page",
   );
-  // Income rules and the plan import sit side by side; the bank import spans both.
-  expect(Math.abs(r.y - p.y)).toBeLessThan(4);
-  expect(p.x).toBeGreaterThan(r.x + r.width - 1);
-  expect(i.width).toBeGreaterThan(g.width * 1.8);
+  await list.getByRole("link", { name: /^Tags/ }).click();
+  await expect(page).toHaveURL(/#manage\/tags$/);
+  const tags = page.getByRole("region", { name: "Tags", exact: true });
+  const [l, t] = await Promise.all([list, tags].map(async (x) => (await x.boundingBox())!));
+  // Side by side, the page the wider of the two; no back link on a desktop.
+  expect(Math.abs(l!.y - t!.y)).toBeLessThan(40);
+  expect(t!.x).toBeGreaterThan(l!.x + l!.width - 1);
+  expect(t!.width).toBeGreaterThan(l!.width);
+  await expect(list).toBeVisible();
+  await expect(page.locator(".manage-back")).toHaveCount(0);
 });
 
 test("no page menu on a desktop: sort, order and Sign out stay on the page", async ({ page }) => {
@@ -86,6 +93,6 @@ test("no page menu on a desktop: sort, order and Sign out stay on the page", asy
   // A new sort starts in its own order: Name A–Z.
   await sort.selectOption("name");
   await expect(order).toHaveValue("asc");
-  await goTo(page, "Settings");
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await goTo(page, "Manage");
+  await expect(page.getByRole("button", { name: /^Sign out/ })).toBeVisible();
 });

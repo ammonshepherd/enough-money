@@ -158,7 +158,8 @@ export function ReviewCard({ view, onEdit }: { view: View; onEdit: (tx: Transact
       <p className="empty-state">
         <Money cents={view.toReviewIn} /> in and <Money cents={view.toReviewOut} /> out are not in
         Available to Assign yet. Tap one to give it an envelope or make it a Transfer; mark
-        paychecks as Income. <a href="#settings">Income rules</a> can mark paychecks for you.
+        paychecks as Income. <a href="#manage/income-rules">Income rules</a> can mark paychecks for
+        you.
       </p>
       <ul className="item-list" aria-label="To review">
         {view.toReview.map(({ tx, accountName, canBeIncome }) => (

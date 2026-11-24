@@ -242,16 +242,40 @@ export const editActivityRow = (page: Page, payee: string) =>
   activityRow(page, payee).locator(".activity-who").click();
 
 /** Clicks a page in the bottom navigation. */
-export const goTo = (page: Page, name: "Budget" | "Accounts" | "Settings") =>
+export const goTo = (page: Page, name: "Budget" | "Accounts" | "Manage") =>
   page
     .getByRole("navigation", { name: "Primary navigation" })
     .getByRole("link", { name, exact: true })
     .first()
     .click();
 
-/** Adds a group in Settings, then its envelopes with the group's + button on Budget. */
+/** Opens one of Manage's options by its title ("Tags", "Envelope groups"). */
+export async function openManage(page: Page, option: string) {
+  await goTo(page, "Manage");
+  await page
+    .getByRole("navigation", { name: "Manage options" })
+    .getByRole("link", { name: new RegExp(`^${option}\\b`) })
+    .click();
+  await expect(page).toHaveURL(/#manage\/[\w-]+$/);
+}
+
+/** Opens an account's Import CSV (a sheet on a phone) and returns its import card. */
+export async function openImportCsv(page: Page, account: string) {
+  await openAccount(page, account);
+  await page.getByRole("button", { name: "Import CSV" }).click();
+  return page.getByRole("region", { name: "Import transactions" });
+}
+
+/** Closes an account's Import CSV sheet (phone). */
+export const closeImportCsv = (page: Page) =>
+  page
+    .getByRole("dialog", { name: /^Import CSV into / })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
+
+/** Adds a group in Manage, then its envelopes with the group's + button on Budget. */
 export async function addGroupWithEnvelopes(page: Page, group: string, envelopes: string[]) {
-  await goTo(page, "Settings");
+  await openManage(page, "Envelope groups");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   await groups.getByLabel("Group name").fill(group);
   await groups.getByRole("button", { name: "Add group" }).click();

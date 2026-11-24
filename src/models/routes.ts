@@ -1,15 +1,15 @@
 import { isMonth, type Month } from "./month";
 
 /** The app's pages. Hash routing (#budget) works on any static host. */
-export const ROUTES = ["budget", "accounts", "settings"] as const;
+export const ROUTES = ["budget", "accounts", "manage"] as const;
 
-/** One of the strings in ROUTES: "budget" | "accounts" | "settings". */
+/** One of the strings in ROUTES: "budget" | "accounts" | "manage". */
 export type Route = (typeof ROUTES)[number];
 
 export const ROUTE_TITLES: Record<Route, string> = {
   budget: "Budget",
   accounts: "Accounts",
-  settings: "Settings",
+  manage: "Manage",
 };
 
 /** What the Accounts page has open: nothing (the list), "all" accounts, or one account's id. */
@@ -30,9 +30,10 @@ export interface AppLocation {
 export const MONTH_ROUTES: readonly Route[] = ["budget", "accounts"];
 
 /**
- * Reads a location hash such as "#Settings", "#budget/2026-10",
+ * Reads a location hash such as "#Manage", "#budget/2026-10",
  * "#accounts/all/2026-10" or "#accounts/<account id>"; anything unknown means
- * Budget. The old "#activity" page reads as All accounts.
+ * Budget. Old links still work: "#activity" reads as All accounts and
+ * "#settings" (Manage's name before v0.46.0) as Manage.
  */
 export function parseLocation(hash: string): AppLocation {
   const parts = hash.replace(/^#\/?/, "").split("/");
@@ -43,7 +44,7 @@ export function parseLocation(hash: string): AppLocation {
   const middle = parts.slice(1, month ? -1 : undefined).filter(Boolean);
 
   if (name === "activity") return { route: "accounts", month, account: "all" };
-  const route = ROUTES.find((r) => r === name) ?? "budget";
+  const route = ROUTES.find((r) => r === (name === "settings" ? "manage" : name)) ?? "budget";
   if (route !== "accounts") {
     return { route, month: MONTH_ROUTES.includes(route) ? month : null, account: null };
   }
@@ -72,14 +73,37 @@ export function routeHref(route: Route, month: Month): string {
   return MONTH_ROUTES.includes(route) ? `#${route}/${month}` : `#${route}`;
 }
 
-/** Sections of Settings a link can go straight to ("#settings/groups"). */
-export type SettingsSection = "groups";
+/**
+ * The pages listed on Manage, each at its own address ("#manage/tags").
+ * Restore sits apart from Backup, in the danger zone at the bottom.
+ */
+export const MANAGE_SECTIONS = [
+  "groups",
+  "plan",
+  "income-rules",
+  "tags",
+  "payees",
+  "backup",
+  "restore",
+] as const;
 
-export function settingsHref(section?: SettingsSection): string {
-  return section ? `#settings/${section}` : "#settings";
+export type ManageSection = (typeof MANAGE_SECTIONS)[number];
+
+export function manageHref(section?: ManageSection): string {
+  return section ? `#manage/${section}` : "#manage";
 }
 
-/** The Settings section a hash points at ("#settings/groups"), else null. */
-export function settingsSection(hash: string): SettingsSection | null {
-  return /^#\/?settings\/groups\/?$/i.test(hash) ? "groups" : null;
+/**
+ * The Manage page a hash points at ("#manage/tags"), else null (the list).
+ * The old "#settings/groups" points at Envelope groups.
+ */
+export function manageSection(hash: string): ManageSection | null {
+  const match = /^#\/?(?:manage|settings)\/([^/]+)\/?$/i.exec(hash);
+  const name = match?.[1]?.toLowerCase();
+  return MANAGE_SECTIONS.find((s) => s === name) ?? null;
+}
+
+/** An old "#settings…" link's new address ("#settings/groups" → "#manage/groups"), else null. */
+export function legacySettingsHash(hash: string): string | null {
+  return /^#\/?settings(?=\/|$)/i.test(hash) ? manageHref(manageSection(hash) ?? undefined) : null;
 }

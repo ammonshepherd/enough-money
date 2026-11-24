@@ -14,7 +14,7 @@ const countEnvelopes = (count: number) =>
   count === 0 ? "No envelopes" : `${count} ${count === 1 ? "envelope" : "envelopes"}`;
 
 /**
- * Settings card: the groups that hold envelopes on the Budget page. Drag a
+ * Manage → Envelope groups: the groups that hold envelopes on the Budget page. Drag a
  * group's handle to reorder; tap it to rename it and reorder its envelopes.
  */
 export function EnvelopeGroups({ budget, data }: { budget: Budget; data: BudgetData }) {
