@@ -1015,15 +1015,18 @@ Decided or wanted, but not in the app:
   desktop (Collapse all groups, Go to this month and Edit groups are phone
   only); more page menu options (show unused envelopes, start or upload a
   plan at any time).
-- Envelope goals: a goal amount and goal date set per envelope. The
-  envelope sheet shows progress towards it as a ring or bar, counting the
-  envelope's money (Saved + Remaining), and what is still to assign per
-  month, week and day to reach the goal by its date (the amount left to
-  reach, divided over the time left). Display only, like Planned: a goal
-  changes no other number. Not decided yet: where it is stored (per
-  envelope, not per month), whether card payment envelopes can have one,
-  whether the per-period figures count the current month, and what shows
-  once the date passes or the goal is met.
+- Payee suggestions: a saved list of the household's payees, offered as
+  matches while typing a payee in the transaction form (as
+  `EnvelopePicker` does for envelopes), and edited in Settings (rename,
+  merge, delete). Not decided yet: whether the list fills itself from
+  past transactions and imports or only from typed payees, whether a
+  payee remembers its last envelope, and whether renaming one changes its
+  past transactions.
+- Location-based payee suggestions: when adding a transaction, offer the
+  payees saved near where the phone is, with each payee's places edited in
+  Settings. Needs the browser's location, which the site's permissions
+  policy blocks today (`dist/_headers`), and a decision on what location
+  data is stored (in Supabase, per household) and when it is asked for.
 - Accounts lists: search and sort on All accounts (an open account has
   them since v0.33.0); a Reconciled chip (only Not reconciled exists);
   keeping a search in the URL or across accounts; a "Needs review" queue
