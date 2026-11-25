@@ -47,9 +47,13 @@ test("a sidebar takes the place of the header and the bottom bar", async ({ page
     await goTo(page, name);
     await expect(page.getByRole("heading", { level: 1, name })).toBeAttached();
   }
-  // Add transaction is in the panel on the right, not the sidebar; none on Manage.
+  // Add transaction is in the panel on the right, not the sidebar; none on
+  // Manage. Accounts offers it only once there is an account to add to.
+  await addAccount(page, { name: "Checking", balance: "1000" });
   for (const name of ["Budget", "Accounts", "Manage"] as const) {
     await goTo(page, name);
+    // Wait for the page to swap, or the count below sees the last page's button.
+    await expect(page.getByRole("heading", { level: 1, name })).toBeAttached();
     await expect(sidebar.getByRole("button", { name: "Add transaction" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Add transaction" })).toHaveCount(
       name === "Manage" ? 0 : 1,
