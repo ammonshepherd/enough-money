@@ -150,7 +150,7 @@
   place-items: center;
   inline-size: 24px;
   block-size: 24px;
-  color: #2e8b57;
+  color: var(--success);
 }
 
 .page-menu-check svg {
@@ -203,7 +203,7 @@
   padding: 0.55rem 0.45rem max(0.55rem, env(safe-area-inset-bottom));
   border-block-start: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 -0.5rem 2rem rgba(75, 42, 104, 0.1);
+  box-shadow: 0 -0.5rem 2rem rgb(var(--brand-rgb) / 0.1);
   backdrop-filter: blur(1rem);
 }
 
@@ -239,7 +239,7 @@
   .app-shell {
     min-block-size: calc(100dvh - 2rem);
     border-radius: 2rem;
-    box-shadow: 0 1.5rem 4rem rgba(75, 42, 104, 0.16);
+    box-shadow: 0 1.5rem 4rem rgb(var(--brand-rgb) / 0.16);
   }
 
   .bottom-nav {
@@ -262,9 +262,9 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--on-brand);
   background: var(--brand);
-  box-shadow: 0 0.6rem 1.5rem rgba(75, 42, 104, 0.35);
+  box-shadow: 0 0.6rem 1.5rem rgb(var(--brand-rgb) / 0.35);
   cursor: pointer;
 }
 
@@ -318,9 +318,9 @@
   margin: 12px 16px;
   padding: 14px 20px;
   border-radius: 0.875rem;
-  color: var(--debt-text, #fff);
-  background: var(--debt-bg, var(--bb-spend));
-  box-shadow: 0 4px 14px rgba(120, 20, 20, 0.18);
+  color: var(--debt-text, var(--on-solid));
+  background: var(--debt-bg, var(--spend));
+  box-shadow: 0 4px 14px var(--danger-shadow);
   font-weight: 800;
 }
 
@@ -437,7 +437,7 @@
 .sidebar-install:hover,
 .sidebar-toggle:hover {
   color: var(--brand);
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
 }
 
 .sidebar-nav a.active {
@@ -476,9 +476,9 @@
   min-block-size: 2.625rem;
   border: 0;
   border-radius: 0.75rem;
-  color: #fff;
+  color: var(--on-brand);
   background: var(--brand);
-  box-shadow: 0 3px 10px rgba(40, 20, 70, 0.22);
+  box-shadow: 0 3px 10px var(--shadow-deep);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 800;
@@ -520,7 +520,7 @@
 }
 
 .sidebar-household strong {
-  color: var(--bb-ink-2);
+  color: var(--ink-2);
   font-size: 0.8125rem;
 }
 
@@ -621,14 +621,14 @@
 
 .sidebar-account-balance {
   flex: none;
-  color: var(--bb-ink-2);
+  color: var(--ink-2);
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .sidebar-account-balance.negative {
-  color: var(--bb-spend);
+  color: var(--spend);
 }
 
 .sidebar-nav .sidebar-accounts a.active {
@@ -651,7 +651,7 @@
   border: 1px solid var(--border);
   border-radius: 0.875rem;
   background: var(--surface);
-  box-shadow: 0 6px 20px rgba(75, 42, 104, 0.08);
+  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.08);
 }
 
 .side-panel.collapsed {
@@ -680,7 +680,7 @@
 }
 
 .side-panel-toggle:hover {
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
 }
 
 .side-panel-toggle svg {
@@ -706,9 +706,9 @@
 .panel-hint {
   margin: 0;
   padding: 0.75rem 0.875rem;
-  border: 1px dashed #cdb8e6;
+  border: 1px dashed var(--brand-outline);
   border-radius: 0.75rem;
-  color: var(--bb-muted);
+  color: var(--muted);
   font-size: 0.8125rem;
   text-align: center;
 }
@@ -802,7 +802,7 @@
   border-radius: 1rem;
   color: var(--text);
   background: var(--surface);
-  box-shadow: 0 0.75rem 2rem rgba(40, 26, 53, 0.35);
+  box-shadow: 0 0.75rem 2rem rgb(var(--ink-rgb) / 0.35);
 }
 
 .update-banner p {
@@ -834,6 +834,6 @@
 
 .update-refresh {
   border: 0;
-  color: #ffffff;
+  color: var(--on-brand);
   background: var(--brand);
 }

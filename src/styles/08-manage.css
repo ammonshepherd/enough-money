@@ -92,7 +92,7 @@
    where its handle would be (v0.42.2). */
 
 .drag-handle.pinned {
-  color: #1f4766;
+  color: var(--card);
   cursor: default;
 }
 
@@ -119,7 +119,7 @@
 
 .group-envelopes h3 {
   margin: 0;
-  color: var(--bb-muted);
+  color: var(--muted);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -143,13 +143,13 @@
   place-items: center;
   border: 0;
   border-radius: 50%;
-  color: var(--bb-purple);
+  color: var(--brand);
   background: none;
   cursor: pointer;
 }
 
 .title-edit:hover {
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
 }
 
 .title-edit svg {
@@ -165,9 +165,9 @@
 .title-input {
   inline-size: 100%;
   padding: 0.15rem 0.45rem;
-  border: 1px solid var(--bb-purple-line);
+  border: 1px solid var(--brand-line);
   border-radius: 0.5rem;
-  color: var(--bb-ink);
+  color: var(--ink);
   background: var(--surface);
   font: inherit;
   font-size: 1.375rem;
@@ -187,9 +187,9 @@
 .group-picker select,
 .move-picker select {
   padding: 0.25rem 1.6rem 0.25rem 0.65rem;
-  border: 1px solid var(--bb-purple-line);
+  border: 1px solid var(--brand-line);
   border-radius: 999px;
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
   font: inherit;
   cursor: pointer;
   appearance: none;
@@ -199,19 +199,19 @@
 .move-picker > span {
   position: absolute;
   inset-inline-end: 0.6rem;
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 0.75rem;
   pointer-events: none;
 }
 
 .group-picker select.sheet-eyebrow {
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 0.75rem;
   font-weight: 800;
 }
 
 .move-picker select {
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -248,7 +248,7 @@
   inline-size: 0.95rem;
   block-size: 0.95rem;
   fill: none;
-  stroke: var(--bb-muted);
+  stroke: var(--muted);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2;
@@ -261,7 +261,7 @@
 
 .move-status {
   margin: 0;
-  color: var(--bb-muted);
+  color: var(--muted);
   font-size: 0.8rem;
 }
 
@@ -354,16 +354,16 @@ button.manage-row:hover {
 }
 
 .manage-group.danger h2 {
-  color: var(--bb-spend);
+  color: var(--spend);
 }
 
 .manage-group.danger ul {
-  border-color: color-mix(in srgb, var(--bb-spend) 35%, var(--border));
+  border-color: color-mix(in srgb, var(--spend) 35%, var(--border));
 }
 
 .manage-group.danger .settings-row-icon {
-  color: var(--bb-spend);
-  background: color-mix(in srgb, var(--bb-spend) 10%, transparent);
+  color: var(--spend);
+  background: color-mix(in srgb, var(--spend) 10%, transparent);
 }
 
 /* A phone's way back from an option's page to the list. */
@@ -375,7 +375,7 @@ button.manage-row:hover {
   margin-block-end: 0.75rem;
   padding: 0.5rem 0.9rem 0.5rem 0.6rem;
   border-radius: 999px;
-  color: #fff;
+  color: var(--on-brand);
   background: var(--brand);
   font-weight: 750;
   text-decoration: none;

@@ -408,7 +408,7 @@ function SavedPanel({ saved, onMove }: { saved: number; onMove: (text: string) =
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
-        <path d={STAR} fill="#F3D36B" />
+        <path className="sparkle-gold" d={STAR} />
       </svg>
       <svg
         className="saved-panel-star small"
@@ -417,7 +417,7 @@ function SavedPanel({ saved, onMove }: { saved: number; onMove: (text: string) =
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
-        <path d={STAR} fill="#B48BE0" />
+        <path className="sparkle-lilac" d={STAR} />
       </svg>
       <span className="saved-panel-label">Saved</span>
       <strong className="saved-panel-amount">

@@ -6,14 +6,14 @@
   padding: 0.85rem 1rem;
   border: 0;
   border-radius: 0.9rem;
-  color: #fff;
+  color: var(--on-brand);
   background: var(--brand);
   cursor: pointer;
   font-weight: 750;
 }
 
 .primary-button:hover {
-  background: #633b82;
+  background: var(--brand-hover);
 }
 
 .form {
@@ -87,7 +87,7 @@
 .segmented label:has(input:checked) {
   color: var(--brand);
   background: var(--surface);
-  box-shadow: 0 0.15rem 0.5rem rgba(75, 42, 104, 0.12);
+  box-shadow: 0 0.15rem 0.5rem rgb(var(--brand-rgb) / 0.12);
 }
 
 .segmented label:has(input:focus-visible) {
@@ -133,7 +133,7 @@
 }
 
 .text-button.danger {
-  color: #b3261e;
+  color: var(--danger);
 }
 
 .button-row {
@@ -279,8 +279,8 @@
 .badge-uncategorized {
   padding: 0.05rem 0.4rem;
   border-radius: 0.4rem;
-  color: #6b4500;
-  background: #ffe2a8;
+  color: var(--review-text);
+  background: var(--review-bg);
   font-weight: 700;
 }
 
