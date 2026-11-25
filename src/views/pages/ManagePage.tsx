@@ -5,6 +5,7 @@ import { useHousehold } from "../../controllers/useHousehold";
 import { APP_VERSION } from "../../models/appInfo";
 import { manageHref, type ManageSection } from "../../models/routes";
 import type { BudgetData } from "../../models/types";
+import { AppearanceSettings } from "../AppearanceSettings";
 import { BackupExport, BackupRestore } from "../Backup";
 import { CardDebt } from "../CardDebt";
 import { ErrorMessage } from "../components";
@@ -18,6 +19,7 @@ import {
   HomeIcon,
   IncomeIcon,
   InfoIcon,
+  MoonIcon,
   PencilIcon,
   PersonIcon,
   PlanIcon,
@@ -101,6 +103,15 @@ const GROUPS: { title: string; options: Option[] }[] = [
   },
 ];
 
+/** The Settings group's one page (its other rows are the household and who is signed in). */
+const APPEARANCE: Option = {
+  section: "appearance",
+  title: "Appearance",
+  description: "Light, dark or match this device",
+  Icon: MoonIcon,
+  Page: AppearanceSettings,
+};
+
 const RESTORE: Option = {
   section: "restore",
   title: "Restore from a backup",
@@ -109,7 +120,7 @@ const RESTORE: Option = {
   Page: BackupRestore,
 };
 
-const OPTIONS = [...GROUPS.flatMap((g) => g.options), RESTORE];
+const OPTIONS = [APPEARANCE, ...GROUPS.flatMap((g) => g.options), RESTORE];
 
 /**
  * Manage: a list of options, each opening its own page ("#manage/tags").
@@ -159,7 +170,7 @@ export function ManagePage({
       <div className="manage-layout">
         {listShown && (
           <nav className="manage-list" aria-label="Manage options">
-            <OptionGroup title="Settings" options={[]} shown={shown}>
+            <OptionGroup title="Settings" options={[APPEARANCE]} shown={shown}>
               <SettingsRows budget={budget} data={data} email={email} />
             </OptionGroup>
             {GROUPS.map((group) => (

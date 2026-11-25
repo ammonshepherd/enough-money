@@ -59,7 +59,7 @@
 }
 
 .activity-totals .activity-out {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 /* Balance today, with reconciled (or cash and card debt) under it. */
@@ -104,7 +104,7 @@
   padding: 0 12px;
   border: 0;
   border-radius: 999px;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--on-brand);
   font: inherit;
   font-size: 13px;
@@ -254,7 +254,7 @@
   inline-size: 18px;
   block-size: 18px;
   margin: 0;
-  accent-color: var(--brand);
+  accent-color: var(--brand-text);
   cursor: pointer;
 }
 
@@ -346,7 +346,7 @@
 }
 
 .activity-amount.out {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 .activity-portions {
@@ -369,7 +369,7 @@
 }
 
 .portion-envelope {
-  color: var(--brand);
+  color: var(--brand-text);
   font-size: 12px;
   font-weight: 700;
 }
@@ -383,7 +383,7 @@
 }
 
 .portion-amount.out {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 .portion-amount.in {
@@ -437,7 +437,7 @@
   border: 1px solid var(--border);
   border-radius: 0.875rem;
   background: var(--surface);
-  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.06);
+  box-shadow: 0 6px 20px rgb(var(--shadow-rgb) / 0.06);
 }
 
 /* Rows: checkbox | bank | payee over account | envelope | memo | amount. */
@@ -460,7 +460,7 @@
 
 .desktop .activity-item.selected {
   background: var(--row-selected);
-  box-shadow: inset 4px 0 0 var(--brand);
+  box-shadow: inset 4px 0 0 var(--brand-text);
 }
 
 .desktop .activity-item.checked {
@@ -493,7 +493,7 @@
 }
 
 .account-group-heading h2 {
-  color: var(--brand);
+  color: var(--brand-text);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -544,7 +544,7 @@
 }
 
 .account-row-balance.negative {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 .all-accounts-row {
@@ -556,7 +556,7 @@
 }
 
 .account-list .activity-out {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 .account-list > .unused-toggle {
@@ -596,7 +596,7 @@
 
 .account-pane-head h2 {
   margin: 0;
-  color: var(--brand);
+  color: var(--brand-text);
   font-size: 17px;
   font-weight: 800;
   overflow-wrap: anywhere;
@@ -619,7 +619,7 @@
   block-size: 2.75rem;
   border: 0;
   border-radius: 50%;
-  color: var(--brand);
+  color: var(--brand-text);
   background: transparent;
   cursor: pointer;
 }
@@ -633,7 +633,7 @@
 .pane-back {
   color: var(--on-brand);
   background: var(--brand);
-  box-shadow: 0 2px 6px rgb(var(--brand-rgb) / 0.3);
+  box-shadow: 0 2px 6px rgb(var(--shadow-rgb) / 0.3);
 }
 
 .pane-back:hover {
@@ -703,7 +703,7 @@
 }
 
 .account-figure.out dd {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 /* All accounts: the In / Out / Balance strip sits in the pane. */
@@ -726,7 +726,7 @@
   padding: 0 14px;
   border: 1px solid var(--brand-line);
   border-radius: 999px;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--surface);
   font: inherit;
   font-size: 13px;
@@ -740,7 +740,7 @@
   margin: 0;
   padding: 10px 16px 6px;
   border-block-end: 1px solid var(--brand-line);
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-tint);
   font-size: 12px;
   font-weight: 800;
@@ -754,7 +754,7 @@
   min-block-size: 2.75rem;
   border: 0;
   border-block-start: 1px solid var(--row-line);
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--app-background);
   font: inherit;
   font-weight: 800;

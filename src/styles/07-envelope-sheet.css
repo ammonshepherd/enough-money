@@ -98,7 +98,7 @@
 
 .plan-line strong .money,
 .plan-status {
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 800;
 }
 
@@ -135,7 +135,7 @@
 }
 
 .sheet-field.planned .sheet-field-label {
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .sheet-field-value {
@@ -157,7 +157,7 @@
 
 .sheet-field.planned .sheet-field-value {
   border: 2px solid var(--brand-outline);
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 800;
 }
 
@@ -211,7 +211,7 @@ div.sheet-field .sheet-field-value {
   block-size: 2.75rem;
   border: 0;
   border-radius: 0.625rem;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--on-brand);
   font: inherit;
   font-size: 0.875rem;
@@ -228,7 +228,7 @@ div.sheet-field .sheet-field-value {
 }
 
 .saved-panel.empty {
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-tint);
 }
 
@@ -257,7 +257,7 @@ div.sheet-field .sheet-field-value {
   block-size: 2.75rem;
   border: 1px dashed var(--brand-line);
   border-radius: 0.875rem;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-tint);
   font: inherit;
   font-size: 0.875rem;
@@ -280,15 +280,15 @@ div.sheet-field .sheet-field-value {
 }
 
 .goal-ring-fill {
-  stroke: var(--accent);
+  stroke: var(--accent-text);
 }
 
 .goal-ring-fill.met {
-  stroke: var(--success);
+  stroke: var(--success-text);
 }
 
 .goal-ring-tick {
-  stroke: var(--success);
+  stroke: var(--success-text);
 }
 
 .goal-text {

@@ -5,6 +5,7 @@ import { useHashRoute } from "../controllers/useHashRoute";
 import { useInstallPrompt } from "../controllers/useInstallPrompt";
 import { useDesktop, useSidebar } from "../controllers/useLayout";
 import { useSession } from "../controllers/useSession";
+import { ThemeContext, useTheme } from "../controllers/useTheme";
 import { sidebarAccounts } from "../models/accounts";
 import { formatCents } from "../models/money";
 import { APP_VERSION } from "../models/appInfo";
@@ -121,6 +122,7 @@ function SignedInApp({
 }) {
   const budget = useBudget(store);
   const location = useHashRoute();
+  const theme = useTheme(session.userId);
   const { state } = budget;
   // The month last shown on Budget or Accounts, so moving between pages keeps
   // it. (Updating state while rendering is React's way to follow a prop.)
@@ -160,7 +162,7 @@ function SignedInApp({
     </Navigation>
   );
   const frame = (content: JSX.Element) => (
-    <>
+    <ThemeContext.Provider value={theme}>
       {desktop && nav}
       <main className="page-content" aria-live="polite">
         {content}
@@ -168,7 +170,7 @@ function SignedInApp({
       {add}
       {/* The bottom bar only once there is a budget to move around in. */}
       {!desktop && data && nav}
-    </>
+    </ThemeContext.Provider>
   );
 
   if (state.status === "loading") {

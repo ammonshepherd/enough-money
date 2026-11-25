@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.46.5.
+Version described: 0.47.0.
 
 ## 1. Purpose
 
@@ -310,7 +310,7 @@ These are implemented in `budgetMath.ts` and the controllers:
   `#accounts` (the list), `#accounts/all` (All accounts open),
   `#accounts/<account id>` (one account open), each Accounts route with an
   optional `/YYYY-MM` at the end, and `#manage` (the list) or
-  `#manage/<option>` (`groups`, `plan`, `income-rules`, `tags`, `payees`,
+  `#manage/<option>` (`appearance`, `groups`, `plan`, `income-rules`, `tags`, `payees`,
   `backup`, `restore`; `manageSection`); anything else shows Budget. The old
   `#activity` and `#activity/YYYY-MM` open All accounts, and `#settings` and
   `#settings/<option>` (before v0.46.0) open Manage; the address is
@@ -876,7 +876,9 @@ The list, under the heading "Manage" and the Credit card debt strip:
 - Groups, each a small uppercase heading over a rounded list. Every option
   is a row with an icon, its name, one short line saying what it does, and
   a chevron:
-  - **Settings** (v0.46.1; rows that open no page, so no chevron): the
+  - **Settings** (v0.46.1): first Appearance ("Light, dark or match this
+    device", v0.47.0: Match system, Light or Dark, see §8); then rows that open no page, so
+    no chevron: the
     household's name over "Household name", with a pencil ("Rename
     household") that turns the row into a form in place (Household name,
     Save, Cancel; Escape cancels; 1–100 characters once trimmed,
@@ -1028,6 +1030,16 @@ Envelopes not in the file are left alone.
 ## 8. Look and feel
 
 - Font: Inter, falling back to the system UI font.
+- Light and dark (v0.47.0): Manage → Appearance offers Match system (the
+  default), Light and Dark, remembered per device and user in localStorage
+  (`bb.theme.mode.<user>`, `src/models/theme.ts`; never in Supabase). The
+  theme is `data-theme` on `<html>`, set by `useTheme`; the device also
+  keeps its last choice (`bb.theme.device`), which `public/theme-boot.js`
+  (a plain script in `index.html`, before the app loads) applies so the
+  sign-in page and a dark device never flash light. Dark changes only the
+  colour variables in `01-tokens.css` (`:root[data-theme="dark"]`); the
+  browser bar (`meta theme-color`) takes `--browser-bar`. Colours used as
+  a fill and as text have a `-text` twin (`--brand-text`), lighter in dark.
 - Colours (v0.46.4): every colour is a variable named for its role in
   `:root` in `src/styles/01-tokens.css`, the only file with typed-in colours
   (Stylelint fails any other; ESLint fails a typed-in `fill`, `stroke` or
@@ -1055,6 +1067,10 @@ Envelopes not in the file are left alone.
 
 Decided or wanted, but not in the app:
 
+- Theme colours (decided 2026-11-24, after dark mode): one colour
+  in place of the brand purple, from seven ready-made ones or any colour
+  (a built-in wheel and shading panel with a hex field), kept readable
+  (WCAG AA) by adjusting its shade, with a warning for red or green.
 - Desktop: keyboard shortcuts; a group's envelopes beside the group list in
   Manage → Envelope groups instead of a sheet; the accounts list kept as a left column
   while an account is open.

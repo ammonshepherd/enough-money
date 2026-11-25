@@ -85,9 +85,9 @@
 }
 
 .segmented label:has(input:checked) {
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--surface);
-  box-shadow: 0 0.15rem 0.5rem rgb(var(--brand-rgb) / 0.12);
+  box-shadow: 0 0.15rem 0.5rem rgb(var(--shadow-rgb) / 0.12);
 }
 
 .segmented label:has(input:focus-visible) {
@@ -116,7 +116,7 @@
   padding: 0.65rem 1rem;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-light);
   cursor: pointer;
   font-weight: 750;
@@ -125,7 +125,7 @@
 .text-button {
   padding: 0.3rem 0;
   border: 0;
-  color: var(--accent);
+  color: var(--accent-text);
   background: none;
   cursor: pointer;
   font-size: 0.82rem;
@@ -133,7 +133,7 @@
 }
 
 .text-button.danger {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .button-row {
@@ -154,7 +154,7 @@
 }
 
 .notice a {
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 750;
 }
 
@@ -170,7 +170,7 @@
   block-size: 1.8rem;
   place-items: center;
   border-radius: 50%;
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-light);
   font-size: 1.1rem;
   text-decoration: none;
@@ -240,7 +240,7 @@
 .import-columns > summary,
 .import-skipped > summary {
   cursor: pointer;
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 700;
 }
 

@@ -36,7 +36,7 @@
 }
 
 .tx-search-box:focus-within {
-  border-color: var(--brand);
+  border-color: var(--brand-text);
   box-shadow: 0 0 0 3px var(--brand-light);
 }
 
@@ -109,7 +109,7 @@
 }
 
 .tx-search-text .picker-name {
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 700;
 }
 
@@ -146,6 +146,6 @@
 
 .activity-portion.match .portion-envelope,
 .activity-portion.match .portion-memo {
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 700;
 }

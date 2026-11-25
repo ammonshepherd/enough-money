@@ -458,6 +458,13 @@ non-card budget balances − all envelope money (P included)`.
   full ring, "Goal reached" and Archive goal (kept with `archived_at`, no
   longer shown; a new goal can be set). Past its date unmet: "$X short,
   date passed", no per-period figures. Set with a date from today on.
+- Light and dark (decided in v0.47.0, `src/models/theme.ts`, display
+  only): Manage → Appearance offers Match system (default), Light and
+  Dark, kept per device and user in localStorage (never in Supabase). Dark
+  changes only the colour variables in `01-tokens.css`; a colour used as a
+  fill and as text has a `-text` twin for the text. `public/theme-boot.js`
+  applies the device's last choice before the first paint. Theme colours
+  (one colour for the brand purple) come next.
 - Saved payees (decided in v0.45.0, `src/models/payees.ts`): the
   household's payee names (`payees`, unique ignoring case), suggested in
   the transaction form's Payee field (`PayeePicker`: names containing the

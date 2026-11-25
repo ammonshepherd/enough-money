@@ -78,6 +78,7 @@ export function routeHref(route: Route, month: Month): string {
  * Restore sits apart from Backup, in the danger zone at the bottom.
  */
 export const MANAGE_SECTIONS = [
+  "appearance",
   "groups",
   "plan",
   "income-rules",
