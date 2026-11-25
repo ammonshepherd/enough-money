@@ -20,6 +20,8 @@ import {
   HomeIcon,
   IncomeIcon,
   InfoIcon,
+  KeyIcon,
+  MailIcon,
   MessageIcon,
   MoonIcon,
   PencilIcon,
@@ -32,6 +34,7 @@ import {
 } from "../icons";
 import { MenuItem, PageMenu } from "../PageMenu";
 import { PayeeSettings } from "../PayeeSettings";
+import { ChangeEmail, ChangePassword } from "../SignInSettings";
 import { TagSettings } from "../TagSettings";
 
 interface Option {
@@ -41,7 +44,7 @@ interface Option {
   description: string;
   Icon: () => JSX.Element;
   /** The option's page. */
-  Page: (props: { budget: Budget; data: BudgetData }) => JSX.Element;
+  Page: (props: { budget: Budget; data: BudgetData; email: string }) => JSX.Element;
 }
 
 /** Manage's list, in its groups. Restore sits apart, in the danger zone. */
@@ -113,14 +116,30 @@ const GROUPS: { title: string; options: Option[] }[] = [
   },
 ];
 
-/** The Settings group's one page (its other rows are the household and who is signed in). */
-const APPEARANCE: Option = {
-  section: "appearance",
-  title: "Appearance",
-  description: "Light, dark or match this device",
-  Icon: MoonIcon,
-  Page: AppearanceSettings,
-};
+/** The Settings group's pages (its other rows are the household and who is signed in). */
+const SETTINGS: Option[] = [
+  {
+    section: "appearance",
+    title: "Appearance",
+    description: "Light, dark or match this device",
+    Icon: MoonIcon,
+    Page: AppearanceSettings,
+  },
+  {
+    section: "password",
+    title: "Change password",
+    description: "Choose a new password to sign in with",
+    Icon: KeyIcon,
+    Page: ChangePassword,
+  },
+  {
+    section: "email",
+    title: "Change email",
+    description: "Sign in with a different email",
+    Icon: MailIcon,
+    Page: ChangeEmail,
+  },
+];
 
 const RESTORE: Option = {
   section: "restore",
@@ -130,7 +149,7 @@ const RESTORE: Option = {
   Page: BackupRestore,
 };
 
-const OPTIONS = [APPEARANCE, ...GROUPS.flatMap((g) => g.options), RESTORE];
+const OPTIONS = [...SETTINGS, ...GROUPS.flatMap((g) => g.options), RESTORE];
 
 /**
  * Manage: a list of options, each opening its own page ("#manage/tags").
@@ -180,7 +199,7 @@ export function ManagePage({
       <div className="manage-layout">
         {listShown && (
           <nav className="manage-list" aria-label="Manage options">
-            <OptionGroup title="Settings" options={[APPEARANCE]} shown={shown}>
+            <OptionGroup title="Settings" options={SETTINGS} shown={shown}>
               <SettingsRows budget={budget} data={data} email={email} />
             </OptionGroup>
             {GROUPS.map((group) => (
@@ -234,7 +253,7 @@ export function ManagePage({
               </a>
             )}
             {/* key: each page starts fresh (a half-typed form is not carried over). */}
-            <option.Page key={option.section} budget={budget} data={data} />
+            <option.Page key={option.section} budget={budget} data={data} email={email} />
           </div>
         )}
       </div>

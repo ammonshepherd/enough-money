@@ -19,6 +19,7 @@ import { nameKey } from "./envelopePlan";
 import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
+import { EMAIL_TAKEN, normalizeEmail, SAME_PASSWORD, WRONG_PASSWORD } from "./signInDetails";
 import { MAX_SPLIT_LINES } from "./splits";
 import {
   MAX_TAGS_PER_TRANSACTION,
@@ -38,6 +39,12 @@ const TRACKING_ALONE = "A tracking account stands alone: no envelopes, Income or
 
 export function createMemoryStore(): DataStore {
   let session: UserSession | null = null;
+  // The password last used to sign in or set, checked by the changes in
+  // Manage (any password signs in, as before). Null: any is accepted.
+  let password: string | null = null;
+  // A Change email waiting for its links, and emails other accounts use.
+  let pendingEmail: string | null = null;
+  const otherAccounts = new Set(["taken@example.com"]);
   let data: BudgetData | null = null;
   const listeners = new Set<(s: UserSession | null) => void>();
   const id = () => crypto.randomUUID();
@@ -112,6 +119,11 @@ export function createMemoryStore(): DataStore {
     return record;
   };
 
+  const checkCurrentPassword = (typed: string) => {
+    if (!session) throw new UserFacingError("Sign in first");
+    if (password !== null && typed !== password) throw new UserFacingError(WRONG_PASSWORD);
+  };
+
   return {
     async getSession() {
       return session;
@@ -120,24 +132,52 @@ export function createMemoryStore(): DataStore {
       listeners.add(callback);
       return () => listeners.delete(callback);
     },
-    async signIn(email) {
+    async signIn(email, typed) {
+      password = typed;
       setSession({ userId: "memory-user", email });
     },
     async signOut() {
       setSession(null);
     },
-    // Like Supabase: any token signs in an invited user, except "expired" (for tests).
+    // Like Supabase: any token signs in an invited user, except "expired" (for
+    // tests). A Change email address link: "half" is the first of its two.
     async verifyEmailLink(link) {
       if (link.tokenHash === "expired") throw new UserFacingError(EXPIRED_LINK);
+      if (link.type === "email_change") {
+        if (link.tokenHash === "half") return null;
+        const next = {
+          userId: "memory-user",
+          email: pendingEmail ?? session?.email ?? "changed@example.com",
+        };
+        pendingEmail = null;
+        setSession(next);
+        return next;
+      }
       const next = { userId: "memory-user", email: "invited@example.com" };
       setSession(next);
       return next;
     },
-    async setPassword(password) {
+    async setPassword(next) {
       if (!session) throw new UserFacingError("Sign in first");
-      if (password.length < MIN_PASSWORD_LENGTH) {
+      if (next.length < MIN_PASSWORD_LENGTH) {
         throw new UserFacingError(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
       }
+      password = next;
+    },
+    async changePassword(current, next) {
+      checkCurrentPassword(current);
+      if (next.length < MIN_PASSWORD_LENGTH) {
+        throw new UserFacingError(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+      }
+      if (next === current) throw new UserFacingError(SAME_PASSWORD);
+      password = next;
+    },
+    async changeEmail(current, newEmail) {
+      checkCurrentPassword(current);
+      const email = normalizeEmail(newEmail);
+      if (otherAccounts.has(email)) throw new UserFacingError(EMAIL_TAKEN);
+      // Nothing changes until the emailed links are opened (verifyEmailLink).
+      pendingEmail = email;
     },
     async sendPasswordReset() {
       // Nothing to send; Supabase too answers the same whether or not the account exists.

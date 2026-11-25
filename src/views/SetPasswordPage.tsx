@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useAsyncAction } from "../controllers/useAsyncAction";
-import { checkNewPassword, MIN_PASSWORD_LENGTH, type EmailLinkType } from "../models/emailLink";
+import { checkNewPassword, MIN_PASSWORD_LENGTH, type PasswordLinkType } from "../models/emailLink";
 import { ErrorMessage } from "./components";
 
 /**
@@ -13,7 +13,7 @@ export function SetPasswordPage({
   onSave,
   onSignOut,
 }: {
-  kind: EmailLinkType;
+  kind: PasswordLinkType;
   email: string;
   onSave: (password: string) => Promise<void>;
   onSignOut: () => Promise<void>;

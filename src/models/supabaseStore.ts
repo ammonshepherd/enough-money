@@ -14,6 +14,7 @@ import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
 import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
+import { BAD_EMAIL, EMAIL_TAKEN, SAME_PASSWORD, WRONG_PASSWORD } from "./signInDetails";
 import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
 import { checkGoalDetails } from "./goals";
@@ -56,6 +57,19 @@ export function createSupabaseStore(
     return client;
   };
 
+  /** Signs in again with the current password: the check before a change. */
+  const confirmPassword = async (password: string) => {
+    const { data, error } = await db().auth.getSession();
+    if (error) throw error;
+    const email = data.session?.user.email;
+    if (!email) throw new UserFacingError("Sign in first");
+    const signIn = await db().auth.signInWithPassword({ email, password });
+    if (!signIn.error) return;
+    throw new UserFacingError(
+      signIn.error.code === "invalid_credentials" ? WRONG_PASSWORD : signIn.error.message,
+    );
+  };
+
   return {
     async getSession() {
       const { data, error } = await db().auth.getSession();
@@ -86,6 +100,9 @@ export function createSupabaseStore(
         // Supabase gives only "invalid or has expired" (or a rate limit) here.
         throw new UserFacingError(error.status === 429 ? error.message : EXPIRED_LINK);
       }
+      // The first of a Change email address email's two links answers with
+      // no session (and no user): the email changes after the second.
+      if (type === "email_change" && !data.session) return null;
       const session = toSession(data.user);
       if (!session) throw new UserFacingError(EXPIRED_LINK);
       return session;
@@ -97,6 +114,32 @@ export function createSupabaseStore(
       }
       const { error } = await db().auth.updateUser({ password });
       if (error) throw new UserFacingError(error.message);
+    },
+
+    async changePassword(currentPassword, newPassword) {
+      if (newPassword.length < MIN_PASSWORD_LENGTH) {
+        throw new UserFacingError(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+      }
+      await confirmPassword(currentPassword);
+      const { error } = await db().auth.updateUser({ password: newPassword });
+      if (error) {
+        throw new UserFacingError(error.code === "same_password" ? SAME_PASSWORD : error.message);
+      }
+      // Anyone signed in elsewhere with the old password is signed out there.
+      await db().auth.signOut({ scope: "others" });
+    },
+
+    async changeEmail(currentPassword, newEmail) {
+      await confirmPassword(currentPassword);
+      // Supabase Auth keeps one account per email and refuses one in use.
+      // The confirmation emails link to the Site URL (their template).
+      const { error } = await db().auth.updateUser({ email: newEmail });
+      if (!error) return;
+      if (error.code === "email_exists" || error.code === "user_already_exists") {
+        throw new UserFacingError(EMAIL_TAKEN);
+      }
+      if (error.code === "email_address_invalid") throw new UserFacingError(BAD_EMAIL);
+      throw new UserFacingError(error.message);
     },
 
     async sendPasswordReset(email) {

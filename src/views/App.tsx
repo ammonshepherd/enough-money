@@ -74,6 +74,17 @@ export function App() {
     <MenuSlotProvider value={menuSlot}>
       <div className={desktop ? "app-shell desktop" : "app-shell"}>
         {update.ready && <UpdateBanner onRefresh={update.refresh} onDismiss={update.dismiss} />}
+        {emailLink.state.status === "confirmed" && (
+          // After a Change email address link, signed in or not.
+          <div className="update-banner" role="status">
+            <p>{emailLink.state.message}</p>
+            <div className="update-banner-actions">
+              <button className="update-refresh" type="button" onClick={emailLink.dismiss}>
+                OK
+              </button>
+            </div>
+          </div>
+        )}
         {!desktop && (
           <header className="app-header">
             <Brand />

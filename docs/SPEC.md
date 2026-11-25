@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.50.0.
+Version described: 0.51.0.
 
 ## 1. Purpose
 
@@ -397,12 +397,26 @@ Reset password email (`resetPasswordForEmail`); the page says the same
 whether or not the account exists. Its link (`type=recovery`) leads to
 "Choose a new password" the same way.
 
+Changing the password or email while signed in (v0.51.0) is in Manage →
+Settings (below). A Change email address email's link
+(`type=email_change`) is taken out of the address bar the same way but
+asks for no password: Supabase sends one link to the old address and one
+to the new (Secure email change, on by default), and the email changes
+only once both are opened. The first answers with no session, and the app
+shows a banner "Link accepted. To finish changing your email, also open
+the link sent to your other address."; the second signs in with the new
+email and the banner says "Your email is now …". OK hides it.
+
 Supabase Auth settings these need (dashboard, production project):
 
 - Authentication → Emails → Invite user: the link is
   `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite`.
 - Authentication → Emails → Reset password: the link is
   `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=recovery`.
+- Authentication → Emails → Change email address: the link is
+  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=email_change` (the
+  same template goes to both addresses, each with its own token), and
+  Secure email change stays on.
 - Site URL `https://enoughmoney.app/app/` (in the redirect URLs too),
   minimum password length 12, and an email rate limit that allows the
   few emails a day this needs.
@@ -909,7 +923,9 @@ The list, under the heading "Manage" and the Credit card debt strip:
   a chevron:
   - **Settings** (v0.46.1): first Appearance ("Light, dark or match this
     device", v0.48.0: Match system, Light or Dark, and the theme colour since
-    v0.49.0; see §8); then rows that open no page, so
+    v0.49.0; see §8), Change password ("Choose a new password to sign in
+    with") and Change email ("Sign in with a different email", both
+    v0.51.0, below); then rows that open no page, so
     no chevron: the
     household's name over "Household name", with a pencil ("Rename
     household") that turns the row into a form in place (Household name,
@@ -931,6 +947,27 @@ The list, under the heading "Manage" and the Credit card debt strip:
 
 Bank CSVs are imported from each account (Accounts → Import CSV, §6); Manage
 has no Import transactions since v0.46.0.
+
+Change password and Change email (v0.51.0, `src/views/SignInSettings.tsx`,
+checks in `src/models/signInDetails.ts`) both ask for the current
+password, which the store checks by signing in with it again (wrong:
+"Your current password is not right."), so an unlocked device is not
+enough to take the account over.
+
+- **Change password** (`#manage/password`): Current password, New password
+  (at least 12 characters) and Confirm new password, like Choose a password
+  (`checkNewPassword`), and not the same as the current one. Saved, the
+  fields clear, every other device signed in as this user is signed out
+  (`signOut({ scope: "others" })`), and it says "Your password was changed.
+  Other devices signed in as you are signed out."
+- **Change email** (`#manage/email`): New email and Current password. The
+  email is trimmed and lower-cased, and must look like an email and differ
+  from the current one (`checkNewEmail`). One account per email: Supabase
+  Auth refuses an email another account uses, and the app says "Another
+  account already uses that email." Otherwise Supabase emails a link to
+  both addresses and the page says to open each; until both are opened the
+  old email still signs in (see Sign in). The household's data does not
+  store the email, so nothing else changes.
 
 On a phone an option's page replaces the list: a purple "← Manage" link
 (back to `#manage`, as is the Manage tab) above the option's card, no
@@ -1177,8 +1214,7 @@ Decided or wanted, but not in the app:
 - Tracking accounts: transfers between two tracking accounts, a total for
   the Tracking group, a net worth figure, closing one with a balance left.
 - Inviting a second member into an existing household (an invite
-  creates a new household, v0.50.0); changing the password while signed
-  in (sign out and use Forgot password).
+  creates a new household, v0.50.0).
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a

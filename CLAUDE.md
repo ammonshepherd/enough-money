@@ -53,12 +53,13 @@ always describes the app as of that version (including §9, not built yet).
   `CLOUDFLARE_ACCOUNT_ID` (variable) deploy. Supabase Auth Site URL must be
   `https://enoughmoney.app/app/`, and the redirect URLs must include it.
   Public sign-up and every provider but email stay off. People are
-  invited from the dashboard (Invite user, v0.50.0): the Invite user and
-  Reset password email templates link to
-  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite|recovery` (never
-  `{{ .ConfirmationURL }}`, whose `#` session clashes with hash routing);
-  the app exchanges the token, removes it from the URL and asks for a
-  password before anything else (`src/models/emailLink.ts`,
+  invited from the dashboard (Invite user, v0.50.0): the Invite user,
+  Reset password and Change email address email templates link to
+  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite|recovery|email_change`
+  (never `{{ .ConfirmationURL }}`, whose `#` session clashes with hash
+  routing); the app exchanges the token, removes it from the URL and, after
+  an invite or reset, asks for a password before anything else
+  (`src/models/emailLink.ts`,
   `src/controllers/useEmailLink.ts`, docs/SPEC.md → Sign in). The whole site
   (landing page included) carries one Content Security Policy
   (`vite.config.ts`), on the app as a `<meta>` tag and site-wide in
@@ -322,8 +323,11 @@ non-card budget balances − all envelope money (P included)`.
 - Manage (decided in v0.46.0, named Settings before, `src/views/pages/ManagePage.tsx`):
   a list of options, each opening its own page (`#manage/<option>`,
   `manageSection` in `src/models/routes.ts`; old `#settings…` links are
-  rewritten). The list is in groups: Settings (the household's name, whose
-  pencil renames it in place, and who is signed in; v0.46.1), Budget (Envelope
+  rewritten). The list is in groups: Settings (Appearance; Change password
+  and Change email, v0.51.0, both checking the current password first, an
+  email another account uses refused by Supabase Auth, and the email changed
+  only once the links sent to both addresses are opened; the household's
+  name, whose pencil renames it in place, and who is signed in; v0.46.1), Budget (Envelope
   groups, Import envelope plan), Transactions (Income rules, Tags, Payees),
   Household (Backup, Give Feedback, About with the version), and a red Danger zone
   (Restore from a backup, Sign out). Each row shows its name and one short
