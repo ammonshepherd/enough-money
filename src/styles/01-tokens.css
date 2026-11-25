@@ -136,6 +136,22 @@
   --tag-pink-bg: #fbe0ee;
   --tag-pink-fg: #8f1f5b;
 
+  /* The colour picker (Manage → Appearance): every hue, and the white and
+     black that shade the square. The same in every theme. */
+  --picker-hues: linear-gradient(
+    to right,
+    #ff0000 0%,
+    #ffff00 17%,
+    #00ff00 33%,
+    #00ffff 50%,
+    #0000ff 67%,
+    #ff00ff 83%,
+    #ff0000 100%
+  );
+  --picker-white: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0));
+  --picker-black: linear-gradient(to top, #000000, rgba(0, 0, 0, 0));
+  --picker-marker: #ffffff;
+
   /* Sizes. */
   --desktop-band: 4.25rem;
   --desktop-gap: 0.875rem;

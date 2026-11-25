@@ -473,8 +473,15 @@ non-card budget balances − all envelope money (P included)`.
   Dark, kept per device and user in localStorage (never in Supabase). Dark
   changes only the colour variables in `01-tokens.css`; a colour used as a
   fill and as text has a `-text` twin for the text. `public/theme-boot.js`
-  applies the device's last choice before the first paint. Theme colours
-  (one colour for the brand purple) come next.
+  applies the device's last choice before the first paint.
+- Theme colour (decided in v0.49.0, `src/models/themeColour.ts`, display
+  only): one colour in place of the brand purple, from seven ready-made ones
+  or any colour (a built-in picker with a hex field), per device and user.
+  Every purple-carrying variable (`PURPLE`, kept equal to `01-tokens.css`
+  by `scripts/themeTokens.test.ts`) is recoloured keeping its designed
+  luminance, so contrasts hold; the brand is the pick, darkened only until
+  it reads (WCAG AA); red or green picks get a warning; meaning colours
+  never change. A new purple-tinged variable goes in `PURPLE` too.
 - Saved payees (decided in v0.45.0, `src/models/payees.ts`): the
   household's payee names (`payees`, unique ignoring case), suggested in
   the transaction form's Payee field (`PayeePicker`: names containing the
