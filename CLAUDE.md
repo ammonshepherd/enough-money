@@ -68,7 +68,7 @@ always describes the app as of that version (including §9, not built yet).
 - `src/controllers/` — React hooks that load data, handle user actions, call models.
 - `src/views/` — React components. Display only; no money math.
 
-Reuse the existing `styles.css`, icons, manifest and page names
+Reuse the existing styles (`src/styles/`), icons, manifest and page names
 (Budget, Accounts, Manage; Activity merged into Accounts in v0.29.0;
 Settings renamed Manage in v0.46.0) from
 v0.0.1 where they still fit.

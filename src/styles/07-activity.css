@@ -1,0 +1,459 @@
+/* ---- v0.21.0: Activity page redesign (docs/mockups/activity-screen.html) - */
+
+:root {
+  --bb-day-bg: #faf8fc;
+  --bb-income: #1f6b42;
+  --bb-spend: #b3261e;
+  --bb-checked: #f1e9f9;
+  --bb-bank: #2e8b57;
+  --bb-bank-off: #b9b3c0;
+}
+
+.activity-page {
+  /* Rows run edge to edge, right under the app header, like the Budget page. */
+  margin: -1.5rem -0.5rem 0;
+  color: var(--bb-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-page .budget-month {
+  padding: 6px 4px;
+  font-size: 0.875rem;
+}
+
+.activity-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  border-block-end: 1px solid var(--bb-purple-line);
+  background: var(--bb-purple-tint);
+}
+
+.activity-totals div {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.activity-totals dt {
+  color: var(--bb-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.activity-totals dd {
+  margin: 0;
+  color: var(--bb-ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.activity-totals .activity-in {
+  color: var(--bb-income);
+}
+
+.activity-totals .activity-out {
+  color: var(--bb-spend);
+}
+
+/* What the credit cards owe: a rounded strip under the month (top of the
+   page elsewhere), on one of 30 reds set by CardDebt (--debt-bg, with
+   --debt-text chosen to read on it). */
+.card-debt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 12px 16px;
+  padding: 14px 20px;
+  border-radius: 0.875rem;
+  color: var(--debt-text, #fff);
+  background: var(--debt-bg, var(--bb-spend));
+  box-shadow: 0 4px 14px rgba(120, 20, 20, 0.18);
+  font-weight: 800;
+}
+
+.card-debt-label {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.card-debt .money {
+  color: inherit;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+/* Accounts and Manage: the page's own spacing sets the sides. */
+.stack > .card-debt {
+  margin-inline: 0;
+}
+
+/* Balance today, with reconciled (or cash and card debt) under it. */
+.activity-totals .activity-balance-detail {
+  color: var(--bb-muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+/* Ticked rows: how many, their total, and what to do with them. Pinned to
+   the top while the list scrolls. */
+.selection-bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: max(6px, env(safe-area-inset-top)) 12px 6px 16px;
+  color: #fff;
+  background: var(--bb-purple);
+}
+
+.selection-summary {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto 0 0;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.selection-summary strong {
+  font-size: 15px;
+}
+
+.selection-action {
+  min-block-size: 2.25rem;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--bb-purple);
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.selection-action.quiet {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.selection-action:disabled {
+  opacity: 0.6;
+}
+
+.selection-clear {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.selection-bar .error-message {
+  flex-basis: 100%;
+  margin: 0;
+  color: #fff;
+}
+
+.activity-page > .activity-notice,
+.activity-page > .activity-review {
+  margin: 0.6rem 1rem;
+}
+
+.activity-empty {
+  margin: 0;
+  padding: 2rem 16px;
+  color: var(--bb-muted);
+  text-align: center;
+}
+
+.activity-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 6px 16px;
+  border-block-end: 1px solid var(--bb-row-line);
+  color: var(--bb-muted);
+  background: var(--bb-day-bg);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.activity-day-head :is(h2, h3) {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* A day heading is a button that folds its day to the heading (date and net). */
+.activity-day-head {
+  position: relative;
+}
+
+.day-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+/* The whole bar is the tap target. */
+.day-toggle::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.day-toggle svg {
+  inline-size: 14px;
+  block-size: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+  transition: transform 0.15s;
+}
+
+.activity-day-head.folded .day-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.activity-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-item {
+  border-block-end: 1px solid var(--bb-row-line);
+  background: #fff;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: 22px 16px minmax(0, 1fr) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px 4px 10px;
+}
+
+.activity-item.checked {
+  background: var(--bb-checked);
+}
+
+.activity-row {
+  min-block-size: 48px;
+}
+
+/* The checkbox gets a full-height tap target; the box itself stays small. */
+.activity-check {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  margin-inline: -6px;
+  cursor: pointer;
+}
+
+.activity-check input {
+  inline-size: 18px;
+  block-size: 18px;
+  margin: 0;
+  accent-color: var(--bb-purple);
+  cursor: pointer;
+}
+
+/* Grey bank until reconciled; then green and filled in (more than color). */
+.bank-mark {
+  display: grid;
+  color: var(--bb-bank-off);
+}
+
+.bank-mark svg {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.bank-mark.reconciled {
+  color: var(--bb-bank);
+}
+
+.bank-mark.reconciled svg {
+  fill: currentColor;
+}
+
+.activity-who {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.activity-payee,
+.activity-account,
+.activity-category,
+.portion-memo,
+.portion-envelope {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-payee {
+  color: var(--bb-ink);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Bold only while it waits for review, so it stands out. */
+.activity-payee.to-review {
+  font-weight: 700;
+}
+
+.activity-account,
+.activity-category {
+  color: var(--bb-muted);
+}
+
+.activity-account {
+  font-size: 11px;
+}
+
+.activity-category {
+  font-size: 12px;
+}
+
+.activity-amount {
+  color: var(--bb-ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.activity-amount.in {
+  color: var(--bb-income);
+}
+
+.activity-amount.out {
+  color: var(--bb-spend);
+}
+
+.split-pill {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 4px;
+  min-block-size: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--bb-purple);
+  background: var(--bb-purple-tint);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.split-pill svg {
+  inline-size: 12px;
+  block-size: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+  transition: transform 0.15s;
+}
+
+.split-pill[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split-pill svg {
+    transition: none;
+  }
+}
+
+.activity-portions {
+  padding: 2px 0;
+  border-block-start: 1px dashed var(--bb-purple-line);
+  background: var(--bb-day-bg);
+}
+
+.activity-portions[hidden] {
+  display: none;
+}
+
+.activity-portion {
+  min-block-size: 36px;
+}
+
+.portion-memo {
+  color: var(--bb-muted);
+  font-size: 12px;
+}
+
+.portion-envelope {
+  color: var(--bb-purple);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.portion-amount {
+  color: var(--bb-ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.portion-amount.out {
+  color: var(--bb-spend);
+}
+
+.portion-amount.in {
+  color: var(--bb-income);
+}
