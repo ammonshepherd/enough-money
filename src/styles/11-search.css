@@ -4,8 +4,8 @@
 
 .tx-search {
   padding: 10px 16px 0;
-  border-block-end: 1px solid var(--bb-purple-line);
-  background: var(--bb-purple-tint);
+  border-block-end: 1px solid var(--brand-line);
+  background: var(--brand-tint);
 }
 
 .tx-search-row {
@@ -43,7 +43,7 @@
 .tx-search-glyph {
   display: flex;
   flex: none;
-  color: var(--bb-muted);
+  color: var(--muted);
 }
 
 .tx-search-glyph svg {
@@ -82,8 +82,8 @@
   overflow: hidden;
   border: 0;
   border-radius: 999px;
-  color: #ffffff;
-  background: var(--bb-purple);
+  color: var(--on-brand);
+  background: var(--brand);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
@@ -98,14 +98,14 @@
   block-size: 2rem;
   border: 0;
   border-radius: 999px;
-  color: var(--bb-muted);
+  color: var(--muted);
   background: transparent;
   font: inherit;
   cursor: pointer;
 }
 
 .tx-search-clear:hover {
-  background: var(--bb-grey-cell);
+  background: var(--grey-cell);
 }
 
 .tx-search-text .picker-name {
@@ -128,7 +128,7 @@
 .tx-search-summary {
   margin: 0;
   padding: 6px 2px 8px;
-  color: var(--bb-muted);
+  color: var(--muted);
   font-size: 13px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -141,11 +141,11 @@
 /* A split's part for the envelope searched for. */
 
 .activity-portion.match {
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
 }
 
 .activity-portion.match .portion-envelope,
 .activity-portion.match .portion-memo {
-  color: var(--bb-purple);
+  color: var(--brand);
   font-weight: 700;
 }

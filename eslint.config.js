@@ -42,6 +42,15 @@ export default tseslint.config(
           ],
         },
       ],
+      // Colours live in src/styles/01-tokens.css, so a theme can change them.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name=/^(fill|stroke|color|stopColor)$/][value.type='Literal'][value.value=/^(#|rgb|hsl)/]",
+          message: "Give the element a class and colour it with a variable from 01-tokens.css.",
+        },
+      ],
     },
   },
 );

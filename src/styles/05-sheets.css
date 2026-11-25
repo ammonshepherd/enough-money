@@ -6,7 +6,7 @@
   padding: 1rem;
   border: 2px solid var(--focus);
   border-radius: 1.1rem;
-  background: #fff8ec;
+  background: var(--warning-bg);
 }
 
 .cover-card h3 {
@@ -103,7 +103,7 @@
 }
 
 .split-left {
-  color: #8a5a00;
+  color: var(--warning-text);
   font-weight: 700;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .sheet::backdrop {
-  background: rgba(40, 26, 53, 0.45);
+  background: rgb(var(--ink-rgb) / 0.45);
 }
 
 .sheet-delete {
@@ -163,7 +163,7 @@
   inline-size: 2.5rem;
   block-size: 0.3125rem;
   border-radius: 0.2rem;
-  background: #d6cde2;
+  background: var(--border-strong);
 }
 
 .sheet-header {
@@ -181,7 +181,7 @@
 }
 
 .sheet-eyebrow {
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -194,8 +194,8 @@
   block-size: 2.75rem;
   border: 0;
   border-radius: 50%;
-  color: var(--bb-purple);
-  background: var(--bb-purple-tint);
+  color: var(--brand);
+  background: var(--brand-tint);
   font-size: 1.25rem;
   cursor: pointer;
 }
@@ -216,8 +216,8 @@
   padding: 0 10px;
   border: 0;
   border-radius: 999px;
-  color: var(--bb-purple);
-  background: var(--bb-purple-tint);
+  color: var(--brand);
+  background: var(--brand-tint);
   font: inherit;
   font-size: 12px;
   font-weight: 700;
