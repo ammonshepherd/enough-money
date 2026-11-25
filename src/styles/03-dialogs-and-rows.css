@@ -1,0 +1,124 @@
+/* ---- v0.7.0: Add transaction button and dialog ------------------------- */
+
+/* Fixed to the bottom-right of the app column (centred on wide screens). */
+.fab {
+  position: fixed;
+  inset-block-end: calc(5.75rem + env(safe-area-inset-bottom));
+  inset-inline-end: max(1rem, calc(50% - 15rem + 1rem));
+  z-index: 11;
+  display: grid;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--brand);
+  box-shadow: 0 0.6rem 1.5rem rgba(75, 42, 104, 0.35);
+  cursor: pointer;
+}
+
+.fab:hover {
+  background: var(--accent);
+}
+
+.fab svg {
+  inline-size: 1.6rem;
+  block-size: 1.6rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.sheet {
+  inline-size: min(calc(100% - 2rem), 28rem);
+  max-block-size: calc(100dvh - 2rem);
+  padding: 1.1rem;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 1.25rem;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.sheet::backdrop {
+  background: rgba(40, 26, 53, 0.45);
+}
+
+@media (min-width: 30.01rem) {
+  .fab {
+    inset-block-end: 6.75rem;
+  }
+}
+
+/* ---- v0.13.0: compact Budget page --------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.notice.compact {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* ---- v0.13.1: tappable rows, tighter sides -------------------------------- */
+
+/* The whole row opens the edit dialog. */
+.item-button {
+  inline-size: 100%;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.item-button:hover {
+  background: var(--surface-muted);
+}
+
+.item-button .item-detail {
+  grid-column: 1 / -1;
+}
+
+.badge-uncategorized {
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.4rem;
+  color: #6b4500;
+  background: #ffe2a8;
+  font-weight: 700;
+}
+
+.sheet-delete {
+  justify-self: center;
+  margin-block-start: 0.25rem;
+}
+
+/* Less empty space at the sides on a phone. */
+.page-content {
+  padding-inline: 0.5rem;
+}
+
+.list-card {
+  padding-inline: 0.85rem;
+}
+
+/* ---- v0.14.0: review list rows (tap to edit, plus Mark as Income) -------- */
+
+.review-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}

@@ -1,0 +1,370 @@
+/* ---- v0.2.0: forms, envelopes, transactions ---------------------------- */
+
+.stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  inline-size: 100%;
+  min-block-size: 2.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.segmented {
+  display: grid;
+  /* One row of equal options, however many there are. */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 0.85rem;
+  background: var(--surface-muted);
+}
+
+.segmented label {
+  display: grid;
+  place-items: center;
+  min-block-size: 2.3rem;
+  border-radius: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+}
+
+.segmented label:has(input:checked) {
+  color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0.15rem 0.5rem rgba(75, 42, 104, 0.12);
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.form .primary-button,
+.form-row .primary-button {
+  margin-block-start: 0;
+}
+
+.form-row .primary-button,
+.form-row .secondary-button {
+  inline-size: auto;
+  min-block-size: 2.6rem;
+  padding-inline: 1rem;
+}
+
+.secondary-button {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  color: var(--brand);
+  background: var(--brand-light);
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.text-button {
+  padding: 0.3rem 0;
+  border: 0;
+  color: var(--accent);
+  background: none;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.text-button.danger {
+  color: #b3261e;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.error-message {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.notice {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  color: var(--text);
+  background: var(--brand-light);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.notice a {
+  color: var(--brand);
+  font-weight: 750;
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.money.negative,
+.short {
+  color: #b3261e;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.month-nav a {
+  display: inline-grid;
+  inline-size: 1.8rem;
+  block-size: 1.8rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--brand);
+  background: var(--brand-light);
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+
+.item-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item-list > li + li {
+  border-block-start: 1px solid var(--border);
+}
+
+/* .review-row: a row of Activity's To review list, laid out like .item. */
+.item,
+.review-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.15rem 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.item-title {
+  overflow: hidden;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-detail {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.cover-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--focus);
+  border-radius: 1.1rem;
+  background: #fff8ec;
+}
+
+.cover-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.cover-card ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding-inline-start: 1.2rem;
+  font-size: 0.88rem;
+}
+
+.choice {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.cover-step {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.split {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface-muted);
+}
+
+.split legend {
+  padding-inline: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.split-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem 2rem;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.split-line select,
+.split-line input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 2.6rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.split-line input {
+  text-align: end;
+}
+
+.split-line select:focus-visible,
+.split-line input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.split-remove {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.split-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.split-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.split-left {
+  color: #8a5a00;
+  font-weight: 700;
+}
+
+.split-done {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.csv-example {
+  margin: 0.75rem 0;
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  border-radius: 0.9rem;
+  color: var(--text);
+  background: var(--surface-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.error-text {
+  color: #b3261e;
+}
+
+.field input[type="file"] {
+  padding-block: 0.55rem;
+}
+
+.unused-toggle {
+  margin: 0;
+  text-align: center;
+}
+
+.import-columns,
+.import-skipped {
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.import-columns > summary,
+.import-skipped > summary {
+  cursor: pointer;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.import-columns[open] > summary,
+.import-skipped[open] > summary {
+  margin-block-end: 0.75rem;
+}

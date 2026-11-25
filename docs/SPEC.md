@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.46.1.
+Version described: 0.46.2.
 
 ## 1. Purpose
 
@@ -30,7 +30,7 @@ src/views/        React components (pages in src/views/pages/; the Budget
                   page's groups, rows and panel parts in src/views/budget/;
                   transaction lists, search, form and cover prompt in
                   src/views/transactions/)
-src/styles.css    all styling
+src/styles/       all styling: index.css imports one file per area, in order
 public/icons/     app icons (see CLAUDE.md "App icons")
 supabase/migrations/  every schema change, applied in order
 docs/mockups/     static design mockups (reference only, not shipped)
@@ -1027,7 +1027,7 @@ Envelopes not in the file are left alone.
 ## 8. Look and feel
 
 - Font: Inter, falling back to the system UI font.
-- Colours (`:root` in `styles.css`): page `#ece7f2`, app background `#faf8fc`,
+- Colours (`:root` in `src/styles/01-base.css`): page `#ece7f2`, app background `#faf8fc`,
   surface `#ffffff`, muted surface `#f2ecf7`, border `#e3dbe9`, text `#281a35`,
   muted text `#74677e`, brand `#4b2a68`, light brand `#eee5f7`, accent `#8051a2`,
   focus `#d29a3b`; negative money and errors red `#b3261e`; Uncategorized label
