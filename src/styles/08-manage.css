@@ -414,3 +414,154 @@ button.manage-row:hover {
   color: var(--text);
   font-weight: 700;
 }
+
+/* Manage → Appearance (v0.49.0): theme colour swatches, the colour picker
+   and a small preview, all drawn from the colour variables. */
+.appearance-heading {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+.theme-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.theme-swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* The radio covers its whole swatch, unseen, so the swatch is the tap target. */
+.theme-swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.theme-swatch:has(input:checked) {
+  border-color: var(--brand-text);
+  box-shadow: inset 0 0 0 1px var(--brand-text);
+}
+
+.theme-swatch:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.theme-swatch-dot {
+  flex: none;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--overlay-dark);
+}
+
+.theme-swatch-dot.custom {
+  background: var(--picker-hues);
+}
+
+.colour-picker {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.colour-square {
+  position: relative;
+  block-size: 11rem;
+  border-radius: 0.75rem;
+  background-image: var(--picker-black), var(--picker-white);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.colour-square:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.colour-square-marker {
+  position: absolute;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border: 2px solid var(--picker-marker);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.45);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* More specific than .field input, whose box it replaces with the hues. */
+.colour-picker .colour-hue {
+  inline-size: 100%;
+  block-size: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--picker-hues);
+  appearance: none;
+}
+
+.colour-picker .colour-hue::-webkit-slider-thumb {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  border: 2px solid var(--picker-marker);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(var(--ink-rgb) / 0.45);
+  appearance: none;
+}
+
+.colour-picker .colour-hue::-moz-range-thumb {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border: 2px solid var(--picker-marker);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.theme-preview {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--app-background);
+}
+
+.theme-preview-band {
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.6rem;
+  color: var(--on-brand);
+  background: var(--brand);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.theme-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.6rem;
+  color: var(--brand-text);
+  background: var(--brand-tint);
+  font-weight: 700;
+}
+
+.theme-preview .primary-button {
+  justify-self: start;
+}

@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.48.0.
+Version described: 0.49.0.
 
 ## 1. Purpose
 
@@ -878,7 +878,8 @@ The list, under the heading "Manage" and the Credit card debt strip:
   is a row with an icon, its name, one short line saying what it does, and
   a chevron:
   - **Settings** (v0.46.1): first Appearance ("Light, dark or match this
-    device", v0.48.0: Match system, Light or Dark, see §8); then rows that open no page, so
+    device", v0.48.0: Match system, Light or Dark, and the theme colour since
+    v0.49.0; see §8); then rows that open no page, so
     no chevron: the
     household's name over "Household name", with a pencil ("Rename
     household") that turns the row into a form in place (Household name,
@@ -1063,6 +1064,23 @@ Envelopes not in the file are left alone.
   colour variables in `01-tokens.css` (`:root[data-theme="dark"]`); the
   browser bar (`meta theme-color`) takes `--browser-bar`. Colours used as
   a fill and as text have a `-text` twin (`--brand-text`), lighter in dark.
+- Theme colour (v0.49.0, `src/models/themeColour.ts`, display only): Manage
+  → Appearance offers seven ready-made colours (Purple, the default; Blue,
+  Teal, Green, Rose, Orange, Slate) and Custom, a picker built into the app
+  (a shading square that also takes the arrow keys, a hue slider and a hex
+  field). Changes apply at once, so the app is the preview (plus a small one
+  on the page); "Back to purple" undoes it. Every variable that carries the
+  purple (the brand family and the purple-tinged surfaces, lines and text,
+  listed in `PURPLE`) is recoloured for light and dark: hue turned, saturation
+  scaled (never above the purple design's) and lightness solved to keep the
+  designed luminance, so every contrast holds. The brand itself is the picked
+  colour, darkened only until white text on it and it on its tint read
+  (WCAG AA, 4.5:1; "Adjusted for readability" then says so). A red or green
+  pick shows a warning (they also mean money out and in). Meaning colours
+  never change. Kept per device and user (`bb.theme.colour.<user>`); the
+  device keeps the last colour's variables (`bb.theme.colourVars`), which
+  `theme-boot.js` sets before the first paint. Purple sets nothing, so the
+  CSS is the default.
 - Colours (v0.46.4): every colour is a variable named for its role in
   `:root` in `src/styles/01-tokens.css`, the only file with typed-in colours
   (Stylelint fails any other; ESLint fails a typed-in `fill`, `stroke` or
@@ -1090,10 +1108,6 @@ Envelopes not in the file are left alone.
 
 Decided or wanted, but not in the app:
 
-- Theme colours (decided 2026-11-24, after dark mode): one colour
-  in place of the brand purple, from seven ready-made ones or any colour
-  (a built-in wheel and shading panel with a hex field), kept readable
-  (WCAG AA) by adjusting its shade, with a warning for red or green.
 - Desktop: keyboard shortcuts; a group's envelopes beside the group list in
   Manage → Envelope groups instead of a sheet; the accounts list kept as a left column
   while an account is open.
