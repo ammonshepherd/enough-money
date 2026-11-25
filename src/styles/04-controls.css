@@ -139,6 +139,13 @@
   font-weight: 750;
 }
 
+/* A short rule under a field ("At least 12 characters."). */
+.field-hint {
+  margin: -0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .text-button.danger {
   color: var(--danger-text);
 }

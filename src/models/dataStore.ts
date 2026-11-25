@@ -4,6 +4,7 @@
  * by UI tests are interchangeable ("dependency injection").
  */
 import type { Backup } from "./backup";
+import type { EmailLink } from "./emailLink";
 import type { EnvelopePlanRow, PlannedAmount } from "./envelopePlan";
 import type { GoalDetails } from "./goals";
 import type { Cents } from "./money";
@@ -63,6 +64,15 @@ export interface DataStore {
   onSessionChange(callback: (session: UserSession | null) => void): () => void;
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
+  /**
+   * Signs in with the token from an Invite user or Reset password email
+   * (see emailLink.ts) and returns who it signed in.
+   */
+  verifyEmailLink(link: EmailLink): Promise<UserSession>;
+  /** Sets the signed-in user's password (at least MIN_PASSWORD_LENGTH characters). */
+  setPassword(password: string): Promise<void>;
+  /** Emails a Reset password link. Says nothing about whether the account exists. */
+  sendPasswordReset(email: string): Promise<void>;
 
   /** The signed-in user's whole budget, or null if they have no household yet. */
   load(): Promise<BudgetData | null>;

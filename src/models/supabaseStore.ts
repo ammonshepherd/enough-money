@@ -13,6 +13,7 @@ import { validateBackup, withFreshIds, type Backup } from "./backup";
 import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
+import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
 import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
 import { checkGoalDetails } from "./goals";
@@ -77,6 +78,31 @@ export function createSupabaseStore(
     async signOut() {
       const { error } = await db().auth.signOut();
       if (error) throw error;
+    },
+
+    async verifyEmailLink({ tokenHash, type }) {
+      const { data, error } = await db().auth.verifyOtp({ token_hash: tokenHash, type });
+      if (error) {
+        // Supabase gives only "invalid or has expired" (or a rate limit) here.
+        throw new UserFacingError(error.status === 429 ? error.message : EXPIRED_LINK);
+      }
+      const session = toSession(data.user);
+      if (!session) throw new UserFacingError(EXPIRED_LINK);
+      return session;
+    },
+
+    async setPassword(password) {
+      if (password.length < MIN_PASSWORD_LENGTH) {
+        throw new UserFacingError(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+      }
+      const { error } = await db().auth.updateUser({ password });
+      if (error) throw new UserFacingError(error.message);
+    },
+
+    async sendPasswordReset(email) {
+      // The email's link goes to the Site URL (its template; see emailLink.ts).
+      const { error } = await db().auth.resetPasswordForEmail(email);
+      if (error) throw new UserFacingError(error.message);
     },
 
     async load() {

@@ -17,12 +17,19 @@ export function useSession(store: DataStore): SessionState {
 
   useEffect(() => {
     let active = true;
+    // A change reported while the first answer is on its way (an email link
+    // signing in) is newer than that answer, so the answer is then dropped.
+    let changed = false;
     store.getSession().then(
-      (session) => active && setState(fromSession(session)),
-      (error: unknown) => active && setState({ status: "error", error: messageOf(error) }),
+      (session) => active && !changed && setState(fromSession(session)),
+      (error: unknown) =>
+        active && !changed && setState({ status: "error", error: messageOf(error) }),
     );
     try {
-      const unsubscribe = store.onSessionChange((session) => setState(fromSession(session)));
+      const unsubscribe = store.onSessionChange((session) => {
+        changed = true;
+        setState(fromSession(session));
+      });
       return () => {
         active = false;
         unsubscribe();

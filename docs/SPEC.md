@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.49.0.
+Version described: 0.50.0.
 
 ## 1. Purpose
 
@@ -375,10 +375,40 @@ signed out, everything is as above.
 
 Email and password, and Sign in. There is no create-account form or link:
 public sign-up is off in Supabase Auth (so are GitHub and every other
-provider; only email), and the owner adds each household member in the
-dashboard (Authentication → Users → Add user, with a password of
-at least 12 characters and "Auto confirm"). Sign-in uses PKCE so a `?code=` in
-the URL leaves the `#route` alone.
+provider; only email). Sign-in uses PKCE so a `?code=` in the URL leaves
+the `#route` alone.
+
+Inviting someone (v0.50.0, `src/models/emailLink.ts`,
+`src/controllers/useEmailLink.ts`): the owner uses the Supabase dashboard,
+Authentication → Users → Invite user, with the person's email. Bird sends
+the invite. Its link opens the app as `?token_hash=…&type=invite`; the app
+takes the token out of the address bar at once, exchanges it for a session
+(`verifyOtp`), and shows "Choose a password" (new password twice, at least
+12 characters, `checkNewPassword`) before anything else. Then the usual
+Create household page follows, so each invited person gets their own
+household. Until the password is saved, a reload or sign-in on that device
+comes back to it (`bb.auth.passwordNeeded.<user>` in localStorage). A used
+or expired link returns to Sign in with "This link has expired or was
+already used…". Adding a user with a password (Add user, "Auto confirm")
+still works too.
+
+Forgot password? (under Sign in) asks for an email and sends Supabase's
+Reset password email (`resetPasswordForEmail`); the page says the same
+whether or not the account exists. Its link (`type=recovery`) leads to
+"Choose a new password" the same way.
+
+Supabase Auth settings these need (dashboard, production project):
+
+- Authentication → Emails → Invite user: the link is
+  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite`.
+- Authentication → Emails → Reset password: the link is
+  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=recovery`.
+- Site URL `https://enoughmoney.app/app/` (in the redirect URLs too),
+  minimum password length 12, and an email rate limit that allows the
+  few emails a day this needs.
+
+The default templates' `{{ .ConfirmationURL }}` would return the session
+after a `#`, which the hash routing would read as a page.
 
 ### Create household
 
@@ -1146,7 +1176,9 @@ Decided or wanted, but not in the app:
   own branch).
 - Tracking accounts: transfers between two tracking accounts, a total for
   the Tracking group, a net worth figure, closing one with a balance left.
-- Inviting a second household member.
+- Inviting a second member into an existing household (an invite
+  creates a new household, v0.50.0); changing the password while signed
+  in (sign out and use Forgot password).
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a

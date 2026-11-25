@@ -358,3 +358,22 @@ describe("memory store backup", () => {
     expect((await other.load())!.accounts).toEqual([]);
   });
 });
+
+describe("email links (like Supabase Auth)", () => {
+  it("signs in with an invite token and then takes a long enough password", async () => {
+    const store = createMemoryStore();
+    const session = await store.verifyEmailLink({ tokenHash: "abc", type: "invite" });
+    expect(await store.getSession()).toEqual(session);
+    await expect(store.setPassword("too short")).rejects.toThrow("Use at least 12 characters.");
+    await expect(store.setPassword("long enough now")).resolves.toBeUndefined();
+  });
+
+  it("refuses a used or expired token and a password while signed out", async () => {
+    const store = createMemoryStore();
+    await expect(store.verifyEmailLink({ tokenHash: "expired", type: "recovery" })).rejects.toThrow(
+      UserFacingError,
+    );
+    expect(await store.getSession()).toBeNull();
+    await expect(store.setPassword("long enough now")).rejects.toThrow("Sign in first");
+  });
+});

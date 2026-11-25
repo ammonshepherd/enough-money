@@ -3,6 +3,7 @@ import { useAppUpdate } from "../controllers/useAppUpdate";
 import { useBudget } from "../controllers/useBudget";
 import { useHashRoute } from "../controllers/useHashRoute";
 import { useInstallPrompt } from "../controllers/useInstallPrompt";
+import { useEmailLink } from "../controllers/useEmailLink";
 import { useDesktop, useSidebar } from "../controllers/useLayout";
 import { useSession } from "../controllers/useSession";
 import { ThemeContext, useTheme } from "../controllers/useTheme";
@@ -29,6 +30,7 @@ import { AccountsIcon, BudgetIcon, ChevronLeftIcon, InstallIcon, ManageIcon } fr
 import { AccountsPage } from "./pages/AccountsPage";
 import { BudgetPage } from "./pages/BudgetPage";
 import { ManagePage } from "./pages/ManagePage";
+import { SetPasswordPage } from "./SetPasswordPage";
 import { SignInPage } from "./SignInPage";
 import { MenuSlotProvider } from "./PageMenu";
 import { AddTransactionButton } from "./TransactionEntry";
@@ -53,9 +55,18 @@ type Install = (() => Promise<void>) | null;
  */
 export function App() {
   const session = useSession(store);
+  const emailLink = useEmailLink(
+    store,
+    session.status === "signedIn" ? session.session.userId : null,
+  );
   const { install } = useInstallPrompt();
   const update = useAppUpdate();
-  const desktop = useDesktop() && session.status === "signedIn";
+  // The budget itself shows only once the email link (if any) is dealt with.
+  const inBudget =
+    session.status === "signedIn" &&
+    emailLink.state.status !== "checking" &&
+    !emailLink.passwordNeeded;
+  const desktop = useDesktop() && inBudget;
   // The header's spot for the page menu (a state, so pages re-render once it exists).
   const [menuSlot, setMenuSlot] = useState<HTMLElement | null>(null);
 
@@ -82,14 +93,33 @@ export function App() {
           </header>
         )}
 
-        {session.status === "loading" && <Message text="Loading Enough Money..." />}
+        {emailLink.state.status === "checking" ? (
+          <Message text="Checking your link..." />
+        ) : (
+          session.status === "loading" && <Message text="Loading Enough Money..." />
+        )}
         {session.status === "error" && <Message error={session.error} />}
-        {session.status === "signedOut" && (
+        {session.status === "signedOut" && emailLink.state.status !== "checking" && (
           <main className="page-content">
-            <SignInPage onSignIn={store.signIn} />
+            <SignInPage
+              onSignIn={emailLink.signIn}
+              onSendReset={store.sendPasswordReset}
+              linkError={emailLink.state.status === "failed" ? emailLink.state.error : null}
+            />
           </main>
         )}
-        {session.status === "signedIn" && (
+        {session.status === "signedIn" && emailLink.passwordNeeded && (
+          // Before anything else, someone who came by an email's link sets a password.
+          <main className="page-content">
+            <SetPasswordPage
+              kind={emailLink.passwordNeeded}
+              email={session.session.email}
+              onSave={emailLink.setPassword}
+              onSignOut={store.signOut}
+            />
+          </main>
+        )}
+        {inBudget && session.status === "signedIn" && (
           // key: a different user gets a fresh budget, never the previous one's.
           <SignedInApp
             key={session.session.userId}
