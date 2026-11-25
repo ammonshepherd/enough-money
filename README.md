@@ -8,7 +8,7 @@ budgeting rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Version
 
-The current application version is **0.46.4** (kept in `package.json`; the app shows it on
+The current application version is **0.46.5** (kept in `package.json`; the app shows it on
 Manage → About and in the desktop sidebar, and `docs/SPEC.md` describes that version).
 
 Versions follow:
