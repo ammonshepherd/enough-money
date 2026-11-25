@@ -11,6 +11,7 @@ import { CardDebt } from "../CardDebt";
 import { ErrorMessage } from "../components";
 import { EnvelopeGroups } from "../EnvelopeGroups";
 import { EnvelopePlanImport } from "../EnvelopePlanImport";
+import { Feedback } from "../Feedback";
 import { IncomeRules } from "../IncomeRules";
 import {
   ArrowLeftIcon,
@@ -19,6 +20,7 @@ import {
   HomeIcon,
   IncomeIcon,
   InfoIcon,
+  MessageIcon,
   MoonIcon,
   PencilIcon,
   PersonIcon,
@@ -98,6 +100,14 @@ const GROUPS: { title: string; options: Option[] }[] = [
         description: "Save all your data to a file",
         Icon: ExportIcon,
         Page: BackupExport,
+      },
+      {
+        // Also the "Give Feedback" link that ends every page.
+        section: "feedback",
+        title: "Give Feedback",
+        description: "Report a problem or suggest an idea",
+        Icon: MessageIcon,
+        Page: Feedback,
       },
     ],
   },

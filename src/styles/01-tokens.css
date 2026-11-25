@@ -96,7 +96,8 @@
   --danger-text: var(--danger);
   --danger-shadow: rgba(120, 20, 20, 0.18);
   --success: #2e8b57;
-  --success-text: var(--success);
+  --success-text: #1f6b42; /* success as text on white (readable; v0.47.0) */
+  --success-mark: var(--success); /* check marks and rings */
   --assign: #1f7a45;
   --assign-shadow: rgba(20, 90, 50, 0.2);
   --on-solid: #ffffff; /* text on green or red */
@@ -210,6 +211,7 @@
   --danger-text: #ff8f84;
   --danger-shadow: rgba(0, 0, 0, 0.4);
   --success-text: #5fd08f;
+  --success-mark: #5fd08f;
   --assign-shadow: rgba(0, 0, 0, 0.4);
   --over: #ffb27a;
   --over-bg: #3b2416;

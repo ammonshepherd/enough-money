@@ -284,11 +284,11 @@ div.sheet-field .sheet-field-value {
 }
 
 .goal-ring-fill.met {
-  stroke: var(--success-text);
+  stroke: var(--success-mark);
 }
 
 .goal-ring-tick {
-  stroke: var(--success-text);
+  stroke: var(--success-mark);
 }
 
 .goal-text {

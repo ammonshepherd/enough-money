@@ -59,6 +59,11 @@ always describes the app as of that version (including §9, not built yet).
   `frame-ancestors 'none'`); a new outside resource must be added to it. Cloudflare features that inject scripts
   (Web Analytics auto-inject, Rocket Loader, email obfuscation) stay off.
   Actions are pinned to commit hashes.
+- Email (v0.47.0): Bird sends Supabase Auth's emails (custom SMTP) and,
+  through its API, Give Feedback messages: the `send-feedback` Edge Function
+  (`supabase/functions/send-feedback/`, deployed by hand, README there)
+  holds the Bird key and addresses as function secrets. The browser never
+  calls Bird.
 
 ## Architecture: keep MVC
 
@@ -313,12 +318,17 @@ non-card budget balances − all envelope money (P included)`.
   rewritten). The list is in groups: Settings (the household's name, whose
   pencil renames it in place, and who is signed in; v0.46.1), Budget (Envelope
   groups, Import envelope plan), Transactions (Income rules, Tags, Payees),
-  Household (Backup, About with the version), and a red Danger zone
+  Household (Backup, Give Feedback, About with the version), and a red Danger zone
   (Restore from a backup, Sign out). Each row shows its name and one short
   line saying what it does, no counts. No Import transactions: bank CSVs
   are imported from each account. A phone shows the list or one page (with
   a "← Manage" link back); a desktop keeps the list on the left and opens
   the option beside it (Envelope groups when none is chosen).
+- Give Feedback (decided in v0.47.0, `src/views/Feedback.tsx`): a plain
+  "Give Feedback" link ends every page (Budget, Accounts, Manage) and
+  Manage lists it; both open `#manage/feedback`, a message box whose text
+  alone (at most 5,000 characters, no app data) is emailed to the owner
+  through the `send-feedback` Edge Function and Bird, Reply-To the user.
 - Debt is shown negative everywhere (decided in v0.42.3, `asDebt` in
   `src/models/money.ts`): card balances, Total Owed, the Credit card debt
   strip, Owed and Remaining debt on a card's payment envelope, "Card
@@ -458,7 +468,7 @@ non-card budget balances − all envelope money (P included)`.
   full ring, "Goal reached" and Archive goal (kept with `archived_at`, no
   longer shown; a new goal can be set). Past its date unmet: "$X short,
   date passed", no per-period figures. Set with a date from today on.
-- Light and dark (decided in v0.47.0, `src/models/theme.ts`, display
+- Light and dark (decided in v0.48.0, `src/models/theme.ts`, display
   only): Manage → Appearance offers Match system (default), Light and
   Dark, kept per device and user in localStorage (never in Supabase). Dark
   changes only the colour variables in `01-tokens.css`; a colour used as a

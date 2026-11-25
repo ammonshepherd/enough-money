@@ -108,6 +108,7 @@ test("Manage lists its options; each opens its own page, and Back returns to the
     "Tags",
     "Payees",
     "Backup",
+    "Give Feedback",
     "Restore from a backup",
   ]);
   // Bank CSVs are imported from each account, not here.

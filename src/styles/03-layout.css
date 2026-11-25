@@ -150,7 +150,7 @@
   place-items: center;
   inline-size: 24px;
   block-size: 24px;
-  color: var(--success-text);
+  color: var(--success-mark);
 }
 
 .page-menu-check svg {
