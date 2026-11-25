@@ -52,7 +52,14 @@ always describes the app as of that version (including §9, not built yet).
   Actions variables; `CLOUDFLARE_API_TOKEN` (secret) and
   `CLOUDFLARE_ACCOUNT_ID` (variable) deploy. Supabase Auth Site URL must be
   `https://enoughmoney.app/app/`, and the redirect URLs must include it.
-  Public sign-up and every provider but email stay off. The whole site
+  Public sign-up and every provider but email stay off. People are
+  invited from the dashboard (Invite user, v0.50.0): the Invite user and
+  Reset password email templates link to
+  `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite|recovery` (never
+  `{{ .ConfirmationURL }}`, whose `#` session clashes with hash routing);
+  the app exchanges the token, removes it from the URL and asks for a
+  password before anything else (`src/models/emailLink.ts`,
+  `src/controllers/useEmailLink.ts`, docs/SPEC.md → Sign in). The whole site
   (landing page included) carries one Content Security Policy
   (`vite.config.ts`), on the app as a `<meta>` tag and site-wide in
   `dist/_headers` (sent as a header by Cloudflare, with

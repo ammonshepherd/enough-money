@@ -14,6 +14,7 @@ import {
   withFreshIds,
 } from "./backup";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
+import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
 import { nameKey } from "./envelopePlan";
 import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
@@ -124,6 +125,22 @@ export function createMemoryStore(): DataStore {
     },
     async signOut() {
       setSession(null);
+    },
+    // Like Supabase: any token signs in an invited user, except "expired" (for tests).
+    async verifyEmailLink(link) {
+      if (link.tokenHash === "expired") throw new UserFacingError(EXPIRED_LINK);
+      const next = { userId: "memory-user", email: "invited@example.com" };
+      setSession(next);
+      return next;
+    },
+    async setPassword(password) {
+      if (!session) throw new UserFacingError("Sign in first");
+      if (password.length < MIN_PASSWORD_LENGTH) {
+        throw new UserFacingError(`Use at least ${MIN_PASSWORD_LENGTH} characters.`);
+      }
+    },
+    async sendPasswordReset() {
+      // Nothing to send; Supabase too answers the same whether or not the account exists.
     },
 
     async load() {
