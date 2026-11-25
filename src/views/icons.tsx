@@ -105,6 +105,10 @@ export const PersonIcon = () => (
 export const ExportIcon = () => (
   <Icon path="M12 15V3m0 0-4 4m4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
 );
+/** A speech bubble: give feedback. */
+export const MessageIcon = () => (
+  <Icon path="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8 10h8M8 13h5" />
+);
 /** Info in a circle: About. */
 export const InfoIcon = () => (
   <Icon path="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 11v6M12 7.5h.01" />

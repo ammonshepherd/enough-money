@@ -2,11 +2,18 @@
  * DataStore backed by Supabase. Row Level Security on every table limits
  * each user to their own household, so these queries need no household filter.
  */
-import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  FunctionsFetchError,
+  FunctionsHttpError,
+  type PostgrestError,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import { validateBackup, withFreshIds, type Backup } from "./backup";
 import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
+import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
 import { checkGoalDetails } from "./goals";
 import { cleanPayeeName } from "./payees";
@@ -592,6 +599,26 @@ export function createSupabaseStore(
         p_backup: withFreshIds(validateBackup(backup)) as unknown as Json,
       });
       check(error);
+    },
+
+    async sendFeedback(message) {
+      const { error } = await db().functions.invoke("send-feedback", {
+        body: { message: cleanFeedback(message) },
+      });
+      if (!error) return;
+      if (error instanceof FunctionsHttpError) {
+        // The function answers with { error: "…" }, written for people.
+        const body = (await (error.context as Response).json().catch(() => null)) as {
+          error?: unknown;
+        } | null;
+        if (typeof body?.error === "string") throw new UserFacingError(body.error);
+      }
+      if (error instanceof FunctionsFetchError) {
+        throw new UserFacingError(
+          "Your feedback couldn't be sent. Check your connection and try again.",
+        );
+      }
+      throw error;
     },
   };
 }

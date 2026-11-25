@@ -82,6 +82,7 @@
   --danger: #b3261e;
   --danger-shadow: rgba(120, 20, 20, 0.18);
   --success: #2e8b57;
+  --success-text: #1f6b42; /* success as text on white (readable; v0.47.0) */
   --assign: #1f7a45;
   --assign-shadow: rgba(20, 90, 50, 0.2);
   --on-solid: #ffffff; /* text on green or red */

@@ -23,6 +23,8 @@ export interface Budget {
   ) => Promise<void>;
   createHousehold: (name: string) => Promise<void>;
   reload: () => Promise<void>;
+  /** Emails a message to the owner (Manage → Send feedback); changes no data. */
+  sendFeedback: (message: string) => Promise<void>;
 }
 
 const toState = (data: BudgetData | null): BudgetState =>
@@ -80,5 +82,7 @@ export function useBudget(store: DataStore): Budget {
     [store, reload],
   );
 
-  return { state, change, createHousehold, reload };
+  const sendFeedback = useCallback((message: string) => store.sendFeedback(message), [store]);
+
+  return { state, change, createHousehold, reload, sendFeedback };
 }

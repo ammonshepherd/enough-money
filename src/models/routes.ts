@@ -84,6 +84,7 @@ export const MANAGE_SECTIONS = [
   "tags",
   "payees",
   "backup",
+  "feedback",
   "restore",
 ] as const;
 

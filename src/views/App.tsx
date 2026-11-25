@@ -16,6 +16,7 @@ import {
   ROUTE_TITLES,
   ROUTES,
   routeHref,
+  manageHref,
   manageSection,
   type AccountsView,
   type Route,
@@ -130,6 +131,8 @@ function SignedInApp({
   const data = state.status === "ready" ? state.data : null;
   /** What Accounts has open: All accounts, an account, or nothing (also on other pages). */
   const opened = location.route === "accounts" ? location.account : null;
+  const manageOpen = location.route === "manage" ? manageSection(window.location.hash) : null;
+  const feedbackOpen = manageOpen === "feedback";
 
   // The Add transaction button: round and floating on a phone. Not on
   // Manage. On a desktop it heads the panel on the right (each page's own).
@@ -164,6 +167,14 @@ function SignedInApp({
       {desktop && nav}
       <main className="page-content" aria-live="polite">
         {content}
+        {/* Every page ends with it once there is a budget (the form is a Manage page). */}
+        {data && (
+          <footer className="page-footer">
+            <a href={manageHref("feedback")} aria-current={feedbackOpen ? "page" : undefined}>
+              Give Feedback
+            </a>
+          </footer>
+        )}
       </main>
       {add}
       {/* The bottom bar only once there is a budget to move around in. */}
@@ -206,7 +217,7 @@ function SignedInApp({
         email={session.email}
         onSignOut={store.signOut}
         desktop={desktop}
-        section={location.route === "manage" ? manageSection(window.location.hash) : null}
+        section={manageOpen}
       />
     ),
   };
