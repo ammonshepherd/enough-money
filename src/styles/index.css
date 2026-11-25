@@ -1,19 +1,17 @@
-/* The app's styles, one file per area, in the order they were written.
-   Order matters: when two rules are equally specific, the later one wins,
-   so a new file goes at the end unless it is meant to be overridden.
+/* The app's styles, one file per area. Order matters: when two rules are
+   equally specific, the later one wins, so shared pieces (tokens, base,
+   layout, controls, sheets) come before the pages that build on them.
    Vite joins these into one stylesheet when it builds the app. */
 
-@import "./01-base.css";
-@import "./02-forms.css";
-@import "./03-dialogs-and-rows.css";
-@import "./04-budget.css";
-@import "./05-envelope-sheet.css";
-@import "./06-groups.css";
-@import "./07-activity.css";
-@import "./08-desktop.css";
+@import "./01-tokens.css";
+@import "./02-base.css";
+@import "./03-layout.css";
+@import "./04-controls.css";
+@import "./05-sheets.css";
+@import "./06-budget.css";
+@import "./07-envelope-sheet.css";
+@import "./08-manage.css";
 @import "./09-accounts.css";
 @import "./10-picker-and-pad.css";
-@import "./11-update-banner.css";
-@import "./12-search.css";
-@import "./13-tags.css";
-@import "./14-manage.css";
+@import "./11-search.css";
+@import "./12-tags.css";
