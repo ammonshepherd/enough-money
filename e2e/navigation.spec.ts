@@ -101,6 +101,7 @@ test("Manage lists its options; each opens its own page, and Back returns to the
     "Danger zone",
   ]);
   await expect(list.getByRole("link").locator("strong")).toHaveText([
+    "Appearance",
     "Envelope groups",
     "Import envelope plan",
     "Income rules",
@@ -137,6 +138,7 @@ test("Manage → Settings shows who is signed in and renames the household", asy
   await goTo(page, "Manage");
   const settings = page.getByRole("region", { name: "Settings" });
   await expect(settings.getByRole("listitem")).toHaveText([
+    /^AppearanceLight, dark or match this device/,
     /Test HomeHousehold name/,
     "test@example.comSigned in as",
   ]);

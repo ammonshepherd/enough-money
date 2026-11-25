@@ -57,7 +57,7 @@
   place-items: center;
   border: 1px solid var(--border);
   border-radius: 50%;
-  color: var(--brand);
+  color: var(--brand-text);
   background: color-mix(in srgb, var(--surface) 84%, transparent);
   cursor: pointer;
 }
@@ -150,7 +150,7 @@
   place-items: center;
   inline-size: 24px;
   block-size: 24px;
-  color: var(--success);
+  color: var(--success-mark);
 }
 
 .page-menu-check svg {
@@ -203,7 +203,7 @@
   padding: 0.55rem 0.45rem max(0.55rem, env(safe-area-inset-bottom));
   border-block-start: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 -0.5rem 2rem rgb(var(--brand-rgb) / 0.1);
+  box-shadow: 0 -0.5rem 2rem rgb(var(--shadow-rgb) / 0.1);
   backdrop-filter: blur(1rem);
 }
 
@@ -221,7 +221,7 @@
 
 .bottom-nav a:hover,
 .bottom-nav a.active {
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-light);
 }
 
@@ -239,7 +239,7 @@
   .app-shell {
     min-block-size: calc(100dvh - 2rem);
     border-radius: 2rem;
-    box-shadow: 0 1.5rem 4rem rgb(var(--brand-rgb) / 0.16);
+    box-shadow: 0 1.5rem 4rem rgb(var(--shadow-rgb) / 0.16);
   }
 
   .bottom-nav {
@@ -264,7 +264,7 @@
   border-radius: 50%;
   color: var(--on-brand);
   background: var(--brand);
-  box-shadow: 0 0.6rem 1.5rem rgb(var(--brand-rgb) / 0.35);
+  box-shadow: 0 0.6rem 1.5rem rgb(var(--shadow-rgb) / 0.35);
   cursor: pointer;
 }
 
@@ -436,19 +436,19 @@
 .sidebar-nav a:hover,
 .sidebar-install:hover,
 .sidebar-toggle:hover {
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-tint);
 }
 
 .sidebar-nav a.active {
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--brand-light);
   font-weight: 800;
 }
 
 .sidebar-install {
   border: 1px solid var(--border);
-  color: var(--brand);
+  color: var(--brand-text);
 }
 
 .sidebar svg {
@@ -628,11 +628,11 @@
 }
 
 .sidebar-account-balance.negative {
-  color: var(--spend);
+  color: var(--spend-text);
 }
 
 .sidebar-nav .sidebar-accounts a.active {
-  border-inline-start-color: var(--brand);
+  border-inline-start-color: var(--brand-text);
   font-weight: 800;
 }
 
@@ -651,7 +651,7 @@
   border: 1px solid var(--border);
   border-radius: 0.875rem;
   background: var(--surface);
-  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.08);
+  box-shadow: 0 6px 20px rgb(var(--shadow-rgb) / 0.08);
 }
 
 .side-panel.collapsed {
@@ -670,7 +670,7 @@
   place-items: center;
   border: 0;
   border-radius: 0.625rem;
-  color: var(--brand);
+  color: var(--brand-text);
   background: transparent;
   cursor: pointer;
 }
@@ -798,7 +798,7 @@
   inline-size: min(calc(100% - 2rem), 28rem);
   transform: translateX(-50%);
   padding: 0.75rem 0.85rem 0.75rem 1rem;
-  border: 2px solid var(--brand);
+  border: 2px solid var(--brand-text);
   border-radius: 1rem;
   color: var(--text);
   background: var(--surface);
@@ -828,7 +828,7 @@
 
 .update-later {
   border: 1px solid var(--border);
-  color: var(--brand);
+  color: var(--brand-text);
   background: var(--surface);
 }
 

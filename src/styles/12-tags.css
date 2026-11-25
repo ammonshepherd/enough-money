@@ -196,7 +196,7 @@
 .tag-swatch:has(input:checked) {
   box-shadow:
     0 0 0 2px var(--surface),
-    0 0 0 4px var(--brand);
+    0 0 0 4px var(--brand-text);
 }
 
 .tag-swatch:has(input:checked)::after {
