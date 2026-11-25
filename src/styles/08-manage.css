@@ -1,0 +1,416 @@
+/* Manage: its option list and pages, envelope groups (drag to reorder, rename, move). */
+
+.settings-row-icon {
+  display: inline-grid;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: var(--accent);
+  background: var(--brand-light);
+}
+
+.settings-row-icon svg {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.settings-row-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-row-copy strong {
+  font-size: 0.9rem;
+}
+
+.settings-row-chevron {
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* A row with a drag handle (six dots) on the left. */
+
+.sortable-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--surface);
+}
+
+.sortable-row > :last-child {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.sortable-row.dragging {
+  z-index: 1;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.drag-handle {
+  display: grid;
+  flex: none;
+  inline-size: 2.25rem;
+  block-size: 2.75rem;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  background: none;
+  cursor: grab;
+
+  /* The finger drags the row instead of scrolling the page. */
+  touch-action: none;
+}
+
+.drag-handle:hover {
+  color: var(--brand);
+  background: var(--surface-muted);
+}
+
+.sortable-row.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: currentColor;
+}
+
+/* Manage → Envelope groups: the card payments group is pinned first, so a card icon stands
+   where its handle would be (v0.42.2). */
+
+.drag-handle.pinned {
+  color: var(--card);
+  cursor: default;
+}
+
+.drag-handle.pinned:hover {
+  background: none;
+}
+
+.drag-handle.pinned svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.pinned-group + .sortable-list > li:first-child {
+  border-block-start: 1px solid var(--border);
+}
+
+.group-envelopes {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.group-envelopes h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.editable-title {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.editable-title.editing {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.title-edit {
+  display: grid;
+  flex: none;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--brand);
+  background: none;
+  cursor: pointer;
+}
+
+.title-edit:hover {
+  background: var(--brand-tint);
+}
+
+.title-edit svg {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.title-input {
+  inline-size: 100%;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--brand-line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 1.375rem;
+  font-weight: 800;
+}
+
+/* A select that looks like a small purple pill with a ▾ (the envelope sheet's
+   group, and "Move to…" in the group sheet). */
+
+.group-picker,
+.move-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.group-picker select,
+.move-picker select {
+  padding: 0.25rem 1.6rem 0.25rem 0.65rem;
+  border: 1px solid var(--brand-line);
+  border-radius: 999px;
+  background: var(--brand-tint);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+
+.group-picker > span,
+.move-picker > span {
+  position: absolute;
+  inset-inline-end: 0.6rem;
+  color: var(--brand);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.group-picker select.sheet-eyebrow {
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.move-picker select {
+  color: var(--brand);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.group-envelope {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.3rem;
+}
+
+.group-envelope > :first-child {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* An envelope's name in the group sheet: tap to rename. */
+
+.row-name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row-name svg {
+  flex: none;
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+  fill: none;
+  stroke: var(--muted);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.title-input.row {
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.move-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.move-status:empty {
+  display: none;
+}
+
+.desktop .manage-page {
+  max-inline-size: 100rem;
+  margin-inline: auto;
+}
+
+.desktop .manage-layout {
+  display: grid;
+  grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.manage-list {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Manage → Settings: the household's name, with its pencil; renaming puts
+   the form beside the icon. */
+
+.manage-household .form {
+  grid-column: 2 / -1;
+}
+
+.manage-household:has(.form) {
+  align-items: start;
+}
+
+.manage-group h2 {
+  margin: 0 0 0.4rem 0.35rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.manage-group ul {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--surface);
+}
+
+.manage-group li + li {
+  border-block-start: 1px solid var(--border);
+}
+
+.manage-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  inline-size: 100%;
+  min-block-size: 3.5rem;
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+a.manage-row,
+button.manage-row {
+  cursor: pointer;
+}
+
+a.manage-row:hover,
+button.manage-row:hover {
+  background: var(--surface-muted);
+}
+
+/* The page open beside the list (desktop). */
+
+.manage-row[aria-current="page"] {
+  background: var(--brand-light);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.manage-group.danger h2 {
+  color: var(--spend);
+}
+
+.manage-group.danger ul {
+  border-color: color-mix(in srgb, var(--spend) 35%, var(--border));
+}
+
+.manage-group.danger .settings-row-icon {
+  color: var(--spend);
+  background: color-mix(in srgb, var(--spend) 10%, transparent);
+}
+
+/* A phone's way back from an option's page to the list. */
+
+.manage-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-block-end: 0.75rem;
+  padding: 0.5rem 0.9rem 0.5rem 0.6rem;
+  border-radius: 999px;
+  color: var(--on-brand);
+  background: var(--brand);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.manage-back svg {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+/* v0.47.0: Give Feedback. The status line stays in the page while empty, so
+   screen readers announce "sent" when it appears. */
+.feedback-status {
+  margin: 0;
+  color: var(--success-text);
+  font-weight: 700;
+}
+
+/* v0.47.0: the plain "Give Feedback" link that ends every page. */
+.page-footer {
+  margin-block-start: 2.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.page-footer a {
+  color: var(--text-muted);
+}
+
+.page-footer a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 700;
+}

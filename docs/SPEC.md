@@ -30,7 +30,8 @@ src/views/        React components (pages in src/views/pages/; the Budget
                   page's groups, rows and panel parts in src/views/budget/;
                   transaction lists, search, form and cover prompt in
                   src/views/transactions/)
-src/styles/       all styling: index.css imports one file per area, in order
+src/styles/       all styling: index.css imports one file per area (tokens, base,
+                  layout, controls, sheets, then each page), in order
 public/icons/     app icons (see CLAUDE.md "App icons")
 supabase/migrations/  every schema change, applied in order
 supabase/functions/   Edge Functions (send-feedback, v0.47.0)
@@ -1050,11 +1051,19 @@ Envelopes not in the file are left alone.
 ## 8. Look and feel
 
 - Font: Inter, falling back to the system UI font.
-- Colours (`:root` in `src/styles/01-base.css`): page `#ece7f2`, app background `#faf8fc`,
-  surface `#ffffff`, muted surface `#f2ecf7`, border `#e3dbe9`, text `#281a35`,
-  muted text `#74677e`, brand `#4b2a68`, light brand `#eee5f7`, accent `#8051a2`,
-  focus `#d29a3b`; negative money and errors red `#b3261e`; Uncategorized label
-  `#ffe2a8` on `#6b4500`.
+- Colours (v0.46.4): every colour is a variable named for its role in
+  `:root` in `src/styles/01-tokens.css`, the only file with typed-in colours
+  (Stylelint fails any other; ESLint fails a typed-in `fill`, `stroke` or
+  `color` in a view, so SVG parts are coloured by class). Groups: page and
+  surfaces, text, the brand colour and what is drawn on it (`--on-brand`;
+  see-through tints use `rgb(var(--brand-rgb) / 0.1)`), Saved and its
+  sparkles, the envelope icon, meaning colours that stay whatever the theme
+  (income, spend, danger, success, Assign green, over, review, reconciled),
+  card payments, and the nine tag colours. Main values: page `#ece7f2`, app
+  background `#faf8fc`, surface `#ffffff`, border `#e3dbe9`, text
+  `#281a35`, brand `#4b2a68`, accent `#8051a2`, focus `#d29a3b`; negative
+  money and errors red `#b3261e`; Uncategorized label `#ffe2a8` on
+  `#6b4500`.
 - Cards: white, 1px border, rounded (1–1.35rem), soft purple shadow; page side
   padding 0.5rem on a phone.
 - Money shows as `$1,234.56` / `-$12.50`; negative amounts in red.

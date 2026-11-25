@@ -1,6 +1,488 @@
-/* ---- v0.29.0: Accounts and Activity merged into one Accounts page ---- */
+/* Accounts: the account list, an open account's info pane, transaction rows, ticked rows. */
+
+.activity-what {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.activity-what small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.activity-page {
+  /* Rows run edge to edge, right under the app header, like the Budget page. */
+  margin: -1.5rem -0.5rem 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-page .budget-month {
+  padding: 6px 4px;
+  font-size: 0.875rem;
+}
+
+.activity-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  border-block-end: 1px solid var(--brand-line);
+  background: var(--brand-tint);
+}
+
+.activity-totals div {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.activity-totals dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.activity-totals dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.activity-totals .activity-in {
+  color: var(--income);
+}
+
+.activity-totals .activity-out {
+  color: var(--spend);
+}
+
+/* Balance today, with reconciled (or cash and card debt) under it. */
+
+.activity-totals .activity-balance-detail {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: normal;
+}
+
+/* Ticked rows: how many, their total, and what to do with them. Pinned to
+   the top while the list scrolls. */
+
+.selection-bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: max(6px, env(safe-area-inset-top)) 12px 6px 16px;
+  color: var(--on-brand);
+  background: var(--brand);
+}
+
+.selection-summary {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto 0 0;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.selection-summary strong {
+  font-size: 15px;
+}
+
+.selection-action {
+  min-block-size: 2.25rem;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--brand);
+  background: var(--on-brand);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.selection-action.quiet {
+  color: var(--on-brand);
+  background: rgb(var(--on-brand-rgb) / 0.16);
+}
+
+.selection-action:disabled {
+  opacity: 0.6;
+}
+
+.selection-clear {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  color: var(--on-brand);
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.selection-bar .error-message {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--on-brand);
+}
+
+.activity-page > .activity-notice,
+.activity-page > .activity-review {
+  margin: 0.6rem 1rem;
+}
+
+.activity-empty {
+  margin: 0;
+  padding: 2rem 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.activity-day-head :is(h2, h3) {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* A day heading is a button that folds its day to the heading (date and net). */
+
+.activity-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 6px 16px;
+  border-block-end: 1px solid var(--row-line);
+  color: var(--muted);
+  background: var(--app-background);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  position: relative;
+}
+
+.day-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+/* The whole bar is the tap target. */
+
+.day-toggle::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.day-toggle svg {
+  inline-size: 14px;
+  block-size: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+  transition: transform 0.15s;
+}
+
+.activity-day-head.folded .day-toggle svg {
+  transform: rotate(-90deg);
+}
+
+.activity-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-item {
+  border-block-end: 1px solid var(--row-line);
+  background: var(--surface);
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: 22px 16px minmax(0, 1fr) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px 4px 10px;
+}
+
+.activity-item.checked {
+  background: var(--row-checked);
+}
+
+.activity-row {
+  min-block-size: 48px;
+}
+
+/* The checkbox gets a full-height tap target; the box itself stays small. */
+
+.activity-check {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  margin-inline: -6px;
+  cursor: pointer;
+}
+
+.activity-check input {
+  inline-size: 18px;
+  block-size: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+/* Grey bank until reconciled; then green and filled in (more than color). */
+
+.bank-mark {
+  display: grid;
+  color: var(--unreconciled);
+}
+
+.bank-mark svg {
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.bank-mark.reconciled {
+  color: var(--reconciled);
+}
+
+.bank-mark.reconciled svg {
+  fill: currentColor;
+}
+
+.activity-who {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.activity-payee,
+.activity-account,
+.activity-category,
+.portion-memo,
+.portion-envelope {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-payee {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Bold only while it waits for review, so it stands out. */
+
+.activity-payee.to-review {
+  font-weight: 700;
+}
+
+.activity-account,
+.activity-category {
+  color: var(--muted);
+}
+
+.activity-account {
+  font-size: 11px;
+}
+
+.activity-category {
+  font-size: 12px;
+}
+
+.activity-amount {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.activity-amount.in {
+  color: var(--income);
+}
+
+.activity-amount.out {
+  color: var(--spend);
+}
+
+.activity-portions {
+  padding: 2px 0;
+  border-block-start: 1px dashed var(--brand-line);
+  background: var(--app-background);
+}
+
+.activity-portions[hidden] {
+  display: none;
+}
+
+.activity-portion {
+  min-block-size: 36px;
+}
+
+.portion-memo {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.portion-envelope {
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.portion-amount {
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.portion-amount.out {
+  color: var(--spend);
+}
+
+.portion-amount.in {
+  color: var(--income);
+}
+
+/* The month, the account picker and the totals share one band. */
+
+.activity-band {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-block-size: var(--desktop-band);
+  padding: 0 1rem;
+  border-radius: 0 0 0.875rem 0.875rem;
+  background: var(--brand);
+}
+
+.activity-band .budget-month {
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+}
+
+.activity-band .budget-month span {
+  min-inline-size: 11.5em;
+  text-align: center;
+}
+
+.activity-band .budget-month a:hover {
+  background: rgb(var(--on-brand-rgb) / 0.12);
+}
+
+.desktop .activity-page > .activity-notice {
+  margin: var(--desktop-gap) 0 0;
+}
+
+.activity-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: start;
+  padding-block: var(--desktop-gap) 2.5rem;
+}
+
+.activity-table {
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.06);
+}
+
+/* Rows: checkbox | bank | payee over account | envelope | memo | amount. */
+
+.desktop .activity-grid {
+  grid-template-columns: 22px 16px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) 7rem;
+  column-gap: 0.75rem;
+}
+
+/* Below the pinned band, at the top of the list. */
+
+.desktop .selection-bar {
+  inset-block-start: var(--desktop-band);
+  padding-block: 6px;
+}
+
+.desktop .activity-item:hover {
+  background: var(--row-hover);
+}
+
+.desktop .activity-item.selected {
+  background: var(--row-selected);
+  box-shadow: inset 4px 0 0 var(--brand);
+}
+
+.desktop .activity-item.checked {
+  background: var(--row-checked);
+}
+
+.desktop .activity-who:hover .activity-payee {
+  text-decoration: underline;
+  text-decoration-color: var(--brand-outline);
+  text-underline-offset: 3px;
+}
+
+.activity-memo {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* The list: All accounts first, then a bar per type (like Budget's groups). */
+
 .account-list {
   background: var(--surface);
 }
@@ -11,7 +493,7 @@
 }
 
 .account-group-heading h2 {
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -31,13 +513,13 @@
   gap: 1rem;
   min-block-size: 3rem;
   padding: 8px 16px;
-  border-block-end: 1px solid var(--bb-row-line);
-  color: var(--bb-ink);
+  border-block-end: 1px solid var(--row-line);
+  color: var(--ink);
   text-decoration: none;
 }
 
 .account-row:hover {
-  background: var(--bb-day-bg);
+  background: var(--app-background);
 }
 
 .account-row-name {
@@ -62,7 +544,7 @@
 }
 
 .account-row-balance.negative {
-  color: var(--bb-spend);
+  color: var(--spend);
 }
 
 .all-accounts-row {
@@ -70,11 +552,11 @@
 }
 
 .account-list .activity-in {
-  color: var(--bb-income);
+  color: var(--income);
 }
 
 .account-list .activity-out {
-  color: var(--bb-spend);
+  color: var(--spend);
 }
 
 .account-list > .unused-toggle {
@@ -85,6 +567,7 @@
 
 /* An account (or All accounts) open: the info pane, and the bar of ticked
    rows under it, stay pinned to the top while the transactions scroll. */
+
 .account-sticky {
   position: sticky;
   inset-block-start: 0;
@@ -96,10 +579,11 @@
 }
 
 /* Edge to edge: a tinted band, no frame around it. */
+
 .account-pane {
   padding: 12px 16px;
-  border-block-end: 1px solid var(--bb-purple-line);
-  background: var(--bb-purple-tint);
+  border-block-end: 1px solid var(--brand-line);
+  background: var(--brand-tint);
 }
 
 .account-pane-head {
@@ -112,7 +596,7 @@
 
 .account-pane-head h2 {
   margin: 0;
-  color: var(--bb-purple);
+  color: var(--brand);
   font-size: 17px;
   font-weight: 800;
   overflow-wrap: anywhere;
@@ -122,7 +606,7 @@
   margin-inline-start: 0.5rem;
   padding: 1px 8px;
   border-radius: 999px;
-  color: var(--bb-muted);
+  color: var(--muted);
   background: var(--surface);
   font-size: 11px;
   vertical-align: middle;
@@ -135,24 +619,25 @@
   block-size: 2.75rem;
   border: 0;
   border-radius: 50%;
-  color: var(--bb-purple);
+  color: var(--brand);
   background: transparent;
   cursor: pointer;
 }
 
 .pane-icon-button:hover {
-  background: rgba(75, 42, 104, 0.08);
+  background: rgb(var(--brand-rgb) / 0.08);
 }
 
 /* The way back: a solid purple circle with a white arrow, easy to spot. */
+
 .pane-back {
-  color: #fff;
-  background: var(--bb-purple);
-  box-shadow: 0 2px 6px rgba(75, 42, 104, 0.3);
+  color: var(--on-brand);
+  background: var(--brand);
+  box-shadow: 0 2px 6px rgb(var(--brand-rgb) / 0.3);
 }
 
 .pane-back:hover {
-  background: #5d3780;
+  background: var(--brand-hover-strong);
 }
 
 .pane-back svg {
@@ -179,6 +664,7 @@
 }
 
 /* Collapsed from the page menu: the balance alone, on one line with its label. */
+
 .account-figures.folded {
   display: block;
 }
@@ -197,7 +683,7 @@
 }
 
 .account-figure dt {
-  color: var(--bb-muted);
+  color: var(--muted);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -206,21 +692,22 @@
 
 .account-figure dd {
   margin: 0;
-  color: var(--bb-ink);
+  color: var(--ink);
   font-size: 15px;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .account-figure.in dd {
-  color: var(--bb-income);
+  color: var(--income);
 }
 
 .account-figure.out dd {
-  color: var(--bb-spend);
+  color: var(--spend);
 }
 
 /* All accounts: the In / Out / Balance strip sits in the pane. */
+
 .account-pane .activity-totals {
   padding: 0;
   border: 0;
@@ -237,9 +724,9 @@
 .pane-action {
   min-block-size: 2.25rem;
   padding: 0 14px;
-  border: 1px solid var(--bb-purple-line);
+  border: 1px solid var(--brand-line);
   border-radius: 999px;
-  color: var(--bb-purple);
+  color: var(--brand);
   background: var(--surface);
   font: inherit;
   font-size: 13px;
@@ -248,12 +735,13 @@
 }
 
 /* An open account's list crosses months: a divider above each month. */
+
 .activity-month-head {
   margin: 0;
   padding: 10px 16px 6px;
-  border-block-end: 1px solid var(--bb-purple-line);
-  color: var(--bb-purple);
-  background: var(--bb-purple-tint);
+  border-block-end: 1px solid var(--brand-line);
+  color: var(--brand);
+  background: var(--brand-tint);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -265,19 +753,20 @@
   inline-size: 100%;
   min-block-size: 2.75rem;
   border: 0;
-  border-block-start: 1px solid var(--bb-row-line);
-  color: var(--bb-purple);
-  background: var(--bb-day-bg);
+  border-block-start: 1px solid var(--row-line);
+  color: var(--brand);
+  background: var(--app-background);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
 
 .show-more:hover {
-  background: var(--bb-purple-tint);
+  background: var(--brand-tint);
 }
 
 /* Desktop: the pane sits under the band, which is pinned too. */
+
 .desktop .account-sticky {
   inset-block-start: var(--desktop-band);
 }

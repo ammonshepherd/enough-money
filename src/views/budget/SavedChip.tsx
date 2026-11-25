@@ -2,23 +2,23 @@ import { Money } from "../components";
 
 const STAR = "M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z";
 
-const Star = ({ size, fill, className }: { size: number; fill: string; className?: string }) => (
+/** Each sparkle's colour is a class (sparkle-gold, -lilac, -white) set in the CSS. */
+type Tone = "gold" | "lilac" | "white";
+
+const Star = ({ size, tone, className }: { size: number; tone: Tone; className?: string }) => (
   <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-    <path d={STAR} fill={fill} />
+    <path className={`sparkle-${tone}`} d={STAR} />
   </svg>
 );
 
-const GOLD = "#F3D36B";
-const LILAC = "#B48BE0";
-
 /** The six sparkles around a Saved chip, each placed by its class (sp1–sp6). */
-const SPARKLES = [
-  { size: 12, fill: GOLD },
-  { size: 7, fill: LILAC },
-  { size: 8, fill: LILAC },
-  { size: 7, fill: GOLD },
-  { size: 6, fill: LILAC },
-  { size: 5, fill: "#FFFFFF" },
+const SPARKLES: { size: number; tone: Tone }[] = [
+  { size: 12, tone: "gold" },
+  { size: 7, tone: "lilac" },
+  { size: 8, tone: "lilac" },
+  { size: 7, tone: "gold" },
+  { size: 6, tone: "lilac" },
+  { size: 5, tone: "white" },
 ];
 
 /**
@@ -36,7 +36,7 @@ export function SavedChip({ cents }: { cents: number }) {
   }
   return (
     <span className="saved-chip sparkle">
-      <Star size={15} fill={GOLD} className="star" />
+      <Star size={15} tone="gold" className="star" />
       Saved <Money cents={cents} />
       {SPARKLES.map((star, i) => (
         <Star key={i} {...star} className={`star sp sp${i + 1}`} />

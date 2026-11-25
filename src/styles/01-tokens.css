@@ -1,0 +1,137 @@
+/* Colour and size variables (:root). This is the only file with typed-in
+   colours (Stylelint enforces it); every other file uses these variables,
+   named for their role (what they are for), not for the colour they are.
+   Dark mode and theme colours will change only the values here. */
+
+:root {
+  color-scheme: light;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--text);
+  background: var(--page-background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  /* Page and surfaces. */
+  --page-background: #ece7f2;
+  --app-background: #faf8fc;
+  --surface: #ffffff;
+  --surface-muted: #f2ecf7;
+  --surface-sunken: #f6f3fa;
+  --border: #e3dbe9;
+  --border-strong: #d6cde2;
+  --row-line: #f0ebf5;
+  --row-hover: #fbf9fd;
+  --row-selected: #f6f1fb;
+  --row-checked: #f1e9f9;
+  --grey-cell: #efeef1;
+  --grey-label: #5e5866;
+
+  /* Text. */
+  --text: #281a35;
+  --text-soft: #4b4256;
+  --text-muted: #74677e;
+  --ink: #1e1a24;
+  --ink-2: #3a3342;
+  --muted: #6a6175;
+  --muted-zero: #9a90a6;
+  --ink-rgb: 40 26 53; /* --text as channels, for see-through shadows */
+
+  /* The brand colour (theme colour) and what is drawn on it. */
+  --brand: #4b2a68;
+  --brand-rgb: 75 42 104; /* --brand as channels, for see-through tints */
+  --brand-hover: #633b82;
+  --brand-hover-strong: #5d3780;
+  --brand-light: #eee5f7;
+  --brand-light-hover: #e6daf3;
+  --brand-tint: #f3eef8;
+  --brand-tint-hover: #f3edf9;
+  --brand-line: #e4dcee;
+  --brand-outline: #cdb8e6;
+  --accent: #8051a2;
+  --on-brand: #ffffff;
+  --on-brand-rgb: 255 255 255;
+  --on-brand-muted: #e3d6f2;
+  --error-on-brand: #ffd2cc;
+  --shadow: 0 1rem 3rem rgb(var(--brand-rgb) / 0.12);
+  --shadow-deep: rgba(40, 20, 70, 0.22);
+
+  /* Saved: the pill, its glow and its sparkles. */
+  --saved-quiet: #6e5a85;
+  --saved-glow: #e6d8f5;
+  --sparkle-gold: #f3d36b;
+  --sparkle-lilac: #b48be0;
+  --sparkle-white: #ffffff;
+
+  /* The envelope icon: a purple envelope with two green notes. */
+  --envelope-body: #4b2a68;
+  --envelope-flap: #b48be0;
+  --envelope-note-back: #3e9a62;
+  --envelope-note-front: #5db97e;
+
+  /* Meaning: these stay the same whatever the theme colour. */
+  --focus: #d29a3b;
+  --income: #1f6b42;
+  --spend: #b3261e;
+  --danger: #b3261e;
+  --danger-shadow: rgba(120, 20, 20, 0.18);
+  --success: #2e8b57;
+  --success-text: #1f6b42; /* success as text on white (readable; v0.47.0) */
+  --assign: #1f7a45;
+  --assign-shadow: rgba(20, 90, 50, 0.2);
+  --on-solid: #ffffff; /* text on green or red */
+  --over: #a3470a;
+  --over-bg: #fcebdd;
+  --review-bg: #ffe2a8;
+  --review-text: #6b4500;
+  --warning-bg: #fff8ec;
+  --warning-text: #8a5a00;
+  --reconciled: #2e8b57;
+  --unreconciled: #b9b3c0;
+  --overlay-dark: rgba(0, 0, 0, 0.08);
+
+  /* Credit card payments. */
+  --card: #1f4766;
+  --card-tint: #e3edf6;
+  --card-line: #c9dbea;
+
+  /* Tag colours: background and text. */
+  --tag-grey-bg: #ebe7ef;
+  --tag-grey-fg: #4a4152;
+  --tag-red-bg: #fde0e0;
+  --tag-red-fg: #9b1c1c;
+  --tag-orange-bg: #fde6d2;
+  --tag-orange-fg: #8a3d0a;
+  --tag-yellow-bg: #fbf0c4;
+  --tag-yellow-fg: #6b5104;
+  --tag-green-bg: #daf2df;
+  --tag-green-fg: #1d6430;
+  --tag-teal-bg: #d4f0ee;
+  --tag-teal-fg: #135e5a;
+  --tag-blue-bg: #dde8fb;
+  --tag-blue-fg: #1e4c97;
+  --tag-purple-bg: #ece1f7;
+  --tag-purple-fg: #5a2d82;
+  --tag-pink-bg: #fbe0ee;
+  --tag-pink-fg: #8f1f5b;
+
+  /* Sizes. */
+  --desktop-band: 4.25rem;
+  --desktop-gap: 0.875rem;
+
+  /* Budget table: envelope | Planned | Assigned | Spent | Remaining | + */
+  --env-cols: minmax(9rem, 1fr) repeat(3, 5.75rem) 7rem 2.5rem;
+  --panel-width: clamp(18rem, 27vw, 27rem);
+}
+
+@media (max-width: 74.99rem) {
+  :root {
+    --env-cols: minmax(8rem, 1fr) repeat(3, 5.25rem) 6.25rem 2.25rem;
+  }
+}

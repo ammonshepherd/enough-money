@@ -1,0 +1,128 @@
+/* Elements (html, body, buttons, links) and small shared utilities. */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-block-size: 100%;
+  background: var(--page-background);
+}
+
+body {
+  min-inline-size: 320px;
+  min-block-size: 100dvh;
+  margin: 0;
+  background: var(--page-background);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.section-count,
+.empty-state,
+.settings-row-copy small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: 0.65rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.section-count {
+  display: inline-grid;
+  min-inline-size: 1.5rem;
+  block-size: 1.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.empty-state {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.loading-message {
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@media (min-width: 30.01rem) {
+  body {
+    padding-block: 1rem;
+  }
+}
+
+.stack {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.error-message {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.money.negative,
+.short {
+  color: var(--spend);
+}
+
+.error-text {
+  color: var(--danger);
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+body:has(.app-shell.desktop) {
+  padding: 0;
+}

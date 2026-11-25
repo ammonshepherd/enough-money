@@ -55,13 +55,29 @@ export const GripIcon = () => (
  */
 export const EnvelopeIcon = () => (
   <svg className="envelope-icon" width="22" height="18" viewBox="0 0 22 18" aria-hidden="true">
-    <rect x="6" y="0.5" width="11" height="9" rx="1.2" fill="#3E9A62" transform="rotate(-8 11 5)" />
-    <rect x="9" y="1.5" width="10" height="8" rx="1.2" fill="#5DB97E" transform="rotate(6 14 5)" />
-    <rect x="1" y="6" width="20" height="11.5" rx="2" fill="#4B2A68" />
+    <rect
+      className="envelope-note-back"
+      x="6"
+      y="0.5"
+      width="11"
+      height="9"
+      rx="1.2"
+      transform="rotate(-8 11 5)"
+    />
+    <rect
+      className="envelope-note-front"
+      x="9"
+      y="1.5"
+      width="10"
+      height="8"
+      rx="1.2"
+      transform="rotate(6 14 5)"
+    />
+    <rect className="envelope-body" x="1" y="6" width="20" height="11.5" rx="2" />
     <path
+      className="envelope-flap"
       d="M1.8 6.8 L11 13 L20.2 6.8"
       fill="none"
-      stroke="#B48BE0"
       strokeWidth="1.4"
       strokeLinejoin="round"
     />

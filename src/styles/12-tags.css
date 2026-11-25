@@ -1,41 +1,50 @@
-/* ---- v0.39.0: transaction tags ---- */
+/* Tags: pills, the Tags field and Manage → Tags. */
 
 /* Each colour: a light fill and dark text that reads on it. */
+
 .tag-grey {
-  --tag-bg: #ebe7ef;
-  --tag-fg: #4a4152;
+  --tag-bg: var(--tag-grey-bg);
+  --tag-fg: var(--tag-grey-fg);
 }
+
 .tag-red {
-  --tag-bg: #fde0e0;
-  --tag-fg: #9b1c1c;
+  --tag-bg: var(--tag-red-bg);
+  --tag-fg: var(--tag-red-fg);
 }
+
 .tag-orange {
-  --tag-bg: #fde6d2;
-  --tag-fg: #8a3d0a;
+  --tag-bg: var(--tag-orange-bg);
+  --tag-fg: var(--tag-orange-fg);
 }
+
 .tag-yellow {
-  --tag-bg: #fbf0c4;
-  --tag-fg: #6b5104;
+  --tag-bg: var(--tag-yellow-bg);
+  --tag-fg: var(--tag-yellow-fg);
 }
+
 .tag-green {
-  --tag-bg: #daf2df;
-  --tag-fg: #1d6430;
+  --tag-bg: var(--tag-green-bg);
+  --tag-fg: var(--tag-green-fg);
 }
+
 .tag-teal {
-  --tag-bg: #d4f0ee;
-  --tag-fg: #135e5a;
+  --tag-bg: var(--tag-teal-bg);
+  --tag-fg: var(--tag-teal-fg);
 }
+
 .tag-blue {
-  --tag-bg: #dde8fb;
-  --tag-fg: #1e4c97;
+  --tag-bg: var(--tag-blue-bg);
+  --tag-fg: var(--tag-blue-fg);
 }
+
 .tag-purple {
-  --tag-bg: #ece1f7;
-  --tag-fg: #5a2d82;
+  --tag-bg: var(--tag-purple-bg);
+  --tag-fg: var(--tag-purple-fg);
 }
+
 .tag-pink {
-  --tag-bg: #fbe0ee;
-  --tag-fg: #8f1f5b;
+  --tag-bg: var(--tag-pink-bg);
+  --tag-fg: var(--tag-pink-fg);
 }
 
 .tag-chip {
@@ -76,7 +85,7 @@
 }
 
 .tag-remove:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--overlay-dark);
 }
 
 .tag-chips {
@@ -91,6 +100,7 @@
 }
 
 /* The form's Tags field: chosen chips and the typing field share one box. */
+
 .tag-picker {
   position: relative;
 }
@@ -137,6 +147,7 @@
 }
 
 /* Manage → Tags. */
+
 .tag-actions {
   display: flex;
   gap: 0.75rem;
@@ -205,6 +216,7 @@
 }
 
 /* Ticked rows → Tags: one button per tag, then a new tag. */
+
 .selection-tags {
   display: grid;
   flex-basis: 100%;
@@ -227,17 +239,17 @@
   gap: 0.3rem;
   min-block-size: 2.25rem;
   padding: 0 0.6rem 0 0.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgb(var(--on-brand-rgb) / 0.35);
   border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-brand);
+  background: rgb(var(--on-brand-rgb) / 0.1);
   font: inherit;
   cursor: pointer;
 }
 
 .selection-tag.all {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.24);
+  border-color: var(--on-brand);
+  background: rgb(var(--on-brand-rgb) / 0.24);
 }
 
 .selection-tag:disabled {
