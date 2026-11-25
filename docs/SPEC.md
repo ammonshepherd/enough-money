@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.46.2.
+Version described: 0.47.0.
 
 ## 1. Purpose
 
@@ -33,6 +33,7 @@ src/views/        React components (pages in src/views/pages/; the Budget
 src/styles/       all styling: index.css imports one file per area, in order
 public/icons/     app icons (see CLAUDE.md "App icons")
 supabase/migrations/  every schema change, applied in order
+supabase/functions/   Edge Functions (send-feedback, v0.47.0)
 docs/mockups/     static design mockups (reference only, not shipped)
 e2e/              Playwright UI tests (in-memory store)
 e2e-db/           Playwright UI tests against the test database
@@ -887,8 +888,9 @@ The list, under the heading "Manage" and the Credit card debt strip:
   - **Transactions:** Income rules ("Mark matching deposits as Income"),
     Tags ("Labels for your transactions"), Payees ("Names suggested when
     you add a transaction").
-  - **Household:** Backup ("Save all your data to a file"), then About
-    Enough Money with the version (not a link).
+  - **Household:** Backup ("Save all your data to a file"), Give Feedback
+    ("Report a problem or suggest an idea"; v0.47.0), then About Enough
+    Money with the version (not a link).
   - **Danger zone** (red heading, icons and border): Restore from a backup
     ("Load a backup file into an empty household") and Sign out ("Leave
     Enough Money on this device"; a phone also has it in the page menu).
@@ -964,6 +966,27 @@ row highlighted; with none chosen, Envelope groups is open.
   has no budget data (otherwise the file can still be checked); every row
   gets a fresh id (`withFreshIds`) and the household takes the backup's name.
   Collapsed groups and layout preferences (localStorage) are not included.
+- **Give Feedback** (v0.47.0, `useFeedback`, `Feedback` in
+  `src/views/Feedback.tsx`, `#manage/feedback`): also opened by the plain
+  "Give Feedback" link that ends every page (a muted footer link at the
+  bottom of Budget, Accounts and Manage, once there is a household; bold
+  while the form is open). A short explanation (the message is emailed to
+  the app's owner, who can reply to the sign-in email; only what is
+  written is sent), a Message box (at most 5,000 characters, `MAX_FEEDBACK`
+  in `src/models/feedback.ts`), and Send (off while the message is blank;
+  "Sending…" while it goes). Once sent: "Thanks! Your feedback was sent."
+  (a status line) and the box clears; on failure the error shows and the
+  text stays. `DataStore.sendFeedback` calls the `send-feedback` Edge
+  Function (`supabase/functions/send-feedback/`), which checks the user is
+  signed in (Supabase Auth), checks the message, and sends it through
+  Bird's email API (`POST /v1/email/messages`, the Bird workspace that
+  sends the sign-in emails): plain text, the fixed subject "Enough Money
+  feedback", the sender's email and the time under the message, Reply-To
+  the sender. The Bird key and the addresses are function secrets
+  (`BIRD_API_KEY`, `FEEDBACK_TO`, `FEEDBACK_FROM`; see the function's
+  README); it answers browsers only from `https://enoughmoney.app` and
+  localhost. The memory store checks the message the same way and sends
+  nothing. No app data, no history kept, no send limit beyond sign-in.
 - **Desktop:** group sheets stay sheets.
 
 ## 6. Bank CSV import

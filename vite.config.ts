@@ -201,7 +201,12 @@ export default defineConfig(({ command, mode }) => {
           extends: true,
           test: {
             name: "unit",
-            include: ["src/**/*.test.ts", "src/**/*.test.tsx", "scripts/**/*.test.ts"],
+            include: [
+              "src/**/*.test.ts",
+              "src/**/*.test.tsx",
+              "scripts/**/*.test.ts",
+              "supabase/functions/**/*.test.ts",
+            ],
           },
         },
         {

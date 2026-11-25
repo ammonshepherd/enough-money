@@ -26,7 +26,8 @@
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   inline-size: 100%;
   min-block-size: 2.6rem;
   padding: 0.55rem 0.7rem;
@@ -39,8 +40,14 @@
   font-weight: 500;
 }
 
+.field textarea {
+  resize: vertical;
+  line-height: 1.4;
+}
+
 .field input:focus-visible,
-.field select:focus-visible {
+.field select:focus-visible,
+.field textarea:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 1px;
 }

@@ -15,6 +15,7 @@ import {
 } from "./backup";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { nameKey } from "./envelopePlan";
+import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
 import { MAX_SPLIT_LINES } from "./splits";
@@ -772,6 +773,12 @@ export function createMemoryStore(): DataStore {
           }
         }
       }
+    },
+
+    async sendFeedback(message) {
+      // Like the send-feedback function: signed in, and a message it accepts.
+      if (!session) throw new UserFacingError("Sign in to send feedback.");
+      cleanFeedback(message);
     },
   };
 }

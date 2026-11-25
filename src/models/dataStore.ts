@@ -188,6 +188,13 @@ export interface DataStore {
    * row gets a fresh id. Rejects a file that breaks any database rule.
    */
   restoreBackup(householdId: string, backup: Backup): Promise<void>;
+
+  /**
+   * Emails the message to the owner (Manage → Send feedback), through the
+   * send-feedback Edge Function. Only the text is sent; replies go to the
+   * signed-in user's email.
+   */
+  sendFeedback(message: string): Promise<void>;
 }
 
 /** An error whose message is safe and useful to show the user. */

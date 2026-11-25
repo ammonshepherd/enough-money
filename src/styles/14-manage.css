@@ -106,3 +106,27 @@ button.manage-row:hover {
   stroke-linejoin: round;
   stroke-width: 2.2;
 }
+
+/* v0.47.0: Manage → Send feedback. The status line stays in the page while
+   empty, so screen readers announce "sent" when it appears. */
+.feedback-status {
+  margin: 0;
+  color: #1f6b42;
+  font-weight: 700;
+}
+
+/* v0.47.0: the plain "Give Feedback" link that ends every page. */
+.page-footer {
+  margin-block-start: 2.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.page-footer a {
+  color: var(--text-muted);
+}
+
+.page-footer a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 700;
+}
