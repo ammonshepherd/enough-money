@@ -1,6 +1,7 @@
-/* ---- v0.33.0: search and sort an open account ---- */
+/* Searching and sorting an open account. */
 
 /* The search field and sort menu: pinned with the info pane, tinted like it. */
+
 .tx-search {
   padding: 10px 16px 0;
   border-block-end: 1px solid var(--bb-purple-line);
@@ -19,7 +20,9 @@
 }
 
 /* Looks like one field: the glyph, a chip, the text and a clear button. */
+
 /* Chips stack; past the width they wrap and the text goes on its own line. */
+
 .tx-search-box {
   display: flex;
   flex-wrap: wrap;
@@ -64,6 +67,7 @@
 }
 
 /* The browser's own clear button: ours clears the chip too. */
+
 .tx-search-field input::-webkit-search-cancel-button {
   display: none;
 }
@@ -135,6 +139,7 @@
 }
 
 /* A split's part for the envelope searched for. */
+
 .activity-portion.match {
   background: var(--bb-purple-tint);
 }

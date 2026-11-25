@@ -1,38 +1,47 @@
-/* ---- v0.39.0: transaction tags ---- */
+/* Tags: pills, the Tags field and Manage → Tags. */
 
 /* Each colour: a light fill and dark text that reads on it. */
+
 .tag-grey {
   --tag-bg: #ebe7ef;
   --tag-fg: #4a4152;
 }
+
 .tag-red {
   --tag-bg: #fde0e0;
   --tag-fg: #9b1c1c;
 }
+
 .tag-orange {
   --tag-bg: #fde6d2;
   --tag-fg: #8a3d0a;
 }
+
 .tag-yellow {
   --tag-bg: #fbf0c4;
   --tag-fg: #6b5104;
 }
+
 .tag-green {
   --tag-bg: #daf2df;
   --tag-fg: #1d6430;
 }
+
 .tag-teal {
   --tag-bg: #d4f0ee;
   --tag-fg: #135e5a;
 }
+
 .tag-blue {
   --tag-bg: #dde8fb;
   --tag-fg: #1e4c97;
 }
+
 .tag-purple {
   --tag-bg: #ece1f7;
   --tag-fg: #5a2d82;
 }
+
 .tag-pink {
   --tag-bg: #fbe0ee;
   --tag-fg: #8f1f5b;
@@ -91,6 +100,7 @@
 }
 
 /* The form's Tags field: chosen chips and the typing field share one box. */
+
 .tag-picker {
   position: relative;
 }
@@ -137,6 +147,7 @@
 }
 
 /* Manage → Tags. */
+
 .tag-actions {
   display: flex;
   gap: 0.75rem;
@@ -205,6 +216,7 @@
 }
 
 /* Ticked rows → Tags: one button per tag, then a new tag. */
+
 .selection-tags {
   display: grid;
   flex-basis: 100%;

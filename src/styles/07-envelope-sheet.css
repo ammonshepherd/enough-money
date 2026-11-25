@@ -1,77 +1,4 @@
-/* ---- v0.17.0: envelope sheet --------------------------------------------- */
-
-/* A sheet that rises from the bottom of the screen (the envelope sheet). */
-.sheet.bottom {
-  inline-size: min(100%, 30rem);
-  max-inline-size: 100%;
-  max-block-size: 92dvh;
-  margin: auto auto 0;
-  padding: 0.75rem 1.25rem calc(1.75rem + env(safe-area-inset-bottom));
-  border-radius: 1.5rem 1.5rem 0 0;
-  animation: sheet-rise 0.2s ease-out;
-}
-
-@keyframes sheet-rise {
-  from {
-    transform: translateY(2rem);
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sheet.bottom {
-    animation: none;
-  }
-}
-
-.envelope-sheet {
-  display: grid;
-  gap: 1.125rem;
-  color: var(--bb-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.sheet-handle {
-  justify-self: center;
-  inline-size: 2.5rem;
-  block-size: 0.3125rem;
-  border-radius: 0.2rem;
-  background: #d6cde2;
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.sheet-header h2 {
-  margin: 0;
-  font-size: 1.375rem;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.sheet-eyebrow {
-  color: var(--bb-purple);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.sheet-close {
-  flex: none;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border: 0;
-  border-radius: 50%;
-  color: var(--bb-purple);
-  background: var(--bb-purple-tint);
-  font-size: 1.25rem;
-  cursor: pointer;
-}
+/* The envelope sheet: money flow, plan line, fields, Saved panel, goal and its transactions. */
 
 .sheet-hero {
   display: grid;
@@ -100,6 +27,7 @@
 }
 
 /* "Money flow this month": the amounts that add up to Remaining (v0.40.0). */
+
 .money-flow {
   padding: 0.75rem 0.875rem;
   border: 1px solid var(--border);
@@ -154,6 +82,7 @@
 }
 
 /* "Spent $X of $Y planned" and how far under or over. */
+
 .plan-line {
   display: flex;
   align-items: center;
@@ -238,6 +167,7 @@ div.sheet-field .sheet-field-value {
 }
 
 /* Saved: purple with sparkles, and the way to move some into Remaining. */
+
 .saved-panel {
   position: relative;
   display: grid;
@@ -308,6 +238,7 @@ div.sheet-field .sheet-field-value {
 }
 
 /* Envelope goal (v0.44.0): a ring, the amount and date, and the pace to reach it. */
+
 .goal-panel {
   display: grid;
   gap: 0.5rem;
@@ -487,6 +418,7 @@ div.sheet-field .sheet-field-value {
 }
 
 /* Each transaction is a button that opens it in the edit dialog. */
+
 .sheet-activity-row {
   display: flex;
   align-items: baseline;
@@ -506,16 +438,6 @@ div.sheet-field .sheet-field-value {
 
 .sheet-activity-row:hover {
   background: var(--bb-purple-tint);
-}
-
-.activity-what {
-  display: grid;
-  min-inline-size: 0;
-}
-
-.activity-what small {
-  color: var(--bb-muted);
-  font-size: 0.75rem;
 }
 
 .sheet-activity-row strong {

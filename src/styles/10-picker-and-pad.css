@@ -1,11 +1,13 @@
-/* ---- v0.30.0: assign from Available, the number pad, envelope search ---- */
+/* The envelope and payee pickers, the Assign dialog and its number pad. */
 
 /* Envelope picker: type to find an envelope; matches drop down under it. */
+
 .envelope-picker {
   position: relative;
 }
 
 /* Payee: free text; saved payees that match drop down under it. */
+
 .payee-picker {
   position: relative;
 }
@@ -30,6 +32,7 @@
 }
 
 /* Split lines are too narrow to show the detail in the field: only the list shows it. */
+
 .split-envelope .picker-box[style*="--detail-chars"] input {
   padding-inline-end: 0.6rem;
 }
@@ -72,6 +75,7 @@
 }
 
 /* Split lines and narrow rows: the list may be wider than the field. */
+
 .split-envelope .picker-list {
   min-inline-size: 16rem;
 }
@@ -128,6 +132,7 @@
 }
 
 /* The Assign dialog from the Available to Assign banner. */
+
 .assign-sheet {
   overflow: visible;
 }
@@ -148,6 +153,7 @@
 }
 
 /* Assign full width, with Cancel as a text link centred under it. */
+
 .assign-form-actions {
   display: flex;
   flex-direction: column;
@@ -160,6 +166,7 @@
 }
 
 /* The number pad: along the bottom of the screen, over everything. */
+
 .number-pad {
   inline-size: min(100%, 30rem);
   max-inline-size: 100%;
@@ -174,6 +181,7 @@
 }
 
 /* Light, so the field with the equation stays readable behind it. */
+
 .number-pad::backdrop {
   background: rgba(40, 26, 53, 0.12);
 }
@@ -266,12 +274,14 @@
 }
 
 /* The equation in the Assigned cell while the pad is open. */
+
 .pad-equation {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
 /* The envelope sheet's Assigned on a phone: a button that opens the pad. */
+
 .pad-field {
   border: 0;
   font: inherit;
