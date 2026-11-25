@@ -1,0 +1,1035 @@
+/* The Budget page: Available to Assign, groups, envelope rows, Saved pill, card payments, and its desktop table and month summary. */
+
+.budget-page {
+  display: grid;
+
+  /* Rows run edge to edge: undo the page's side padding, and sit right
+     under the app header. */
+  margin: -1.5rem -0.5rem 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-page > .notice,
+.budget-page > .unused-toggle {
+  margin: 0.6rem 1rem 0;
+}
+
+/* Month picker: a purple band; it scrolls away, Available to Assign does not. */
+
+.budget-month {
+  justify-content: space-between;
+  padding: 6px 12px 0;
+  color: var(--on-brand);
+  background: var(--brand);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.budget-month a {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  color: var(--on-brand);
+  background: transparent;
+  font-size: 1.4rem;
+}
+
+/* Available to Assign: pinned to the top while the envelopes scroll. */
+
+.assign-wrap {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 5;
+  padding: max(8px, env(safe-area-inset-top)) 16px 8px;
+  background: var(--app-background);
+}
+
+/* Available to Assign: a banner like Credit card debt (same type sizes) on
+   solid green, or solid red when over assigned. The whole banner is a button
+   that opens the Assign dialog. */
+
+.assign-card {
+  border-radius: 0.875rem;
+  color: var(--on-solid);
+  background: var(--assign);
+  box-shadow: 0 4px 14px var(--assign-shadow);
+}
+
+.assign-card.over {
+  background: var(--danger);
+  box-shadow: 0 4px 14px var(--danger-shadow);
+}
+
+.assign-card button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  inline-size: 100%;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 800;
+  text-align: start;
+  cursor: pointer;
+}
+
+.assign-card button:hover {
+  background: rgb(var(--on-brand-rgb) / 0.08);
+}
+
+.assign-label {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.assign-card .money {
+  color: inherit;
+  font-size: 26px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Groups: a full-width bar. The name collapses the group (no numbers while
+   open; collapsed it shows how many envelopes and their total left), then +. */
+
+.group-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px 0 4px;
+  border-block: 1px solid var(--brand-line);
+  background: var(--brand-tint);
+}
+
+.group-heading h2 {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font-size: inherit;
+}
+
+.group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  padding: 0 4px 0 6px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.group-toggle svg {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  fill: none;
+  stroke: var(--brand);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+  transition: transform 0.15s;
+}
+
+.budget-group.collapsed .group-toggle svg:first-child {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-toggle svg {
+    transition: none;
+  }
+}
+
+.group-name {
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.group-summary {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-total {
+  color: var(--brand);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.add-envelope-button {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: 0;
+  color: var(--brand);
+  background: transparent;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.group-add,
+.group-empty {
+  padding: 0.5rem 1rem;
+  border-block-end: 1px solid var(--row-line);
+  background: var(--surface);
+}
+
+.group-empty {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+/* Credit card payments (v0.42.2): those envelopes work differently, so the
+   group sits apart in a slate-blue frame, its bar blue with a card icon. */
+
+.budget-group.card-group {
+  overflow: hidden;
+  margin: 14px 8px;
+  border: 1.5px solid var(--card-line);
+  border-radius: 10px;
+}
+
+.card-group .group-heading {
+  border-block: 0;
+  background: var(--card-tint);
+}
+
+.card-group:not(.collapsed) .group-heading {
+  border-block-end: 1px solid var(--card-line);
+}
+
+.card-group :is(.group-name, .group-total, .add-envelope-button) {
+  color: var(--card);
+}
+
+.card-group .group-toggle svg {
+  stroke: var(--card);
+}
+
+.card-group .envelope-list > li:last-child .envelope {
+  border-block-end: 0;
+}
+
+.envelope-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Envelope rows. */
+
+.envelope {
+  display: grid;
+  gap: 6px;
+  padding: 8px 16px;
+  border-block-end: 1px solid var(--row-line);
+  background: var(--surface);
+}
+
+/* Line 1: the name (opens the envelope) and what is left (moves money out). */
+
+.envelope-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.envelope-top {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-inline-size: 0;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  text-align: start;
+  cursor: pointer;
+}
+
+.envelope-icon {
+  flex: none;
+}
+
+.envelope-note-back {
+  fill: var(--envelope-note-back);
+}
+
+.envelope-note-front {
+  fill: var(--envelope-note-front);
+}
+
+.envelope-body {
+  fill: var(--envelope-body);
+}
+
+.envelope-flap {
+  stroke: var(--envelope-flap);
+}
+
+/* The Saved stars (pill and panel), coloured by tone. */
+.sparkle-gold {
+  fill: var(--sparkle-gold);
+}
+
+.sparkle-lilac {
+  fill: var(--sparkle-lilac);
+}
+
+.sparkle-white {
+  fill: var(--sparkle-white);
+}
+
+.envelope-title {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-inline-size: 0;
+}
+
+.envelope-name {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.envelope.unused .envelope-name {
+  color: var(--muted);
+}
+
+.envelope.unused small {
+  font-weight: 400;
+}
+
+.envelope-left {
+  margin-inline-start: 2px;
+}
+
+.envelope-remaining {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* Tappable when some can be moved to another envelope. */
+
+button.envelope-left {
+  padding: 4px 6px;
+  margin-block: -4px;
+  margin-inline-end: -6px;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: end;
+  cursor: pointer;
+}
+
+button.envelope-left:hover,
+button.envelope-left:focus-visible {
+  background: var(--brand-tint-hover);
+}
+
+.envelope-left.zero .envelope-remaining {
+  color: var(--muted-zero);
+}
+
+/* Saved: a pill next to the name; solid purple with sparkles once above $0.00. */
+
+.saved-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--saved-quiet);
+  background: var(--brand-tint);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Rows with this chip are a few pixels taller; that is expected. */
+
+.saved-chip.sparkle {
+  position: relative;
+  gap: 5px;
+  margin: 3px 6px 3px 2px;
+  padding: 4px 12px 4px 8px;
+  color: var(--on-brand);
+  background: var(--brand);
+  box-shadow:
+    0 0 0 2px var(--saved-glow),
+    0 2px 6px rgb(var(--brand-rgb) / 0.25);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.saved-chip .sp {
+  position: absolute;
+}
+
+.saved-chip .sp1 {
+  inset-block-start: -7px;
+  inset-inline-end: -5px;
+}
+
+.saved-chip .sp2 {
+  inset-block-start: -6px;
+  inset-inline-end: 12px;
+}
+
+.saved-chip .sp3 {
+  inset-block-end: -5px;
+  inset-inline-end: -7px;
+}
+
+.saved-chip .sp4 {
+  inset-block-end: -5px;
+  inset-inline-start: 4px;
+}
+
+.saved-chip .sp5 {
+  inset-block-start: -5px;
+  inset-inline-start: -3px;
+}
+
+/* A glint inside the pill. */
+
+.saved-chip .sp6 {
+  inset-block-start: 9px;
+  inset-inline-end: 3px;
+}
+
+/* One twinkle when the row appears. */
+
+.saved-chip .star {
+  animation: chip-twinkle 1.2s ease-in-out 1;
+}
+
+@keyframes chip-twinkle {
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75) rotate(20deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saved-chip .star {
+    animation: none;
+  }
+}
+
+/* Planned, Assigned, Spent (or a card's Available to pay and Remaining debt). */
+
+.envelope-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.envelope-cells.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ink-2);
+  background: transparent;
+  font: inherit;
+  line-height: 1.3;
+  text-align: start;
+}
+
+/* The cells look slimmer than a 44px tap target; their hit area reaches a
+   little above and below. */
+
+button.cell,
+.cell.editing {
+  position: relative;
+  cursor: pointer;
+}
+
+button.cell::after {
+  position: absolute;
+  inset: -5px 0;
+  content: "";
+}
+
+.cell-label {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cell .money {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cell.planned {
+  color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.cell.planned .cell-label {
+  color: var(--brand);
+}
+
+.cell.planned .money {
+  font-weight: 800;
+}
+
+.cell.spent {
+  background: var(--grey-cell);
+}
+
+.cell.spent .cell-label {
+  color: var(--grey-label);
+}
+
+.cell.spent.over {
+  background: var(--over-bg);
+}
+
+.cell.spent.over .cell-label,
+.cell.spent.over .money {
+  color: var(--over);
+}
+
+.cell.debt .money {
+  color: var(--spend);
+}
+
+.cell.editing {
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+.cell.editing input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.envelope-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.envelope-extra .money {
+  font-weight: 700;
+}
+
+/* Compact rows (phone, from the page menu): each envelope shows only line 1
+   (name, Saved and what is left). */
+
+.compact-rows .envelope-cells,
+.compact-rows .envelope-extra {
+  display: none;
+}
+
+.envelope-sheet {
+  display: grid;
+  gap: 1.125rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-page > .plan-start {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.6rem 1rem 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed var(--brand);
+  border-radius: 0.9rem;
+  background: var(--brand-tint);
+  color: var(--ink);
+}
+
+.plan-start h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.plan-start p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.plan-start-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.plan-start-actions .secondary-button {
+  background: var(--surface);
+}
+
+/* Every page uses the width, up to 1600px. */
+
+.desktop .budget-page,
+.desktop .activity-page {
+  max-inline-size: 100rem;
+  margin: 0 auto;
+}
+
+.desktop .budget-page > .notice,
+.desktop .budget-page > .plan-start {
+  margin: var(--desktop-gap) 0 0;
+}
+
+.desktop .budget-page > .plan-start {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.desktop .budget-page > .plan-start .plan-start-actions {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* The month and Available to Assign share one purple band, pinned to the top. */
+
+.budget-band {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 6;
+
+  /* The month on the left; Available to Assign centred across the band. */
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-block-size: var(--desktop-band);
+  padding: 0 1rem;
+  border-radius: 0 0 0.875rem 0.875rem;
+  background: var(--brand);
+}
+
+.budget-band .budget-month span {
+  min-inline-size: 11.5em;
+  text-align: center;
+}
+
+.budget-band .budget-month a:hover {
+  background: rgb(var(--on-brand-rgb) / 0.12);
+}
+
+.budget-band .budget-month {
+  gap: 0.25rem;
+  padding: 0;
+  background: transparent;
+  justify-self: start;
+}
+
+.budget-band .assign-card {
+  grid-column: 2;
+  min-inline-size: 22rem;
+}
+
+.budget-band .assign-card button {
+  padding-block: 9px;
+}
+
+.budget-work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: start;
+  padding-block: var(--desktop-gap) 2.5rem;
+}
+
+.envelope-table {
+  overflow: clip;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(var(--brand-rgb) / 0.06);
+}
+
+/* The card payments box sits above the envelope table, a gap between. */
+
+.budget-tables {
+  display: grid;
+  gap: 1.25rem;
+  min-inline-size: 0;
+}
+
+.envelope-colhead {
+  position: sticky;
+  inset-block-start: var(--desktop-band);
+  z-index: 4;
+  display: grid;
+  grid-template-columns: var(--env-cols);
+  column-gap: 0.5rem;
+  align-items: center;
+  block-size: 2.125rem;
+  padding-inline-start: 1rem;
+  border-block-end: 1px solid var(--brand-line);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.envelope-colhead span:not(:first-child) {
+  padding-inline-end: 8px;
+  text-align: end;
+}
+
+.envelope-colhead span:nth-child(5) {
+  padding-inline-end: 0;
+}
+
+/* Group bars line up with the columns: the total under Remaining, + last. */
+
+.desktop .group-heading {
+  display: grid;
+  grid-template-columns: var(--env-cols);
+  column-gap: 0.5rem;
+  padding: 0 0 0 4px;
+  border-block-start: 0;
+}
+
+.desktop .group-heading h2 {
+  grid-column: 1 / 5;
+}
+
+.desktop .group-total {
+  grid-column: 5;
+  text-align: end;
+}
+
+.desktop .add-envelope-button {
+  grid-column: 6;
+  border-radius: 0.5rem;
+}
+
+.desktop .add-envelope-button:hover {
+  background: var(--brand-light-hover);
+}
+
+/* One line per envelope. */
+
+.desktop .envelope {
+  grid-template-columns: var(--env-cols);
+  column-gap: 0.5rem;
+  align-items: center;
+  min-block-size: 3.25rem;
+  padding: 6px 0 6px 1rem;
+}
+
+.desktop .envelope:hover {
+  background: var(--row-hover);
+}
+
+.desktop .envelope.selected {
+  background: var(--row-selected);
+  box-shadow: inset 4px 0 0 var(--brand);
+}
+
+/* On a desktop the name button is the row's first column itself. */
+
+.desktop .envelope-head {
+  display: contents;
+}
+
+.desktop .envelope-top:hover .envelope-name {
+  text-decoration: underline;
+  text-decoration-color: var(--brand-outline);
+  text-underline-offset: 3px;
+}
+
+.desktop .envelope-cells {
+  display: contents;
+}
+
+.desktop .envelope-cells .cell {
+  align-items: flex-end;
+  padding: 5px 8px;
+  text-align: end;
+}
+
+/* The column head names the cells; screen readers still hear each label. */
+
+.desktop .envelope-cells:not(.two) .cell-label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.desktop .envelope-cells .cell .money,
+.desktop .envelope-cells .cell.editing input {
+  font-size: 13.5px;
+  text-align: end;
+}
+
+.desktop button.cell:hover {
+  box-shadow: inset 0 0 0 1px var(--brand-outline);
+}
+
+/* A card's payment envelope: Available to pay and Remaining debt across the
+   Planned, Assigned and Spent columns, with their labels. */
+
+.desktop .envelope-cells.two {
+  display: grid;
+  grid-column: 2 / 5;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.desktop .envelope-cells.two .cell {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.desktop .envelope-left {
+  grid-column: 5;
+  margin: 0;
+  text-align: end;
+}
+
+.desktop button.envelope-left {
+  justify-self: end;
+  padding: 4px 8px;
+}
+
+.desktop .envelope-remaining {
+  font-size: 18px;
+}
+
+.desktop .envelope-extra {
+  grid-column: 2 / 6;
+  justify-content: flex-end;
+}
+
+.desktop .envelope > .error-message {
+  grid-column: 1 / -1;
+}
+
+/* Desktop card payments (v0.42.2): its own box with its own columns,
+   Card | Available to pay | Remaining debt; the frame is the box itself. */
+
+.card-table {
+  --env-cols: minmax(9rem, 1fr) 9.5rem 9.5rem;
+  border-color: var(--card-line);
+}
+
+.card-table .envelope-colhead {
+  padding-inline-end: 0.5rem;
+  border-block-end-color: var(--card-line);
+}
+
+.card-table .envelope-colhead span:nth-child(3) {
+  padding-inline-end: 8px;
+}
+
+.desktop .card-table .budget-group.card-group {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.card-table .group-heading {
+  padding-inline-end: 0.5rem;
+}
+
+.card-table .group-heading h2 {
+  grid-column: 1 / 2;
+}
+
+.card-table .group-total {
+  grid-column: 2;
+  padding-inline-end: 8px;
+}
+
+.card-table .envelope {
+  padding-inline-end: 0.5rem;
+}
+
+.card-table .envelope-left {
+  grid-column: 2;
+}
+
+.card-table .envelope-cells .cell {
+  grid-column: 3;
+}
+
+.card-table .envelope-extra {
+  grid-column: 2 / 4;
+}
+
+.desktop .envelope-table > .unused-toggle {
+  margin: 0;
+  padding: 0.625rem 1rem;
+  border-block-start: 1px solid var(--brand-line);
+}
+
+/* The panel's month summary (no envelope chosen). */
+
+.month-summary {
+  display: grid;
+  gap: 1rem;
+}
+
+.month-summary h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.summary-stat {
+  display: grid;
+  gap: 2px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--surface-sunken);
+}
+
+.summary-stat dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.summary-stat dd {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 800;
+}
+
+.summary-stat.income dd {
+  color: var(--income);
+}
+
+.summary-stat.saved {
+  color: var(--on-brand);
+  background: var(--brand);
+}
+
+.summary-stat.saved dt {
+  color: var(--on-brand-muted);
+}
+
+.watch-list h3 {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.watch-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.watch-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  inline-size: 100%;
+  min-block-size: 2.375rem;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-block-end: 1px solid var(--row-line);
+  border-radius: 0.375rem;
+  color: inherit;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.watch-list button:hover {
+  background: var(--brand-tint);
+}
+
+.watch-list strong {
+  color: var(--over);
+  white-space: nowrap;
+}
+
+@media (max-width: 74.99rem) {
+  .budget-work {
+    gap: 1rem;
+  }
+
+  .budget-band .assign-card {
+    min-inline-size: 0;
+  }
+}
+
+/* A long name wraps between words, not inside them. */
+
+.desktop .envelope-name {
+  overflow-wrap: break-word;
+}

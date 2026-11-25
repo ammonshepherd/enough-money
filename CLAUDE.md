@@ -67,6 +67,12 @@ always describes the app as of that version (including §9, not built yet).
   and is unit-tested; pages never recompute it.
 - `src/controllers/` — React hooks that load data, handle user actions, call models.
 - `src/views/` — React components. Display only; no money math.
+- `src/styles/` — plain CSS, one file per area (v0.46.3), imported in order
+  by `index.css`: tokens, base, layout, controls, sheets, then each page. A
+  new rule goes in its area's file (desktop rules near the end of it), and
+  a selector appears once per file. Colours are variables named for their
+  role, typed in only in `01-tokens.css` (v0.46.4; `npm run lint` runs
+  Stylelint and ESLint to enforce it, SVG parts included).
 
 Reuse the existing styles (`src/styles/`), icons, manifest and page names
 (Budget, Accounts, Manage; Activity merged into Accounts in v0.29.0;
