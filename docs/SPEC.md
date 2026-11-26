@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.51.0.
+Version described: 0.51.1.
 
 ## 1. Purpose
 
@@ -124,10 +124,12 @@ signed in as test user A at 390×844 (2× pixels;
 `playwright.landing.config.ts`, `landing-screenshots/`, saving nothing),
 then `scripts/landing-images.ts` makes them 600px-wide WebP files in
 `landing/images/` (needs `cwebp`). Retake them when a pictured screen
-changes. `npm run backup` (`scripts/backup-database.ts`) saves production's
-data as the Manage → Backup JSON (the `export_backup` function, run as the
-household's owner through the Supabase CLI login, no password) in
-`.backups/` (ignored by git), keeping the 5 newest. Run before every merge.
+changes. `npm run backup` (`scripts/backup-database.ts`) saves each of
+production's households as the Manage → Backup JSON (the `export_backup`
+function, run as that household's owner through the Supabase CLI login, no
+password; one file per household since v0.51.1, named with the start of its
+id) in `.backups/` (ignored by git), keeping the files of the 5 newest runs.
+Run before every merge.
 UI tests build with the memory store into `dist-e2e/` and run against
 `vite preview` on port 4173: every spec at phone width (Pixel 7), and
 `*.desktop.spec.ts` at 1280×800 (the desktop layout); `test:ui:db` builds with

@@ -607,9 +607,9 @@ the version, changed files, tests run, remaining limitations, and the PR link.
   the decided math needs the owner's approval first and is a feature version (y).
 - Check visible UI changes with a Playwright screenshot (a throwaway spec,
   deleted afterwards) at phone width before opening the PR.
-- Merge only when asked: run `npm run backup` first (the production
-  database as a Manage → Backup JSON file in `.backups/`, ignored by git;
-  it keeps the 5 newest and deletes older ones; it prints only counts),
+- Merge only when asked: run `npm run backup` first (each production
+  household as a Manage → Backup JSON file in `.backups/`, ignored by git;
+  it keeps the 5 newest runs and deletes older ones; it prints only counts),
   wait for the PR's checks, merge with `--delete-branch`,
   pull `main`, then confirm the Cloudflare deploy succeeded and the live bundle
   shows the new version.
