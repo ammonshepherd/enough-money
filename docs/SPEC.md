@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.53.0.
+Version described: 0.53.1.
 
 ## 1. Purpose
 
@@ -855,7 +855,9 @@ picker it shows is gone).
 ### Transaction dialog (add and edit)
 
 Fields: Outflow/Inflow, Amount (> 0), Payee, Envelope, Account, Date (default
-today), Memo, Tags, Reconciled. Reconciled (v0.53.0) is a small on/off
+today), Memo, Tags, Reconciled. The chosen Outflow or Inflow button is
+tinted pale red or pale green with red or green text (v0.53.1, display
+only). Reconciled (v0.53.0) is a small on/off
 switch (`role="switch"`, green when on) for the same mark as Mark
 reconciled: off for a new transaction, showing the saved mark when editing
 (a transfer's switch is this side's only; a new other side starts off).

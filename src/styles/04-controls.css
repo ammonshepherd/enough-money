@@ -128,6 +128,19 @@
   box-shadow: 0 0.15rem 0.5rem rgb(var(--shadow-rgb) / 0.12);
 }
 
+/* The transaction form's direction: the chosen side is tinted red or green. */
+.segmented .direction-outflow:has(input:checked) {
+  color: var(--outflow-tint-text);
+  background: var(--outflow-tint);
+  box-shadow: 0 0.15rem 0.5rem var(--outflow-tint-shadow);
+}
+
+.segmented .direction-inflow:has(input:checked) {
+  color: var(--inflow-tint-text);
+  background: var(--inflow-tint);
+  box-shadow: 0 0.15rem 0.5rem var(--inflow-tint-shadow);
+}
+
 .segmented label:has(input:focus-visible) {
   outline: 3px solid var(--focus);
 }
