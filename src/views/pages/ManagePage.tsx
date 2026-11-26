@@ -247,7 +247,7 @@ export function ManagePage({
         {option && (
           <div className="manage-detail">
             {!desktop && (
-              <a className="manage-back" href={manageHref()}>
+              <a className="back-link" href={manageHref()}>
                 <ArrowLeftIcon />
                 Manage
               </a>
