@@ -1,27 +1,19 @@
 import { expect, test, type Page } from "@playwright/test";
-import { goTo, signInWithHousehold } from "./helpers";
+import { goTo, openManage, signInWithHousehold } from "./helpers";
 
 // signInWithHousehold signs in with "password123"; the in-memory store then
 // checks that as the current password, and treats taken@example.com as an
 // email another account uses.
 
-const openOption = async (page: Page, name: string) => {
-  await goTo(page, "Manage");
-  await page
-    .getByRole("navigation", { name: "Manage options" })
-    .getByRole("link", { name: new RegExp(`^${name}`) })
-    .click();
-};
+const openOption = (page: Page, name: string) => openManage(page, name);
 
 test("Account Info holds the display name, email and password", async ({ page }) => {
   await signInWithHousehold(page);
   await openOption(page, "Account Info");
   await expect(page).toHaveURL(/#manage\/account$/);
-  await expect(page.locator(".manage-detail").getByRole("heading", { level: 2 })).toHaveText([
-    "Display name",
-    "Change email",
-    "Change password",
-  ]);
+  await expect(
+    page.getByRole("dialog", { name: "Account Info" }).getByRole("heading", { level: 2 }),
+  ).toHaveText(["Display name", "Change email", "Change password"]);
   // The old Change password and Change email links open it too.
   for (const old of ["password", "email"]) {
     await page.evaluate((hash) => (location.hash = hash), `#manage/${old}`);
@@ -41,7 +33,10 @@ test("a display name greets the user on Manage", async ({ page }) => {
   await form.getByRole("button", { name: "Save name" }).click();
   await expect(form.getByRole("status")).toHaveText("Your display name was saved.");
   await expect(form.getByLabel("Display name")).toHaveValue("Sam Smith");
-  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await page
+    .getByRole("dialog", { name: "Account Info" })
+    .getByRole("button", { name: "Close" })
+    .click();
   await expect(greeting).toHaveText("Hi, Sam Smith");
 
   // Emptied, the greeting uses the email again.
@@ -49,7 +44,10 @@ test("a display name greets the user on Manage", async ({ page }) => {
   await form.getByLabel("Display name").fill("");
   await form.getByRole("button", { name: "Save name" }).click();
   await expect(form.getByRole("status")).toHaveText("Your display name was saved.");
-  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await page
+    .getByRole("dialog", { name: "Account Info" })
+    .getByRole("button", { name: "Close" })
+    .click();
   await expect(greeting).toHaveText("Hi, test@example.com");
 });
 
@@ -101,7 +99,10 @@ test("Change email refuses an email in use and sends links for a new one", async
     "Check test@example.com and new@example.com: open the link in each email to finish. Until then, sign in with test@example.com.",
   );
   // Still signed in as before until the links are opened.
-  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await page
+    .getByRole("dialog", { name: "Account Info" })
+    .getByRole("button", { name: "Close" })
+    .click();
   await expect(page.locator(".manage-greeting")).toHaveText("Hi, test@example.com");
 });
 

@@ -983,16 +983,20 @@ enough to take the account over.
 
 **Household** (`#manage/household`): the household's name in a form
 (Household name, Save, Cancel; 1–100 characters once trimmed,
-`useHousehold`, `renameHousehold`). On a phone it is a bottom sheet over
-the list: Save, Cancel, Escape or Back close it and return to `#manage`.
-On a desktop it opens beside the list like any option; saving says "The
-household’s name was saved." and Cancel or Escape put the name back.
+`useHousehold`, `renameHousehold`). In a phone's sheet, Save and Cancel
+close the sheet. Beside the desktop list, saving says "The household’s
+name was saved." and Cancel or Escape put the name back.
 
-On a phone an option's page replaces the list: a purple "← Manage" link
-(back to `#manage`, as is the Manage tab) above the option's card, no
-greeting or Credit card debt strip, and the page scrolls to the top. On a
-desktop the list stays in a left column and the option opens beside it,
-its row highlighted; with none chosen, Envelopes is open.
+On a phone (v0.52.0) an option opens in a bottom sheet over the list,
+which stays behind it with the greeting and Credit card debt strip: a
+handle, a "Manage" eyebrow and a × Close button head the option's page,
+whose cards lose their frame inside the sheet and are parted by a line.
+Close, Escape or Back close the sheet. One opened from the list goes Back;
+one opened by a link from elsewhere (Give Feedback, Edit groups, an old
+`#settings…` link) shows the list at `#manage` instead. A sheet inside it
+(Envelopes → a group) closes only itself. On a desktop the list stays in
+a left column and the option opens beside it, its row highlighted; with
+none chosen, Envelopes is open.
 
 - **Envelopes** (its page is headed Envelope groups): list with envelope counts. The card payments group
   (when there is one) is pinned first with a card icon in place of a handle

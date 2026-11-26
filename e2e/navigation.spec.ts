@@ -125,26 +125,41 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   // Bank CSVs are imported from each account, not here.
   await expect(list).not.toContainText("Import transactions");
 
-  // A phone shows one page at a time, with a way back to the list.
-  await list.getByRole("link", { name: /^Tags/ }).click();
-  await expect(page).toHaveURL(/#manage\/tags$/);
-  await expect(page.getByRole("region", { name: "Tags", exact: true })).toBeVisible();
-  await expect(list).toHaveCount(0);
-  await expect(page.locator(".card-debt")).toHaveCount(0);
-  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
-  await expect(page).toHaveURL(/#manage$/);
-  await expect(list).toBeVisible();
-  await list.getByRole("link", { name: /^Payees/ }).click();
-  await page.goBack();
-  await expect(list).toBeVisible();
-
-  // Old Settings links open Manage and show its new address.
+  // Old Settings links open Manage and show its new address. (First: Chrome
+  // closes a dialog a script opens just after another one closed.)
   await page.evaluate(() => (location.hash = "#settings/groups"));
   await expect(page).toHaveURL(/#manage\/groups$/);
   await expect(page.getByRole("region", { name: "Envelope groups" })).toBeVisible();
+  // Opened by a link, closing shows the list at #manage.
+  await page
+    .getByRole("dialog", { name: "Envelopes" })
+    .getByRole("button", { name: "Close" })
+    .click();
+  await expect(page).toHaveURL(/#manage$/);
+
+  // A phone opens each option in a sheet over the list; Close, Escape or
+  // Back return to the list.
+  await list.getByRole("link", { name: /^Tags/ }).click();
+  await expect(page).toHaveURL(/#manage\/tags$/);
+  const sheet = page.getByRole("dialog", { name: "Tags" });
+  await expect(sheet.getByRole("region", { name: "Tags", exact: true })).toBeVisible();
+  await expect(list).toBeAttached();
+  await expect(page.locator(".manage-back")).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(/#manage$/);
+  await list.getByRole("link", { name: /^Payees/ }).click();
+  await expect(page.getByRole("dialog", { name: "Payees" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Payees" })).toBeHidden();
+
+  await list.getByRole("link", { name: /^Backup/ }).click();
+  await expect(page.getByRole("dialog", { name: "Backup" })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("dialog", { name: "Backup" })).toBeHidden();
+  await expect(page).toHaveURL(/#manage$/);
 
   // About opens a page; Version opens nothing.
-  await goTo(page, "Manage");
   await list.getByRole("link", { name: /^About Enough Money/ }).click();
   await expect(page).toHaveURL(/#manage\/about$/);
   await expect(page.getByRole("region", { name: "About Enough Money" })).toContainText(
@@ -152,7 +167,9 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   );
 });
 
-test("Manage → Household renames the household in a sheet", async ({ page }) => {
+test("Manage → Household renames the household; Save and Cancel close its sheet", async ({
+  page,
+}) => {
   await signInWithHousehold(page);
   await goTo(page, "Manage");
   const household = page.getByRole("link", { name: /^Household/ });

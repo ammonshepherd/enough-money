@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type JSX } from "react";
+import { useState, type FormEvent, type JSX } from "react";
 import { useAsyncAction } from "../../controllers/useAsyncAction";
 import type { Budget } from "../../controllers/useBudget";
 import { useHousehold } from "../../controllers/useHousehold";
@@ -16,7 +16,6 @@ import { EnvelopePlanImport } from "../EnvelopePlanImport";
 import { Feedback } from "../Feedback";
 import { IncomeRules } from "../IncomeRules";
 import {
-  ArrowLeftIcon,
   ExportIcon,
   GroupsIcon,
   HomeIcon,
@@ -42,6 +41,8 @@ interface PageProps {
   data: BudgetData;
   email: string;
   displayName: string;
+  /** On a phone, closes the option's sheet (pages that finish, like Household, call it). */
+  closeSheet?: () => void;
 }
 
 interface Option {
@@ -56,16 +57,15 @@ interface Option {
   danger?: boolean;
 }
 
-/** Manage → Household: the household's name, renamed in a sheet (or beside the list on a desktop). */
-function HouseholdPage({ budget, data, onDone }: PageProps & { onDone?: () => void }) {
+/** Manage → Household: the household's name. In a phone's sheet, Save and Cancel close it. */
+function HouseholdPage({ budget, data, closeSheet }: PageProps) {
   const household = useHousehold(budget, data);
   return (
-    // In the phone's sheet (onDone) the sheet is its frame, so no card.
-    <section className={onDone ? "stack" : "list-card"} aria-labelledby="household-title">
+    <section className="list-card" aria-labelledby="household-title">
       <div className="section-heading">
         <h2 id="household-title">Household</h2>
       </div>
-      <RenameHousehold name={household.name} onSave={household.rename} onDone={onDone} />
+      <RenameHousehold name={household.name} onSave={household.rename} onDone={closeSheet} />
     </section>
   );
 }
@@ -189,11 +189,10 @@ const GROUPS: { title: string; options: Option[] }[] = [
 const OPTIONS = GROUPS.flatMap((g) => g.options);
 
 /**
- * Manage: a greeting, then a list of options, each opening its own page
- * ("#manage/tags"). On a phone the page replaces the list (its back arrow
- * returns to it), except Household, whose sheet opens over the list; on a
- * desktop the list stays on the left and the page opens beside it
- * (Envelopes when none is chosen).
+ * Manage: a greeting, then a list of options, each at its own address
+ * ("#manage/tags"). On a phone an option opens in a bottom sheet over the
+ * list (v0.52.0); on a desktop the list stays on the left and the option
+ * opens beside it (Envelopes when none is chosen).
  */
 export function ManagePage({
   budget,
@@ -210,23 +209,29 @@ export function ManagePage({
   displayName: string;
   onSignOut: () => Promise<void>;
   desktop?: boolean;
-  /** The open option, from the URL; null shows the list. */
+  /** The open option, from the URL; null shows only the list. */
   section?: ManageSection | null;
 }) {
   const signOut = useAsyncAction(onSignOut);
   const shown = section ?? (desktop ? "groups" : null);
-  // On a phone Household is a sheet over the list, not a page.
-  const renaming = !desktop && shown === "household";
-  const option = renaming ? null : (OPTIONS.find((o) => o.section === shown) ?? null);
-  const listShown = desktop || !option;
+  const option = OPTIONS.find((o) => o.section === shown) ?? null;
   const pageProps = { budget, data, email, displayName };
-  // Back to the list, in place of the sheet's address, so Back does not reopen it.
-  const closeHousehold = () => window.location.replace(manageHref());
 
-  // A phone opens a page (or returns to the list) at its top.
-  useEffect(() => {
-    if (!desktop && !renaming) window.scrollTo(0, 0);
-  }, [desktop, section, renaming]);
+  // Whether the open sheet was opened from the list here: closing it then
+  // goes Back (so Back does not reopen it). Opened by a link from elsewhere
+  // (Give Feedback, Edit groups), closing it replaces its address with the
+  // list's instead.
+  const [fromList, setFromList] = useState(false);
+  const [lastSection, setLastSection] = useState(section);
+  if (section !== lastSection) {
+    // Updating state while rendering is React's way to follow a prop.
+    setLastSection(section);
+    setFromList(lastSection === null && section !== null);
+  }
+  const closeSheet = () => {
+    if (fromList) window.history.back();
+    else window.location.replace(manageHref());
+  };
 
   return (
     <section className="page-view stack manage-page" aria-labelledby="manage-title">
@@ -235,89 +240,104 @@ export function ManagePage({
           Sign out
         </MenuItem>
       </PageMenu>
-      {listShown && <CardDebt data={data} />}
+      <CardDebt data={data} />
       {/* For screen readers only (v0.52.0): the greeting heads the page. */}
       <h1 id="manage-title" className="visually-hidden">
         Manage
       </h1>
-      {listShown && <p className="manage-greeting">{greeting(displayName, email)}</p>}
+      <p className="manage-greeting">{greeting(displayName, email)}</p>
 
       <div className="manage-layout">
-        {listShown && (
-          <nav className="manage-list" aria-label="Manage options">
-            {GROUPS.map((group) => (
-              <OptionGroup
-                key={group.title}
-                title={group.title}
-                options={group.options}
-                shown={shown}
-                household={data.household.name}
-              >
-                {group.title === "Settings" ? (
-                  <li>
-                    <button
-                      className="manage-row"
-                      type="button"
-                      disabled={signOut.pending}
-                      onClick={() => signOut.run()}
-                    >
-                      <span className="settings-row-icon" aria-hidden="true">
-                        <SignOutIcon />
-                      </span>
-                      <span className="settings-row-copy">
-                        <strong>Sign Out</strong>
-                        <small>Leave Enough Money on this device</small>
-                      </span>
-                    </button>
-                  </li>
-                ) : group.title === "Information" ? (
-                  <li className="manage-row manage-version">
+        <nav className="manage-list" aria-label="Manage options">
+          {GROUPS.map((group) => (
+            <OptionGroup
+              key={group.title}
+              title={group.title}
+              options={group.options}
+              shown={shown}
+              household={data.household.name}
+            >
+              {group.title === "Settings" ? (
+                <li>
+                  <button
+                    className="manage-row"
+                    type="button"
+                    disabled={signOut.pending}
+                    onClick={() => signOut.run()}
+                  >
                     <span className="settings-row-icon" aria-hidden="true">
-                      <VersionIcon />
+                      <SignOutIcon />
                     </span>
                     <span className="settings-row-copy">
-                      <strong>Version</strong>
-                      <small>{APP_VERSION}</small>
+                      <strong>Sign Out</strong>
+                      <small>Leave Enough Money on this device</small>
                     </span>
-                  </li>
-                ) : undefined}
-              </OptionGroup>
-            ))}
-            <ErrorMessage error={signOut.error} />
-          </nav>
-        )}
+                  </button>
+                </li>
+              ) : group.title === "Information" ? (
+                <li className="manage-row manage-version">
+                  <span className="settings-row-icon" aria-hidden="true">
+                    <VersionIcon />
+                  </span>
+                  <span className="settings-row-copy">
+                    <strong>Version</strong>
+                    <small>{APP_VERSION}</small>
+                  </span>
+                </li>
+              ) : undefined}
+            </OptionGroup>
+          ))}
+          <ErrorMessage error={signOut.error} />
+        </nav>
 
-        {option && (
+        {desktop && option && (
           <div className="manage-detail">
-            {!desktop && (
-              <a className="manage-back" href={manageHref()}>
-                <ArrowLeftIcon />
-                Manage
-              </a>
-            )}
             {/* key: each page starts fresh (a half-typed form is not carried over). */}
             <option.Page key={option.section} {...pageProps} />
           </div>
         )}
       </div>
 
-      <Sheet
-        open={renaming}
-        label="Household"
-        className="sheet bottom"
-        onClose={() => {
-          if (renaming) closeHousehold();
-        }}
-      >
-        {() => (
-          <div className="household-sheet">
-            <span className="sheet-handle" aria-hidden="true" />
-            <HouseholdPage {...pageProps} onDone={closeHousehold} />
-          </div>
-        )}
-      </Sheet>
+      {!desktop && (
+        <Sheet
+          open={option !== null}
+          label={option?.title ?? "Manage"}
+          className="sheet bottom manage-sheet"
+          onClose={() => {
+            if (option) closeSheet();
+          }}
+        >
+          {() => (
+            <div className="manage-sheet-body">
+              <div className="sheet-handle" aria-hidden="true" />
+              <header className="sheet-header">
+                <span className="sheet-eyebrow">Manage</span>
+                <button
+                  className="sheet-close"
+                  type="button"
+                  aria-label="Close"
+                  onClick={closeSheet}
+                >
+                  ×
+                </button>
+              </header>
+              <SheetPage
+                key={option!.section}
+                option={option!}
+                {...pageProps}
+                closeSheet={closeSheet}
+              />
+            </div>
+          )}
+        </Sheet>
+      )}
     </section>
   );
+}
+
+/** An option's page in the phone's sheet. */
+function SheetPage({ option, ...props }: PageProps & { option: Option }) {
+  return <option.Page {...props} />;
 }
 
 function OptionGroup({

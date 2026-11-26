@@ -328,8 +328,7 @@ non-card budget balances − all envelope money (P included)`.
   rewritten, `#manage/password` and `#manage/email` open Account Info).
   The list is in groups: Settings (Appearance; Account Info, one page with
   Display name, Change email and Change password; Household, whose line is
-  its name and which opens a rename sheet on a phone, beside the list on a
-  desktop; Sign Out), Budget (Envelopes, Import Envelope Plan, Backup,
+  its name; Sign Out), Budget (Envelopes, Import Envelope Plan, Backup,
   Restore from Backup in red), Transactions (Payees, Tags, Income Rules)
   and Information (About Enough Money, a short page; Give Feedback;
   Version, not a link). Change password and Change email (v0.51.0) both
@@ -340,9 +339,10 @@ non-card budget balances − all envelope money (P included)`.
   `cleanDisplayName` in `src/models/signInDetails.ts`), never in the
   household or Backup. Each row shows its name and one short
   line saying what it does, no counts. No Import transactions: bank CSVs
-  are imported from each account. A phone shows the list or one page (with
-  a "← Manage" link back); a desktop keeps the list on the left and opens
-  the option beside it (Envelopes when none is chosen).
+  are imported from each account. A phone opens each option in a bottom
+  sheet over the list (Close, Escape or Back close it); a desktop keeps
+  the list on the left and opens the option beside it (Envelopes when none
+  is chosen).
 - Give Feedback (decided in v0.47.0, `src/views/Feedback.tsx`): a plain
   "Give Feedback" link ends every page (Budget, Accounts, Manage) and
   Manage lists it; both open `#manage/feedback`, a message box whose text

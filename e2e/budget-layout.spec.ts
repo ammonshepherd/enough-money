@@ -72,7 +72,7 @@ test("the + button adds envelopes, and groups are managed in Manage", async ({ p
     .getByRole("dialog", { name: "Spare" })
     .getByRole("button", { name: "Delete group" })
     .click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog", { name: "Spare" })).toBeHidden();
   await expect(list.getByRole("listitem")).toHaveCount(1);
 });
 

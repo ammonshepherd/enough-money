@@ -242,12 +242,19 @@ export const editActivityRow = (page: Page, payee: string) =>
   activityRow(page, payee).locator(".activity-who").click();
 
 /** Clicks a page in the bottom navigation. */
-export const goTo = (page: Page, name: "Budget" | "Accounts" | "Manage") =>
-  page
+export async function goTo(page: Page, name: "Budget" | "Accounts" | "Manage") {
+  // A phone's Manage option is a sheet over the page: close it first, as a person would.
+  const sheet = page.locator("dialog.manage-sheet[open]");
+  if (await sheet.count()) {
+    await sheet.getByRole("button", { name: "Close" }).first().click();
+    await expect(sheet).toHaveCount(0);
+  }
+  await page
     .getByRole("navigation", { name: "Primary navigation" })
     .getByRole("link", { name, exact: true })
     .first()
     .click();
+}
 
 /** Opens one of Manage's options by its title ("Tags", "Envelopes"). */
 export async function openManage(page: Page, option: string) {
@@ -257,6 +264,8 @@ export async function openManage(page: Page, option: string) {
     .getByRole("link", { name: new RegExp(`^${option}\\b`) })
     .click();
   await expect(page).toHaveURL(/#manage\/[\w-]+$/);
+  // A phone opens it in a sheet over the list.
+  if (onPhone()) await expect(page.locator("dialog.manage-sheet[open]")).toBeVisible();
 }
 
 /** Opens an account's Import CSV (a sheet on a phone) and returns its import card. */

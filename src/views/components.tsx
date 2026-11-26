@@ -65,8 +65,12 @@ export function Sheet({
       ref={dialog}
       className={className}
       aria-label={label}
-      // Escape closes the dialog itself; keep React's state in step.
-      onClose={onClose}
+      // Escape closes the dialog itself; keep React's state in step. React
+      // passes a sheet's close event up to a sheet it sits in (Manage →
+      // Envelopes → a group), so only this dialog's own closing counts.
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       {open && children()}
     </dialog>

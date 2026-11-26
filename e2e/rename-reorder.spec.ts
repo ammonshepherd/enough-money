@@ -186,7 +186,7 @@ test("the group sheet renames envelopes and moves them to another group", async 
   await expect(sheet).toContainText("No envelopes yet.");
   await expect(settingsGroups(page)).toContainText("Bills2 envelopes");
   await sheet.getByRole("button", { name: "Delete group" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(sheet).toBeHidden();
 
   await goTo(page, "Budget");
   await expect(budgetEnvelopes(page, "Bills")).toHaveText(["Rent", "Gas"]);
