@@ -573,6 +573,7 @@ export type Database = {
           p_is_transfer: boolean
           p_memo: string
           p_payee: string
+          p_reconciled?: boolean
           p_tag_ids?: string[]
         }
         Returns: string

@@ -397,6 +397,60 @@ export function storeRuleTests(makeStore: StoreFactory) {
     expect(into!.tagIds).toEqual([t1]);
   });
 
+  it("saves a transaction's reconciled mark, keeping it when left out", async () => {
+    const { store, householdId, ids, prefix } = await setUp(makeStore);
+    const input = {
+      accountId: ids.checking,
+      date: "2026-10-05",
+      amount: -1_000,
+      payee: `${prefix} reconciled`,
+      memo: "",
+      isIncome: false,
+      allocations: [],
+    } satisfies TransactionInput;
+    const find = async () =>
+      (await store.load())!.transactions.find((t) => t.payee === input.payee)!;
+    await store.saveTransaction(householdId, input);
+    let tx = await find();
+    expect(tx.reconciled).toBe(false);
+    await store.saveTransaction(householdId, { ...input, id: tx.id, reconciled: true });
+    expect((await find()).reconciled).toBe(true);
+    // Left out = kept.
+    await store.saveTransaction(householdId, { ...input, id: tx.id, amount: -2_000 });
+    tx = await find();
+    expect(tx).toMatchObject({ reconciled: true, amount: -2_000 });
+    await store.saveTransaction(householdId, { ...input, id: tx.id, reconciled: false });
+    expect((await find()).reconciled).toBe(false);
+  });
+
+  it("saves each side of a transfer's own reconciled mark", async () => {
+    const { store, ids, side, prefix } = await setUp(makeStore);
+    await store.saveTransfer({
+      transferId: null,
+      sides: [{ ...side(ids.checking, -3_000), reconciled: true }, side(ids.savings, 3_000)],
+    });
+    const sides = async () =>
+      [
+        ...(await store.load())!.transactions.filter(
+          (t) =>
+            t.payee === prefix && t.isTransfer && [ids.checking, ids.savings].includes(t.accountId),
+        ),
+      ].sort((a, b) => a.amount - b.amount);
+    let [out, into] = await sides();
+    expect(out!.reconciled).toBe(true);
+    expect(into!.reconciled).toBe(false);
+    await store.saveTransfer({
+      transferId: out!.transferId,
+      sides: [
+        { ...side(ids.checking, -3_000), id: out!.id },
+        { ...side(ids.savings, 3_000), id: into!.id, reconciled: true },
+      ],
+    });
+    [out, into] = await sides();
+    expect(out!.reconciled).toBe(true);
+    expect(into!.reconciled).toBe(true);
+  });
+
   it("tags and untags ticked transactions in one step", async () => {
     const { store, householdId, ids, save, prefix } = await setUp(makeStore);
     const t1 = await store.addTag(householdId, { name: `${prefix} A`, color: "blue" });

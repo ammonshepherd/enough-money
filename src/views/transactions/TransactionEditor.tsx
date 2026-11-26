@@ -242,6 +242,16 @@ export function TransactionEditor({
         onChange={(tagIds) => update({ tagIds })}
         onCreate={entry.createTag}
       />
+      <label className="switch-field field-reconciled">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={form.reconciled}
+          onChange={(e) => update({ reconciled: e.target.checked })}
+        />
+        <span className="switch" aria-hidden="true" />
+        Reconciled
+      </label>
       <div className="form-actions">
         <button className="primary-button" type="submit" disabled={save.pending}>
           {form.id ? "Save changes" : "Save"}

@@ -58,6 +58,11 @@ export interface TransactionInput {
   allocations: Allocation[];
   /** Its tags, replacing those it had. Omit to keep them (none for a new one). */
   tagIds?: string[];
+  /**
+   * Whether it is marked reconciled with the bank (only a mark: no budget
+   * math). Omit to keep the mark (not reconciled for a new one).
+   */
+  reconciled?: boolean;
 }
 
 export interface DataStore {

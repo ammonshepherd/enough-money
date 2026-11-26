@@ -510,6 +510,8 @@ export function createSupabaseStore(
         p_is_income: input.isIncome,
         // Omitted (undefined) = keep the transaction's tags.
         p_tag_ids: input.tagIds,
+        // Omitted = keep its reconciled mark (not reconciled when new).
+        p_reconciled: input.reconciled,
       });
       check(error);
     },
@@ -650,6 +652,8 @@ export function createSupabaseStore(
           memo: side.memo,
           // Left out = keep this side's tags.
           ...(side.tagIds ? { tag_ids: side.tagIds } : {}),
+          // Left out = keep this side's reconciled mark.
+          ...(side.reconciled === undefined ? {} : { reconciled: side.reconciled }),
         })),
       });
       check(error);

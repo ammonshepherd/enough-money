@@ -28,6 +28,8 @@ export interface TransferSide {
   memo: string;
   /** This side's tags, replacing those it had. Omit to keep them (none for a new one). */
   tagIds?: string[];
+  /** This side's reconciled mark. Omit to keep it (not reconciled for a new one). */
+  reconciled?: boolean;
 }
 
 export interface TransferInput {
@@ -154,8 +156,10 @@ export function planTransfer(
     id,
     accountId: otherAccountId,
     amount,
-    // Each side keeps its own tags: the other side's are left as they are.
+    // Each side keeps its own tags and reconciled mark: the other side's are
+    // left as they are.
     tagIds: undefined,
+    reconciled: undefined,
   });
   const fromBank = (tx: Transaction): TransferSide => ({
     id: tx.id,
