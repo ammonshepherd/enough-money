@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DataStore, UserSession } from "../models/dataStore";
 import {
+  EMAIL_CHANGE_HALF_DONE,
+  emailChanged,
   loadPasswordNeeded,
+  needsPassword,
   readEmailLink,
   savePasswordNeeded,
   withoutEmailLink,
   type EmailLink,
-  type EmailLinkType,
+  type PasswordLinkType,
 } from "../models/emailLink";
 import { messageOf } from "./errors";
 
@@ -23,7 +26,7 @@ function storage(): Storage | null {
 // (so it is not bookmarked, shared or reused on reload), and the token is
 // exchanged once even though React's StrictMode runs effects twice.
 let taken: EmailLink | null | undefined;
-let verifying: Promise<UserSession> | null = null;
+let verifying: Promise<UserSession | null> | null = null;
 
 function takeEmailLink(): EmailLink | null {
   if (taken === undefined) {
@@ -34,12 +37,16 @@ function takeEmailLink(): EmailLink | null {
 }
 
 export type EmailLinkState =
-  { status: "none" } | { status: "checking" } | { status: "failed"; error: string };
+  | { status: "none" }
+  | { status: "checking" }
+  | { status: "failed"; error: string }
+  /** A Change email address link worked: what to tell them. */
+  | { status: "confirmed"; message: string };
 
 /**
- * The Invite user and Reset password emails' links (see models/emailLink.ts):
- * signs in with the link's token, then reports, for whoever is signed in,
- * whether they still have to set a password.
+ * The Invite user, Reset password and Change email address emails' links
+ * (see models/emailLink.ts): signs in with the link's token, then reports,
+ * for whoever is signed in, whether they still have to set a password.
  */
 export function useEmailLink(store: DataStore, userId: string | null) {
   const [link] = useState(takeEmailLink);
@@ -53,11 +60,20 @@ export function useEmailLink(store: DataStore, userId: string | null) {
     if (!link) return;
     let active = true;
     verifying ??= store.verifyEmailLink(link).then((session) => {
-      savePasswordNeeded(storage(), session.userId, link.type);
+      if (session && needsPassword(link.type)) {
+        savePasswordNeeded(storage(), session.userId, link.type);
+      }
       return session;
     });
     verifying.then(
-      () => active && setState({ status: "none" }),
+      (session) => {
+        if (!active) return;
+        if (link.type !== "email_change") setState({ status: "none" });
+        else {
+          const message = session ? emailChanged(session.email) : EMAIL_CHANGE_HALF_DONE;
+          setState({ status: "confirmed", message });
+        }
+      },
       (error: unknown) => active && setState({ status: "failed", error: messageOf(error) }),
     );
     return () => {
@@ -66,7 +82,7 @@ export function useEmailLink(store: DataStore, userId: string | null) {
   }, [store, link]);
 
   /** Which link the signed-in user followed and still has to set a password for. */
-  const passwordNeeded: EmailLinkType | null =
+  const passwordNeeded: PasswordLinkType | null =
     userId && state.status !== "checking" ? loadPasswordNeeded(storage(), userId) : null;
 
   const setPassword = useCallback(
@@ -89,5 +105,8 @@ export function useEmailLink(store: DataStore, userId: string | null) {
     [store],
   );
 
-  return { state, passwordNeeded, setPassword, signIn };
+  /** Hides the Change email address link's message. */
+  const dismiss = useCallback(() => setState({ status: "none" }), []);
+
+  return { state, passwordNeeded, setPassword, signIn, dismiss };
 }

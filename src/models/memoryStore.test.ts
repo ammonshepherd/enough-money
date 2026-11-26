@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { withFreshIds, type Backup } from "./backup";
 import { UserFacingError, type TransactionInput } from "./dataStore";
 import { createMemoryStore } from "./memoryStore";
+import { EMAIL_TAKEN, WRONG_PASSWORD } from "./signInDetails";
 import type { ImportFormat } from "./transactionImport";
 import type { TransferInput } from "./transfers";
 
@@ -375,5 +376,44 @@ describe("email links (like Supabase Auth)", () => {
     );
     expect(await store.getSession()).toBeNull();
     await expect(store.setPassword("long enough now")).rejects.toThrow("Sign in first");
+  });
+});
+
+describe("changing the password or email (like Supabase Auth)", () => {
+  it("changes the password only with the current one", async () => {
+    const store = createMemoryStore();
+    await expect(store.changePassword("x", "a long new password")).rejects.toThrow("Sign in first");
+    await store.signIn("me@example.com", "first password");
+    await expect(store.changePassword("wrong", "a long new password")).rejects.toThrow(
+      WRONG_PASSWORD,
+    );
+    await expect(store.changePassword("first password", "short")).rejects.toThrow(
+      "Use at least 12 characters.",
+    );
+    await store.changePassword("first password", "a long new password");
+    // The old password no longer counts as the current one.
+    await expect(store.changePassword("first password", "another password")).rejects.toThrow(
+      WRONG_PASSWORD,
+    );
+    await expect(
+      store.changePassword("a long new password", "another password"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses an email another account uses, and changes it after both links", async () => {
+    const store = createMemoryStore();
+    await store.signIn("me@example.com", "my password");
+    await expect(store.changeEmail("wrong", "new@example.com")).rejects.toThrow(WRONG_PASSWORD);
+    await expect(store.changeEmail("my password", " Taken@Example.com")).rejects.toThrow(
+      EMAIL_TAKEN,
+    );
+    await store.changeEmail("my password", "New@Example.com");
+    // Nothing changes until the links are opened.
+    expect((await store.getSession())?.email).toBe("me@example.com");
+    expect(await store.verifyEmailLink({ tokenHash: "half", type: "email_change" })).toBeNull();
+    expect((await store.getSession())?.email).toBe("me@example.com");
+    const session = await store.verifyEmailLink({ tokenHash: "abc", type: "email_change" });
+    expect(session?.email).toBe("new@example.com");
+    expect((await store.getSession())?.email).toBe("new@example.com");
   });
 });

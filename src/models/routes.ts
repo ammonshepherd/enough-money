@@ -79,6 +79,8 @@ export function routeHref(route: Route, month: Month): string {
  */
 export const MANAGE_SECTIONS = [
   "appearance",
+  "password",
+  "email",
   "groups",
   "plan",
   "income-rules",

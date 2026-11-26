@@ -102,6 +102,8 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   ]);
   await expect(list.getByRole("link").locator("strong")).toHaveText([
     "Appearance",
+    "Change password",
+    "Change email",
     "Envelope groups",
     "Import envelope plan",
     "Income rules",
@@ -139,6 +141,8 @@ test("Manage → Settings shows who is signed in and renames the household", asy
   const settings = page.getByRole("region", { name: "Settings" });
   await expect(settings.getByRole("listitem")).toHaveText([
     /^AppearanceLight, dark or match this device/,
+    /^Change passwordChoose a new password to sign in with/,
+    /^Change emailSign in with a different email/,
     /Test HomeHousehold name/,
     "test@example.comSigned in as",
   ]);

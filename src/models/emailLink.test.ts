@@ -4,6 +4,7 @@ import {
   checkNewPassword,
   loadPasswordNeeded,
   MIN_PASSWORD_LENGTH,
+  needsPassword,
   passwordNeededKey,
   readEmailLink,
   savePasswordNeeded,
@@ -20,6 +21,16 @@ describe("readEmailLink", () => {
       tokenHash: "pkce_xyz",
       type: "recovery",
     });
+  });
+
+  it("reads a Change email address link, which needs no password", () => {
+    expect(readEmailLink("?token_hash=abc&type=email_change")).toEqual({
+      tokenHash: "abc",
+      type: "email_change",
+    });
+    expect(needsPassword("email_change")).toBe(false);
+    expect(needsPassword("invite")).toBe(true);
+    expect(needsPassword("recovery")).toBe(true);
   });
 
   it("ignores other types, missing parts and no query", () => {
@@ -83,6 +94,8 @@ describe("password needed", () => {
   it("ignores unknown values and storage failures", () => {
     const storage = fake();
     storage.values.set(passwordNeededKey("u1"), "signup");
+    expect(loadPasswordNeeded(storage, "u1")).toBeNull();
+    storage.values.set(passwordNeededKey("u1"), "email_change");
     expect(loadPasswordNeeded(storage, "u1")).toBeNull();
     const broken = {
       getItem: () => {

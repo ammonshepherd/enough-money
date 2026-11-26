@@ -5,20 +5,33 @@
  * The app exchanges the token for a session, removes it from the address
  * bar, and asks for a new password before anything else.
  *
+ * The Change email address email (v0.51.0) links the same way with
+ * `type=email_change`. It sets no password: Supabase sends one link to the
+ * old address and one to the new, and the email changes once both are
+ * opened (`verifyEmailLink` returns null after the first).
+ *
  * Whether someone still has to set that password is kept in localStorage,
  * one key per user, so a reload does not skip the step.
  */
 import type { KeyValueStorage } from "./collapsedGroups";
 import { UserFacingError } from "./dataStore";
 
-export type EmailLinkType = "invite" | "recovery";
+export type EmailLinkType = "invite" | "recovery" | "email_change";
+
+/** The links after which a password has to be chosen. */
+export type PasswordLinkType = Exclude<EmailLinkType, "email_change">;
 
 export interface EmailLink {
   tokenHash: string;
   type: EmailLinkType;
 }
 
-const TYPES: readonly string[] = ["invite", "recovery"] satisfies EmailLinkType[];
+const TYPES: readonly string[] = ["invite", "recovery", "email_change"] satisfies EmailLinkType[];
+const PASSWORD_TYPES: readonly string[] = ["invite", "recovery"] satisfies PasswordLinkType[];
+
+/** Whether following this link means choosing a password next. */
+export const needsPassword = (type: EmailLinkType): type is PasswordLinkType =>
+  PASSWORD_TYPES.includes(type);
 
 /** The link in a URL's query string (`location.search`), or null when there is none. */
 export function readEmailLink(search: string): EmailLink | null {
@@ -41,6 +54,14 @@ export function withoutEmailLink(url: string): string {
 export const EXPIRED_LINK =
   "This link has expired or was already used. Ask for a new invite, or use Forgot password below.";
 
+/** After the first of a Change email address email's two links. */
+export const EMAIL_CHANGE_HALF_DONE =
+  "Link accepted. To finish changing your email, also open the link sent to your other address.";
+
+/** After the second: the email is changed. */
+export const emailChanged = (email: string) =>
+  `Your email is now ${email}. Use it the next time you sign in.`;
+
 /** The shortest password allowed (Supabase Auth's minimum is set to the same). */
 export const MIN_PASSWORD_LENGTH = 12;
 
@@ -59,10 +80,10 @@ export const passwordNeededKey = (userId: string) => `bb.auth.passwordNeeded.${u
 export function loadPasswordNeeded(
   storage: KeyValueStorage | null,
   userId: string,
-): EmailLinkType | null {
+): PasswordLinkType | null {
   try {
     const value = storage?.getItem(passwordNeededKey(userId));
-    return value && TYPES.includes(value) ? (value as EmailLinkType) : null;
+    return value && PASSWORD_TYPES.includes(value) ? (value as PasswordLinkType) : null;
   } catch {
     return null;
   }
@@ -72,7 +93,7 @@ export function loadPasswordNeeded(
 export function savePasswordNeeded(
   storage: (KeyValueStorage & Pick<Storage, "removeItem">) | null,
   userId: string,
-  type: EmailLinkType | null,
+  type: PasswordLinkType | null,
 ): void {
   try {
     if (type) storage?.setItem(passwordNeededKey(userId), type);

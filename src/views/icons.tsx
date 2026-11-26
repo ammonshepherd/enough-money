@@ -123,6 +123,12 @@ export const MoonIcon = () => <Icon path="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0
 
 export const HomeIcon = () => <Icon path="M3.5 11 12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5h4v5" />;
 /** A person in a circle: who is signed in (Manage → Settings). */
+/** A key: Change password. */
+export const KeyIcon = () => (
+  <Icon path="M14.5 4a5.5 5.5 0 1 1-5.2 7.3L4 16.6V20h3.4v-2h2v-2h2l1.2-1.2A5.5 5.5 0 0 1 14.5 4zM16.5 7.5h.01" />
+);
+/** An envelope seen as a letter: Change email. */
+export const MailIcon = () => <Icon path="M4 6h16v12H4zM4 7l8 6 8-6" />;
 export const UserIcon = () => (
   <Icon path="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 12.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6.5 18a6.5 6.5 0 0 1 11 0" />
 );

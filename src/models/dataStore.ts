@@ -65,12 +65,26 @@ export interface DataStore {
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   /**
-   * Signs in with the token from an Invite user or Reset password email
-   * (see emailLink.ts) and returns who it signed in.
+   * Signs in with the token from an Invite user, Reset password or Change
+   * email address email (see emailLink.ts) and returns who it signed in.
+   * Null only for the first of a Change email address email's two links,
+   * which changes nothing yet.
    */
-  verifyEmailLink(link: EmailLink): Promise<UserSession>;
+  verifyEmailLink(link: EmailLink): Promise<UserSession | null>;
   /** Sets the signed-in user's password (at least MIN_PASSWORD_LENGTH characters). */
   setPassword(password: string): Promise<void>;
+  /**
+   * Manage → Change password: checks the current password (WRONG_PASSWORD
+   * in signInDetails.ts), then sets the new one.
+   */
+  changePassword(currentPassword: string, newPassword: string): Promise<void>;
+  /**
+   * Manage → Change email: checks the current password, then asks Supabase
+   * Auth to email a confirmation link to the old and the new address. The
+   * email changes once both are opened. EMAIL_TAKEN when another account
+   * already uses it.
+   */
+  changeEmail(currentPassword: string, newEmail: string): Promise<void>;
   /** Emails a Reset password link. Says nothing about whether the account exists. */
   sendPasswordReset(email: string): Promise<void>;
 
