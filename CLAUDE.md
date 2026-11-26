@@ -57,7 +57,8 @@ always describes the app as of that version (including §9, not built yet).
   Reset password and Change email address email templates link to
   `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite|recovery|email_change`
   (never `{{ .ConfirmationURL }}`, whose `#` session clashes with hash
-  routing); the app exchanges the token, removes it from the URL and, after
+  routing; the emails' HTML is kept in `supabase/templates/`, v0.52.1,
+  and pasted into the dashboard); the app exchanges the token, removes it from the URL and, after
   an invite or reset, asks for a password before anything else
   (`src/models/emailLink.ts`,
   `src/controllers/useEmailLink.ts`, docs/SPEC.md → Sign in). The whole site
