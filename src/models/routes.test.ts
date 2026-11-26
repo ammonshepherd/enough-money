@@ -100,6 +100,14 @@ describe("Manage pages", () => {
     expect(manageSection("#manage")).toBeNull();
     expect(manageSection("#manage/nope")).toBeNull();
     expect(manageSection("#budget/groups")).toBeNull();
+    expect(manageSection("#manage/account")).toBe("account");
+    expect(manageSection("#manage/household")).toBe("household");
+    expect(manageSection("#manage/about")).toBe("about");
+  });
+
+  it("open Account Info from the old Change password and Change email links", () => {
+    expect(manageSection("#manage/password")).toBe("account");
+    expect(manageSection("#manage/email")).toBe("account");
   });
 
   it("read old Settings links as Manage and rewrite them", () => {

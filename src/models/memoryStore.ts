@@ -19,7 +19,13 @@ import { nameKey } from "./envelopePlan";
 import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
-import { EMAIL_TAKEN, normalizeEmail, SAME_PASSWORD, WRONG_PASSWORD } from "./signInDetails";
+import {
+  cleanDisplayName,
+  EMAIL_TAKEN,
+  normalizeEmail,
+  SAME_PASSWORD,
+  WRONG_PASSWORD,
+} from "./signInDetails";
 import { MAX_SPLIT_LINES } from "./splits";
 import {
   MAX_TAGS_PER_TRANSACTION,
@@ -44,6 +50,8 @@ export function createMemoryStore(): DataStore {
   let password: string | null = null;
   // A Change email waiting for its links, and emails other accounts use.
   let pendingEmail: string | null = null;
+  // The display name, kept across signing out like Supabase's user metadata.
+  let displayName = "";
   const otherAccounts = new Set(["taken@example.com"]);
   let data: BudgetData | null = null;
   const listeners = new Set<(s: UserSession | null) => void>();
@@ -134,7 +142,7 @@ export function createMemoryStore(): DataStore {
     },
     async signIn(email, typed) {
       password = typed;
-      setSession({ userId: "memory-user", email });
+      setSession({ userId: "memory-user", email, displayName });
     },
     async signOut() {
       setSession(null);
@@ -148,12 +156,13 @@ export function createMemoryStore(): DataStore {
         const next = {
           userId: "memory-user",
           email: pendingEmail ?? session?.email ?? "changed@example.com",
+          displayName,
         };
         pendingEmail = null;
         setSession(next);
         return next;
       }
-      const next = { userId: "memory-user", email: "invited@example.com" };
+      const next = { userId: "memory-user", email: "invited@example.com", displayName };
       setSession(next);
       return next;
     },
@@ -178,6 +187,11 @@ export function createMemoryStore(): DataStore {
       if (otherAccounts.has(email)) throw new UserFacingError(EMAIL_TAKEN);
       // Nothing changes until the emailed links are opened (verifyEmailLink).
       pendingEmail = email;
+    },
+    async setDisplayName(name) {
+      if (!session) throw new UserFacingError("Sign in first");
+      displayName = cleanDisplayName(name);
+      setSession({ ...session, displayName });
     },
     async sendPasswordReset() {
       // Nothing to send; Supabase too answers the same whether or not the account exists.

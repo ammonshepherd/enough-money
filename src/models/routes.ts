@@ -74,22 +74,30 @@ export function routeHref(route: Route, month: Month): string {
 }
 
 /**
- * The pages listed on Manage, each at its own address ("#manage/tags").
- * Restore sits apart from Backup, in the danger zone at the bottom.
+ * The pages listed on Manage, each at its own address ("#manage/tags"),
+ * in the list's order (v0.52.0). "groups" is Envelopes; "household" opens
+ * the household's rename sheet over the list.
  */
 export const MANAGE_SECTIONS = [
   "appearance",
-  "password",
-  "email",
+  "account",
+  "household",
   "groups",
   "plan",
-  "income-rules",
-  "tags",
-  "payees",
   "backup",
-  "feedback",
   "restore",
+  "payees",
+  "tags",
+  "income-rules",
+  "about",
+  "feedback",
 ] as const;
+
+/** Pages merged into another (v0.52.0): Change password and email are on Account Info. */
+const MERGED_SECTIONS: Record<string, ManageSection> = {
+  password: "account",
+  email: "account",
+};
 
 export type ManageSection = (typeof MANAGE_SECTIONS)[number];
 
@@ -99,12 +107,13 @@ export function manageHref(section?: ManageSection): string {
 
 /**
  * The Manage page a hash points at ("#manage/tags"), else null (the list).
- * The old "#settings/groups" points at Envelope groups.
+ * The old "#settings/groups" points at Envelopes, and "#manage/password"
+ * and "#manage/email" at Account Info.
  */
 export function manageSection(hash: string): ManageSection | null {
   const match = /^#\/?(?:manage|settings)\/([^/]+)\/?$/i.exec(hash);
-  const name = match?.[1]?.toLowerCase();
-  return MANAGE_SECTIONS.find((s) => s === name) ?? null;
+  const name = match?.[1]?.toLowerCase() ?? "";
+  return MANAGE_SECTIONS.find((s) => s === name) ?? MERGED_SECTIONS[name] ?? null;
 }
 
 /** An old "#settings…" link's new address ("#settings/groups" → "#manage/groups"), else null. */

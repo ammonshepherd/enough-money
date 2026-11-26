@@ -60,7 +60,7 @@ test("a group collapses to a count and its total left, and is remembered", async
   await expect(envelope(page, "Groceries")).toBeHidden();
 
   // Renaming the group keeps it collapsed.
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   await page.getByRole("button", { name: /^Bills/ }).click();
   const sheet = page.getByRole("dialog", { name: "Bills" });
   await sheet.getByRole("button", { name: "Rename Bills" }).click();

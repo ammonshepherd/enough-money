@@ -201,7 +201,7 @@ test("the card payments group is pinned first and holds only card envelopes", as
   await expect(cards.getByRole("button", { name: /^Add envelope to/ })).toHaveCount(0);
 
   // In Manage it is pinned above the groups that can be dragged.
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   await expect(groups.getByRole("list", { name: "Pinned group" })).toContainText(
     "Credit card payments",

@@ -150,8 +150,8 @@ export function AccountView({
     </div>
   );
 
-  // The way back sits above the info pane, styled like Manage's "← Manage",
-  // and scrolls away while the pane stays pinned.
+  // The way back sits above the info pane, a solid pill (.back-link), and
+  // scrolls away while the pane stays pinned.
   const back = (
     <a className="back-link account-back" href={listHref} aria-label="Back to accounts">
       <ArrowLeftIcon />

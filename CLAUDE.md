@@ -242,7 +242,7 @@ non-card budget balances − all envelope money (P included)`.
   device and user in localStorage (`src/models/collapsedGroups.ts`, by group
   id; never in Supabase); envelopes are added
   with each group's + button; groups are added, renamed, reordered and deleted
-  in Manage → Envelope groups (drag handles; tapping a group opens its sheet, where its
+  in Manage → Envelopes (drag handles; tapping a group opens its sheet, where its
   envelopes are reordered, renamed and moved to another group with "Move
   to…"). Renaming and moving go through `src/controllers/envelopeEdits.ts`.
 - Envelope rows run edge to edge. Line 1: the envelope icon (`EnvelopeIcon`,
@@ -320,21 +320,29 @@ non-card budget balances − all envelope money (P included)`.
   remembered per device and user, `layoutPrefs.ts`); an open account also
   sorts: Date, Name, Amount, Envelope, Income/expense, Ascending or
   Descending. Manage: Sign out. A desktop keeps its own controls.
-- Manage (decided in v0.46.0, named Settings before, `src/views/pages/ManagePage.tsx`):
-  a list of options, each opening its own page (`#manage/<option>`,
+- Manage (decided in v0.46.0, named Settings before, list redesigned in
+  v0.52.0, `src/views/pages/ManagePage.tsx`): no visible title or
+  introduction; a greeting ("Hi, ⟨display name⟩", else the email) heads a
+  list of options, each opening its own page (`#manage/<option>`,
   `manageSection` in `src/models/routes.ts`; old `#settings…` links are
-  rewritten). The list is in groups: Settings (Appearance; Change password
-  and Change email, v0.51.0, both checking the current password first, an
-  email another account uses refused by Supabase Auth, and the email changed
-  only once the links sent to both addresses are opened; the household's
-  name, whose pencil renames it in place, and who is signed in; v0.46.1), Budget (Envelope
-  groups, Import envelope plan), Transactions (Income rules, Tags, Payees),
-  Household (Backup, Give Feedback, About with the version), and a red Danger zone
-  (Restore from a backup, Sign out). Each row shows its name and one short
+  rewritten, `#manage/password` and `#manage/email` open Account Info).
+  The list is in groups: Settings (Appearance; Account Info, one page with
+  Display name, Change email and Change password; Household, whose line is
+  its name; Sign Out), Budget (Envelopes, Import Envelope Plan, Backup,
+  Restore from Backup in red), Transactions (Payees, Tags, Income Rules)
+  and Information (About Enough Money, a short page; Give Feedback;
+  Version, not a link). Change password and Change email (v0.51.0) both
+  check the current password first, an email another account uses is
+  refused by Supabase Auth, and the email changes only once the links sent
+  to both addresses are opened. The display name (v0.52.0) is kept in
+  Supabase Auth's user metadata (`display_name`, at most 50 characters,
+  `cleanDisplayName` in `src/models/signInDetails.ts`), never in the
+  household or Backup. Each row shows its name and one short
   line saying what it does, no counts. No Import transactions: bank CSVs
-  are imported from each account. A phone shows the list or one page (with
-  a "← Manage" link back); a desktop keeps the list on the left and opens
-  the option beside it (Envelope groups when none is chosen).
+  are imported from each account. A phone opens each option in a bottom
+  sheet over the list (Close, Escape or Back close it); a desktop keeps
+  the list on the left and opens the option beside it (Envelopes when none
+  is chosen).
 - Give Feedback (decided in v0.47.0, `src/views/Feedback.tsx`): a plain
   "Give Feedback" link ends every page (Budget, Accounts, Manage) and
   Manage lists it; both open `#manage/feedback`, a message box whose text
@@ -453,7 +461,7 @@ non-card budget balances − all envelope money (P included)`.
 - Backup (decided in v0.28.0, `src/models/backup.ts`): Manage → Backup exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings, income rules, tags, goals and payees); Restore from a backup (Manage's danger zone) loads such a file only into an empty
+  CSV mappings, income rules, tags, goals and payees); Restore from Backup (Manage → Budget, in red) loads such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).

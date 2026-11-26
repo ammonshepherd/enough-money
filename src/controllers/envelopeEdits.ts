@@ -16,7 +16,7 @@ function ordinaryEnvelope(data: BudgetData, envelopeId: string, refusal: string)
 
 /**
  * Renaming and moving an envelope, shared by the envelope sheet (Budget) and
- * the group sheet (Manage → Envelope groups). Both show the change at once, then save it.
+ * the group sheet (Manage → Envelopes). Both show the change at once, then save it.
  */
 export function envelopeEdits(budget: Budget, data: BudgetData) {
   return {

@@ -416,4 +416,25 @@ describe("changing the password or email (like Supabase Auth)", () => {
     expect(session?.email).toBe("new@example.com");
     expect((await store.getSession())?.email).toBe("new@example.com");
   });
+
+  it("keeps a display name with the sign-in and tells session listeners", async () => {
+    const store = createMemoryStore();
+    await expect(store.setDisplayName("Sam")).rejects.toThrow("Sign in first");
+    await store.signIn("me@example.com", "my password");
+    expect((await store.getSession())?.displayName).toBe("");
+    const heard: string[] = [];
+    store.onSessionChange((session) => heard.push(session?.displayName ?? "signed out"));
+    await store.setDisplayName("  Sam   Smith ");
+    expect(heard).toEqual(["Sam Smith"]);
+    expect((await store.getSession())?.displayName).toBe("Sam Smith");
+    await expect(store.setDisplayName("x".repeat(51))).rejects.toThrow(
+      "Use at most 50 characters.",
+    );
+    // Like Supabase's user metadata, it is still there after signing in again.
+    await store.signOut();
+    await store.signIn("me@example.com", "my password");
+    expect((await store.getSession())?.displayName).toBe("Sam Smith");
+    await store.setDisplayName("");
+    expect((await store.getSession())?.displayName).toBe("");
+  });
 });

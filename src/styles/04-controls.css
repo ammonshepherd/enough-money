@@ -16,8 +16,9 @@
   background: var(--brand-hover);
 }
 
-/* The way back to a list (v0.51.2: shared by Manage and Accounts): a solid
-   pill with an arrow and the list's name, "← Manage", "← Accounts". */
+/* The way back to a list (v0.51.2): a solid pill with an arrow and the
+   list's name, "← Accounts". (Manage had one until v0.52.0 opened its
+   options in sheets on a phone.) */
 
 .back-link {
   display: inline-flex;

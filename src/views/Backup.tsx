@@ -59,14 +59,14 @@ export function BackupExport({ budget, data }: { budget: Budget; data: BudgetDat
         </p>
       )}
       <p className="empty-state">
-        To load a backup file, use Restore from a backup at the bottom of Manage.
+        To load a backup file, use Restore from Backup under Budget on Manage.
       </p>
     </section>
   );
 }
 
 /**
- * Manage → Restore from a backup (in the danger zone): load a file into an
+ * Manage → Restore from Backup (red, under Budget): load a file into an
  * empty household. Any file can be chosen to see what it holds.
  */
 export function BackupRestore({ budget, data }: { budget: Budget; data: BudgetData }) {

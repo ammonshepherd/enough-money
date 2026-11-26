@@ -258,6 +258,7 @@ function SignedInApp({
         budget={budget}
         data={data}
         email={session.email}
+        displayName={session.displayName}
         onSignOut={store.signOut}
         desktop={desktop}
         section={manageOpen}

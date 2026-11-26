@@ -75,13 +75,13 @@ test("the old Activity link opens All accounts, and Back closes what is open", a
 test("signing out returns to the sign-in page", async ({ page }) => {
   await signInWithHousehold(page);
   await goTo(page, "Manage");
-  await expect(page.getByRole("region", { name: "Settings" })).toContainText(
-    "test@example.comSigned in as",
+  await expect(page.locator(".manage-greeting")).toHaveText("Hi, test@example.com");
+  await expect(page.getByRole("region", { name: "Information" })).toContainText(
+    /Version\d+\.\d+\.\d+$/,
   );
-  await expect(page.getByText(/^Version \d+\.\d+\.\d+$/)).toBeVisible();
-  // Sign out is in the page menu and in Manage's danger zone.
+  // Sign out is in the page menu and in Manage → Settings.
   await expect(
-    page.getByRole("region", { name: "Danger zone" }).getByRole("button", { name: /^Sign out/ }),
+    page.getByRole("region", { name: "Settings" }).getByRole("button", { name: /^Sign Out/ }),
   ).toBeVisible();
   await choosePageMenu(page, "Sign out");
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
@@ -93,74 +93,115 @@ test("Manage lists its options; each opens its own page, and Back returns to the
   await signInWithHousehold(page);
   await goTo(page, "Manage");
   const list = page.getByRole("navigation", { name: "Manage options" });
+  // No page title or introduction: a greeting heads the list.
+  await expect(page.locator(".page-heading")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "Manage" })).toHaveClass(
+    /visually-hidden/,
+  );
   await expect(list.getByRole("heading", { level: 2 })).toHaveText([
     "Settings",
     "Budget",
     "Transactions",
-    "Household",
-    "Danger zone",
+    "Information",
   ]);
-  await expect(list.getByRole("link").locator("strong")).toHaveText([
+  await expect(list.getByRole("listitem").locator("strong")).toHaveText([
     "Appearance",
-    "Change password",
-    "Change email",
-    "Envelope groups",
-    "Import envelope plan",
-    "Income rules",
-    "Tags",
-    "Payees",
+    "Account Info",
+    "Household",
+    "Sign Out",
+    "Envelopes",
+    "Import Envelope Plan",
     "Backup",
+    "Restore from Backup",
+    "Payees",
+    "Tags",
+    "Income Rules",
+    "About Enough Money",
     "Give Feedback",
-    "Restore from a backup",
+    "Version",
   ]);
+  // Restore is red, as a warning.
+  await expect(list.getByRole("link", { name: /^Restore from Backup/ })).toHaveClass(/danger/);
   // Bank CSVs are imported from each account, not here.
   await expect(list).not.toContainText("Import transactions");
 
-  // A phone shows one page at a time, with a way back to the list.
-  await list.getByRole("link", { name: /^Tags/ }).click();
-  await expect(page).toHaveURL(/#manage\/tags$/);
-  await expect(page.getByRole("region", { name: "Tags", exact: true })).toBeVisible();
-  await expect(list).toHaveCount(0);
-  await expect(page.locator(".card-debt")).toHaveCount(0);
-  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
-  await expect(page).toHaveURL(/#manage$/);
-  await expect(list).toBeVisible();
-  await list.getByRole("link", { name: /^Payees/ }).click();
-  await page.goBack();
-  await expect(list).toBeVisible();
-
-  // Old Settings links open Manage and show its new address.
+  // Old Settings links open Manage and show its new address. (First: Chrome
+  // closes a dialog a script opens just after another one closed.)
   await page.evaluate(() => (location.hash = "#settings/groups"));
   await expect(page).toHaveURL(/#manage\/groups$/);
   await expect(page.getByRole("region", { name: "Envelope groups" })).toBeVisible();
+  // Opened by a link, closing shows the list at #manage.
+  await page
+    .getByRole("dialog", { name: "Envelopes" })
+    .getByRole("button", { name: "Close" })
+    .click();
+  await expect(page).toHaveURL(/#manage$/);
+
+  // A phone opens each option in a sheet over the list; Close, Escape or
+  // Back return to the list.
+  await list.getByRole("link", { name: /^Tags/ }).click();
+  await expect(page).toHaveURL(/#manage\/tags$/);
+  const sheet = page.getByRole("dialog", { name: "Tags" });
+  await expect(sheet.getByRole("region", { name: "Tags", exact: true })).toBeVisible();
+  await expect(list).toBeAttached();
+  await expect(page.locator(".manage-back")).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(/#manage$/);
+  await list.getByRole("link", { name: /^Payees/ }).click();
+  await expect(page.getByRole("dialog", { name: "Payees" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Payees" })).toBeHidden();
+
+  await list.getByRole("link", { name: /^Backup/ }).click();
+  await expect(page.getByRole("dialog", { name: "Backup" })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("dialog", { name: "Backup" })).toBeHidden();
+  await expect(page).toHaveURL(/#manage$/);
+
+  // About opens a page; Version opens nothing.
+  await list.getByRole("link", { name: /^About Enough Money/ }).click();
+  await expect(page).toHaveURL(/#manage\/about$/);
+  await expect(page.getByRole("region", { name: "About Enough Money" })).toContainText(
+    /Version \d+\.\d+\.\d+/,
+  );
 });
 
-test("Manage → Settings shows who is signed in and renames the household", async ({ page }) => {
+test("Manage → Household renames the household; Save and Cancel close its sheet", async ({
+  page,
+}) => {
   await signInWithHousehold(page);
   await goTo(page, "Manage");
-  const settings = page.getByRole("region", { name: "Settings" });
-  await expect(settings.getByRole("listitem")).toHaveText([
-    /^AppearanceLight, dark or match this device/,
-    /^Change passwordChoose a new password to sign in with/,
-    /^Change emailSign in with a different email/,
-    /Test HomeHousehold name/,
-    "test@example.comSigned in as",
-  ]);
-  const household = settings.locator(".manage-household");
-  await household.getByRole("button", { name: "Rename household" }).click();
-  const form = household.getByRole("form", { name: "Rename household" });
-  // Escape cancels.
+  const household = page.getByRole("link", { name: /^Household/ });
+  await expect(household).toContainText("Test Home");
+  await household.click();
+  await expect(page).toHaveURL(/#manage\/household$/);
+  const sheet = page.getByRole("dialog", { name: "Household" });
+  const form = sheet.getByRole("form", { name: "Rename household" });
+  // The list stays behind the sheet; Escape closes it.
+  await expect(page.getByRole("navigation", { name: "Manage options" })).toBeAttached();
   await form.getByLabel("Household name").fill("Nope");
   await form.getByLabel("Household name").press("Escape");
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(/#manage$/);
   await expect(household).toContainText("Test Home");
-  await household.getByRole("button", { name: "Rename household" }).click();
+
+  await household.click();
   await form.getByLabel("Household name").fill("   ");
   await form.getByRole("button", { name: "Save" }).click();
   await expect(form.getByRole("alert")).toHaveText("Household name is required");
   await form.getByLabel("Household name").fill("  The Smiths ");
   await form.getByRole("button", { name: "Save" }).click();
-  await expect(form).toHaveCount(0);
+  await expect(sheet).toBeHidden();
   await expect(household).toContainText("The Smiths");
+
+  // Cancel closes it too, and Back after opening it returns to the list.
+  await household.click();
+  await sheet.getByRole("button", { name: "Cancel" }).click();
+  await expect(sheet).toBeHidden();
+  await household.click();
+  await page.goBack();
+  await expect(sheet).toBeHidden();
 });
 
 test("assets and manifest are served from /app/", async ({ page }) => {

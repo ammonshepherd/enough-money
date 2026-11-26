@@ -25,10 +25,12 @@ export interface Budget {
   reload: () => Promise<void>;
   /** Emails a message to the owner (Manage → Send feedback); changes no data. */
   sendFeedback: (message: string) => Promise<void>;
-  /** Manage → Change password (the store checks the current one first); changes no data. */
+  /** Manage → Account Info → Change password (the store checks the current one first); changes no data. */
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  /** Manage → Change email: emails confirmation links; changes no data. */
+  /** Manage → Account Info → Change email: emails confirmation links; changes no data. */
   changeEmail: (currentPassword: string, newEmail: string) => Promise<void>;
+  /** Manage → Account Info: the user's display name ("" removes it); changes no data. */
+  setDisplayName: (name: string) => Promise<void>;
 }
 
 const toState = (data: BudgetData | null): BudgetState =>
@@ -97,5 +99,16 @@ export function useBudget(store: DataStore): Budget {
     [store],
   );
 
-  return { state, change, createHousehold, reload, sendFeedback, changePassword, changeEmail };
+  const setDisplayName = useCallback((name: string) => store.setDisplayName(name), [store]);
+
+  return {
+    state,
+    change,
+    createHousehold,
+    reload,
+    sendFeedback,
+    changePassword,
+    changeEmail,
+    setDisplayName,
+  };
 }

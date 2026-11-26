@@ -43,7 +43,7 @@ test("groups are reordered by dragging their handle, with the mouse or the keybo
   await addGroupWithEnvelopes(page, "Fun", ["Games"]);
   await expect(budgetGroups(page)).toHaveText(["Bills", "Everyday", "Fun"]);
 
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   const list = settingsGroups(page);
   await expect(list.locator(".item-title")).toHaveText(["Bills", "Everyday", "Fun"]);
 
@@ -73,7 +73,7 @@ test("a group's sheet renames it and reorders its envelopes", async ({ page }) =
   await signInWithHousehold(page);
   await addGroupWithEnvelopes(page, "Everyday", ["Food", "Fuel", "Haircuts"]);
 
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   await settingsGroups(page)
     .getByRole("button", { name: /^Everyday/ })
     .click();
@@ -168,7 +168,7 @@ test("the group sheet renames envelopes and moves them to another group", async 
   await addGroupWithEnvelopes(page, "Bills", ["Rent"]);
   await addGroupWithEnvelopes(page, "Spare", ["Fuel"]);
 
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   await settingsGroups(page)
     .getByRole("button", { name: /^Spare/ })
     .click();
@@ -186,7 +186,7 @@ test("the group sheet renames envelopes and moves them to another group", async 
   await expect(sheet).toContainText("No envelopes yet.");
   await expect(settingsGroups(page)).toContainText("Bills2 envelopes");
   await sheet.getByRole("button", { name: "Delete group" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(sheet).toBeHidden();
 
   await goTo(page, "Budget");
   await expect(budgetEnvelopes(page, "Bills")).toHaveText(["Rent", "Gas"]);
