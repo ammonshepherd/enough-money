@@ -364,7 +364,8 @@ non-card budget balances − all envelope money (P included)`.
   accounts" (the month's In / Out) first, then Checking, Credit cards and
   Tracking groups (`groupAccounts`), each row a link with name and balance;
   closed accounts behind "Show closed accounts". Opening one replaces the
-  list with a sticky info pane (back arrow, name, pencil; figures in
+  list with an "← Accounts" link (styled as Manage's, outside the pane,
+  v0.51.2) and a sticky info pane (name, pencil; figures in
   two rows of three, v0.42.3: Month Start, Reconciled (named Current
   Balance, as the bank does, on a checking account or card; v0.42.1), then
   Available Balance on a checking account (v0.42.0), Total Owed on a card

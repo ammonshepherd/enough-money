@@ -424,6 +424,11 @@
   margin: var(--desktop-gap) 0 0;
 }
 
+/* Above the table and the panel, not in the table's card. */
+.desktop .account-back {
+  margin: var(--desktop-gap) 0 0;
+}
+
 .activity-work {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -586,12 +591,19 @@
   background: var(--brand-tint);
 }
 
+/* v0.51.2: the way back sits above the pane, outside it. */
+
+.account-back {
+  margin: 12px 16px;
+}
+
 .account-pane-head {
   display: grid;
-  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  grid-template-columns: minmax(0, 1fr) 2.75rem;
   align-items: center;
   gap: 10px;
-  margin: -4px -4px 8px;
+  min-block-size: 2.75rem;
+  margin: -4px -4px 8px 0;
 }
 
 .account-pane-head h2 {
@@ -626,24 +638,6 @@
 
 .pane-icon-button:hover {
   background: rgb(var(--brand-rgb) / 0.08);
-}
-
-/* The way back: a solid purple circle with a white arrow, easy to spot. */
-
-.pane-back {
-  color: var(--on-brand);
-  background: var(--brand);
-  box-shadow: 0 2px 6px rgb(var(--shadow-rgb) / 0.3);
-}
-
-.pane-back:hover {
-  background: var(--brand-hover-strong);
-}
-
-.pane-back svg {
-  inline-size: 22px;
-  block-size: 22px;
-  stroke-width: 2.6;
 }
 
 .pane-icon-button svg {

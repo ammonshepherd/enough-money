@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.51.1.
+Version described: 0.51.2.
 
 ## 1. Purpose
 
@@ -654,12 +654,13 @@ $0.00 balance.
 
 **An account open** (`#accounts/<id>`):
 
-- The month band (‹ › keep the account open), the card debt strip, then the
-  info pane, pinned to the top while the list scrolls (with the search and
+- The month band (‹ › keep the account open), the card debt strip, a
+  purple "← Accounts" link ("Back to accounts", to the list; the same pill
+  as Manage's "← Manage", outside the pane, scrolling away; v0.51.2), then
+  the info pane, pinned to the top while the list scrolls (with the search and
   sort row, on an open account, and the bar of ticked rows under it): an
   edge-to-edge `#F3EEF8` band, no frame around it.
-  - Line 1: back arrow (44×44, a full arrow, white on a solid purple
-    circle, "Back to accounts", a link to the list), the account name
+  - Line 1: the account name
     (`<h2>`; "Closed" tag on a closed account), and a pencil (44×44, "Edit
     ⟨name⟩") on an open account.
   - Figures (`accountFigures` in `activity.ts`, display only; label 9px
@@ -757,7 +758,7 @@ $0.00 balance.
 Mockup: `docs/mockups/activity-screen.html` (from v0.21.0; the account
 picker it shows is gone).
 
-- The info pane has the back arrow, "All accounts", and the totals strip,
+- Under the "← Accounts" link, the info pane has "All accounts" and the totals strip,
   display figures from `activityMonth` and `activityBalance`, not Available
   to Assign: IN (green, "+$X") and OUT (red, "−$X") for the month, dated in
   it, budget accounts only, voided left out, a split once, transfers left
