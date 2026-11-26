@@ -78,7 +78,7 @@ test("Manage keeps its list on the left and opens each option beside it", async 
   expect(t!.x).toBeGreaterThan(l!.x + l!.width - 1);
   expect(t!.width).toBeGreaterThan(l!.width);
   await expect(list).toBeVisible();
-  await expect(page.locator(".manage-back")).toHaveCount(0);
+  await expect(page.locator(".back-link")).toHaveCount(0);
 
   // Household opens beside the list too; saving says so there.
   await list.getByRole("link", { name: /^Household/ }).click();

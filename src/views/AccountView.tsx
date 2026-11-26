@@ -29,7 +29,7 @@ type Tool = "review" | "edit" | "import";
 /**
  * Accounts with something open: All accounts (one month, like the old
  * Activity page) or one account (all its transactions). An info pane pinned
- * to the top holds the back arrow, the figures, and for an open account the
+ * to the top (under an "← Accounts" link back to the list) holds the name, the figures, and for an open account the
  * pencil (edit) and Import CSV; To review and the transaction list follow.
  * An open account adds a search field and sort menu, pinned between the
  * pane and the ticked-rows bar; while a search is on, To review steps
@@ -150,12 +150,18 @@ export function AccountView({
     </div>
   );
 
+  // The way back sits above the info pane, a solid pill (.back-link), and
+  // scrolls away while the pane stays pinned.
+  const back = (
+    <a className="back-link account-back" href={listHref} aria-label="Back to accounts">
+      <ArrowLeftIcon />
+      Accounts
+    </a>
+  );
+
   const pane = (
     <section className="account-pane" aria-labelledby="account-pane-title">
       <div className="account-pane-head">
-        <a className="pane-icon-button pane-back" href={listHref} aria-label="Back to accounts">
-          <ArrowLeftIcon />
-        </a>
         <h2 id="account-pane-title">
           {title}
           {account?.closedAt && <span className="account-closed-tag">Closed</span>}
@@ -388,6 +394,7 @@ export function AccountView({
           <div className="activity-band">{monthNav}</div>
           <CardDebt data={data} />
           {notice}
+          {back}
           <div className="activity-work">
             <div className="activity-table">
               <div className="account-sticky">
@@ -413,6 +420,7 @@ export function AccountView({
           {menu}
           {monthNav}
           <CardDebt data={data} />
+          {back}
           <div className="account-sticky">
             {pane}
             {search}

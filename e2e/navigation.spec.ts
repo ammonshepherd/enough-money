@@ -62,7 +62,7 @@ test("the old Activity link opens All accounts, and Back closes what is open", a
   const nav = page.getByRole("navigation", { name: "Primary navigation" });
   await expect(nav.getByRole("link", { name: "Accounts" })).toHaveAttribute("aria-current", "page");
 
-  // The back arrow returns to the list; so does the browser's Back button.
+  // The "← Accounts" link returns to the list; so does the browser's Back button.
   await page.getByRole("link", { name: "Back to accounts" }).click();
   await expect(page).toHaveURL(/#accounts\/2030-01$/);
   await page.getByRole("link", { name: /^Open All accounts/ }).click();
