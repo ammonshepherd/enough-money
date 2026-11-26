@@ -38,6 +38,11 @@ sample household. Retake them all when a pictured screen changes:
 (`landing-screenshots/shots.spec.ts`, saving nothing) and writes
 600px-wide WebP files here. A new picture: add a `shot(…)` to that spec.
 
+`email/` holds pictures for the emails Supabase sends
+(`supabase/templates/`), as JPEG or PNG because email clients do not show
+WebP. `email/envelopes.jpg` is `images/envelopes.webp` cut to its envelope
+rows (600 × 836); cut it again when that picture is retaken.
+
 ## Sections and the old-link redirect
 
 `legacy-redirect.js` forwards any `#…` address to the app, except the

@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.52.0.
+Version described: 0.52.1.
 
 ## 1. Purpose
 
@@ -425,6 +425,15 @@ Supabase Auth settings these need (dashboard, production project):
 
 The default templates' `{{ .ConfirmationURL }}` would return the session
 after a `#`, which the hash routing would read as a page.
+
+The emails' HTML (v0.52.1) is kept in `supabase/templates/` and pasted
+into the dashboard (its README lists each file and subject): the coin logo
+and "Enough Money" above a white card with a purple top edge, one purple
+button with the plain link under it, a security note, and a footer saying
+why the email was sent. The invite also shows a picture of the Budget
+page's envelopes (`landing/email/envelopes.jpg`, served at
+`https://enoughmoney.app/email/`). The Password changed and Email address
+changed security notices use the same look and link only to the app.
 
 ### Create household
 
