@@ -100,6 +100,13 @@
   --success-mark: var(--success); /* check marks and rings */
   --assign: #1f7a45;
   --assign-shadow: rgba(20, 90, 50, 0.2);
+  /* The chosen Outflow / Inflow button in the transaction form (v0.53.1). */
+  --outflow-tint: #fdecea;
+  --outflow-tint-text: #b3261e;
+  --outflow-tint-shadow: rgba(179, 38, 30, 0.18);
+  --inflow-tint: #e6f4ec;
+  --inflow-tint-text: #1f6b42;
+  --inflow-tint-shadow: rgba(46, 139, 87, 0.18);
   --on-solid: #ffffff; /* text on green or red */
   --over: #a3470a;
   --over-bg: #fcebdd;
@@ -229,6 +236,12 @@
   --success-text: #5fd08f;
   --success-mark: #5fd08f;
   --assign-shadow: rgba(0, 0, 0, 0.4);
+  --outflow-tint: #3a1e22;
+  --outflow-tint-text: #ff8f84;
+  --outflow-tint-shadow: rgba(255, 143, 132, 0.18);
+  --inflow-tint: #17331f;
+  --inflow-tint-text: #5fd08f;
+  --inflow-tint-shadow: rgba(95, 208, 143, 0.18);
   --over: #ffb27a;
   --over-bg: #3b2416;
   --warning-bg: #2f2615;

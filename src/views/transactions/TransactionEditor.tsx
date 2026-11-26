@@ -81,7 +81,7 @@ export function TransactionEditor({
       </div>
       <div className="segmented field-direction" role="radiogroup" aria-label="Direction">
         {(["outflow", "inflow"] as const).map((direction) => (
-          <label key={direction}>
+          <label key={direction} className={`direction-${direction}`}>
             <input
               type="radio"
               name="direction"
