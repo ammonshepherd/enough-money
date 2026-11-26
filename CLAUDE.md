@@ -409,7 +409,9 @@ non-card budget balances − all envelope money (P included)`.
   only while to review). Ticked rows are highlighted; a bar under the pane
   shows their count and total with Mark reconciled / Mark unreconciled
   (decided in v0.27.0: `transactions.reconciled` is only a mark: no
-  statement balance, no lock on edits, no budget math). A transfer shows
+  statement balance, no lock on edits, no budget math). The transaction
+  form sets it too (v0.53.0): a small Reconciled switch, off for a new
+  transaction (for a transfer, this side only). A transfer shows
   once, from its money-out side ("From → To", signed and coloured by its
   side in the open account, or on All accounts by the side shown). A split
   shows a "Split (N)" pill and its parts, open until closed (not

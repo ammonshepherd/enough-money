@@ -62,6 +62,8 @@ export interface TransactionForm {
   transferMatch: OtherSideChoice;
   /** Its tags (for a transfer, this side's only). */
   tagIds: string[];
+  /** Marked reconciled with the bank (for a transfer, this side only). */
+  reconciled: boolean;
 }
 
 /** What saving will do: one transaction, or both sides of a transfer. */
@@ -141,6 +143,7 @@ export function formFromTransaction(tx: Transaction, data: BudgetData): Transact
     transferAccountId: transferPartner(data, tx)?.accountId ?? "",
     transferMatch: "auto",
     tagIds: [...tx.tagIds],
+    reconciled: tx.reconciled,
   };
 }
 
@@ -164,6 +167,7 @@ export function blankTransactionForm(data: BudgetData, accountId?: string | null
     transferAccountId: "",
     transferMatch: "auto",
     tagIds: [],
+    reconciled: false,
   };
 }
 
@@ -270,6 +274,7 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
       memo: form.memo.trim(),
       isIncome,
       tagIds: form.tagIds,
+      reconciled: form.reconciled,
       allocations:
         envelopeId === SPLIT
           ? splitAllocations(amount, form.split)
@@ -281,8 +286,8 @@ export function useTransactionEntry(budget: Budget, data: BudgetData) {
 
   /** Both sides of the transfer the form describes, and where the other side comes from. */
   const toTransfer = (form: TransactionForm): { input: TransferInput; other: OtherSide } => {
-    const { id, accountId, date, amount, payee, memo, tagIds } = toInput(form);
-    const side = { id, accountId, date, amount, payee, memo, tagIds };
+    const { id, accountId, date, amount, payee, memo, tagIds, reconciled } = toInput(form);
+    const side = { id, accountId, date, amount, payee, memo, tagIds, reconciled };
     const otherAccountId = transferAccountOf(form);
     if (!otherAccountId) throw new UserFacingError("Add another account to transfer to or from.");
     const existing = data.transactions.find((t) => t.id === form.id);

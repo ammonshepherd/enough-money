@@ -442,7 +442,7 @@ export function createMemoryStore(): DataStore {
         voided: false,
         allocations: lines.map((a) => ({ ...a })),
         importKey: previous?.importKey ?? null,
-        reconciled: previous?.reconciled ?? false,
+        reconciled: input.reconciled ?? previous?.reconciled ?? false,
         tagIds,
       };
       const index = b.transactions.findIndex((t) => t.id === tx.id);
@@ -663,7 +663,7 @@ export function createMemoryStore(): DataStore {
           voided: false,
           allocations: [],
           importKey: existing?.importKey ?? null,
-          reconciled: existing?.reconciled ?? false,
+          reconciled: side.reconciled ?? existing?.reconciled ?? false,
           tagIds: sideTags[index]!,
         };
         if (existing) Object.assign(existing, tx);

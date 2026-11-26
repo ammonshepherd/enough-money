@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.52.0.
+Version described: 0.53.0.
 
 ## 1. Purpose
 
@@ -185,8 +185,8 @@ SQL functions (all `security invoker` except `create_household`):
 | `create_household(name)`                                       | Creates a household and makes the caller its owner (refuses a second one).                                                                                                                                                                                                                                                                      |
 | `adjust_category_month(envelope, month, Δassigned, Δreleased)` | Adds to (never overwrites) a month's Assigned/Released, creating the row.                                                                                                                                                                                                                                                                       |
 | `move_between_envelopes(from, to, month, amount)`              | Moves Assigned between envelopes in one step.                                                                                                                                                                                                                                                                                                   |
-| `save_transaction(…, is_income, allocations, tag_ids)`         | Creates/updates one non-transfer transaction and its allocations (≤ 50 lines of `{category_id, amount}`; empty = Uncategorized); turning a transfer side into an ordinary transaction releases the other side. `tag_ids` replaces its tags (null = keep).                                                                                       |
-| `save_transfer(transfer_id, legs)`                             | Saves both sides of a transfer (new rows or existing ones, e.g. an imported row being linked); sides the transfer no longer has are released. A side with `tag_ids` gets those tags; a side without keeps its own.                                                                                                                              |
+| `save_transaction(…, allocations, tag_ids, reconciled)`        | Creates/updates one non-transfer transaction and its allocations (≤ 50 lines of `{category_id, amount}`; empty = Uncategorized); turning a transfer side into an ordinary transaction releases the other side. `tag_ids` replaces its tags (null = keep). `reconciled` sets its mark (null = keep; new: off).                                   |
+| `save_transfer(transfer_id, legs)`                             | Saves both sides of a transfer (new rows or existing ones, e.g. an imported row being linked); sides the transfer no longer has are released. A side with `reconciled` (true or false) gets that mark, a side without it keeps its own (new: off). A side with `tag_ids` gets those tags; a side without keeps its own.                         |
 | `import_transactions(account, format, rows)`                   | Inserts imported rows (≤ 2000) as `source='csv'`, skipping existing `import_key`s, applies `is_income` (never on cards or tracking accounts); a row with `match_id` gives that typed-in transaction its `import_key` (and `source='csv'`) instead, all or nothing; saves the account's `import_format`, returns how many were added or matched. |
 | `import_envelope_plan(household, month, rows)`                 | Creates missing groups/envelopes (names match ignoring case) and sets Planned for the month (≤ 500 rows).                                                                                                                                                                                                                                       |
 | `mark_income(ids)`                                             | Marks plain Uncategorized inflows (not on cards or tracking accounts) as Income; returns the count.                                                                                                                                                                                                                                             |
@@ -846,7 +846,11 @@ picker it shows is gone).
 ### Transaction dialog (add and edit)
 
 Fields: Outflow/Inflow, Amount (> 0), Payee, Envelope, Account, Date (default
-today), Memo, Tags. Adding (dialog or desktop panel), Amount has the focus
+today), Memo, Tags, Reconciled. Reconciled (v0.53.0) is a small on/off
+switch (`role="switch"`, green when on) for the same mark as Mark
+reconciled: off for a new transaction, showing the saved mark when editing
+(a transfer's switch is this side's only; a new other side starts off).
+Adding (dialog or desktop panel), Amount has the focus
 with its text selected, ready to type (v0.44.1; `focusMarked` in
 `src/views/focusMarked.ts`); in a tracking account there is no Envelope and Memo is called
 Notes. Adding, the Account picker lists every open account (budget accounts,

@@ -10,6 +10,8 @@ import {
   addAccount,
   openAllAccounts,
   chooseEnvelope,
+  editActivityRow,
+  openAccount,
 } from "./helpers";
 
 const plus = (page: import("@playwright/test").Page) =>
@@ -148,4 +150,34 @@ test("amounts fill in cents first; a typed period keeps what is typed", async ({
   await expect(dialog).toBeHidden();
   await openAllAccounts(page);
   await expect(activityRow(page, "Bakery")).toContainText("−$45.20");
+});
+
+test("the Reconciled switch marks a transaction when adding and editing", async ({ page }) => {
+  page.on("dialog", (dialog) => dialog.accept());
+  await signInWithHousehold(page);
+  await addAccount(page, { name: "Checking", balance: "500", date: "2030-01-01" });
+  await openAccount(page, "Checking");
+
+  const dialog = await openAddTransaction(page);
+  const reconciled = dialog.getByRole("switch", { name: "Reconciled" });
+  // A new transaction starts not reconciled.
+  await expect(reconciled).not.toBeChecked();
+  await dialog.getByLabel("Amount").fill("12");
+  await dialog.getByLabel("Payee").fill("Bakery");
+  await dialog.getByLabel("Date").fill("2030-01-05");
+  await reconciled.check();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  const row = activityRow(page, "Bakery");
+  await expect(row.getByRole("img", { name: "Reconciled", exact: true })).toBeVisible();
+
+  // Editing shows the mark and can take it off.
+  await editActivityRow(page, "Bakery");
+  const edit = page.getByRole("dialog", { name: "Edit transaction" });
+  const switchOn = edit.getByRole("switch", { name: "Reconciled" });
+  await expect(switchOn).toBeChecked();
+  await switchOn.uncheck();
+  await edit.getByRole("button", { name: "Save changes" }).click();
+  await expect(edit).toBeHidden();
+  await expect(row.getByRole("img", { name: "Not reconciled" })).toBeVisible();
 });
