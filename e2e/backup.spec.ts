@@ -32,9 +32,9 @@ test("export everything, then restore it into a new empty household", async ({ p
   ]);
   await expect(card.getByRole("status")).toContainText("1 account");
 
-  // Restore sits apart, in Manage's danger zone. This household has data:
+  // Restore sits apart from Backup, in red. This household has data:
   // a file can be checked but not restored.
-  await openManage(page, "Restore from a backup");
+  await openManage(page, "Restore from Backup");
   const restore = page.getByRole("region", { name: "Restore from a backup" });
   await expect(restore).toContainText("only be restored into an empty household");
   await restore.getByLabel("Backup file").setInputFiles(path);
@@ -48,7 +48,7 @@ test("export everything, then restore it into a new empty household", async ({ p
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.getByLabel("Household name").fill("Fresh");
   await page.getByRole("button", { name: "Create" }).click();
-  await openManage(page, "Restore from a backup");
+  await openManage(page, "Restore from Backup");
   const fresh = page.getByRole("region", { name: "Restore from a backup" });
   await expect(fresh).toContainText("This household is empty");
   await fresh.getByLabel("Backup file").setInputFiles(path);
@@ -58,7 +58,7 @@ test("export everything, then restore it into a new empty household", async ({ p
   await goTo(page, "Accounts");
   await expect(accountRow(page, "Checking")).toBeVisible();
   // Restored, the household is no longer empty.
-  await openManage(page, "Restore from a backup");
+  await openManage(page, "Restore from Backup");
   await expect(page.getByRole("region", { name: "Restore from a backup" })).toContainText(
     "only be restored into an empty household",
   );
@@ -66,7 +66,7 @@ test("export everything, then restore it into a new empty household", async ({ p
 
 test("a file that is not a backup is explained", async ({ page }) => {
   await signInWithHousehold(page);
-  await openManage(page, "Restore from a backup");
+  await openManage(page, "Restore from Backup");
   const card = page.getByRole("region", { name: "Restore from a backup" });
   await card
     .getByLabel("Backup file")

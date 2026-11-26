@@ -4,6 +4,8 @@ import {
   BAD_EMAIL,
   checkNewEmail,
   checkPasswordChange,
+  cleanDisplayName,
+  greeting,
   normalizeEmail,
   SAME_EMAIL,
   SAME_PASSWORD,
@@ -49,5 +51,19 @@ describe("checkNewEmail", () => {
       expect(() => checkNewEmail("me@example.com", text)).toThrow(UserFacingError);
       expect(() => checkNewEmail("me@example.com", text)).toThrow(BAD_EMAIL);
     }
+  });
+});
+
+describe("display name", () => {
+  it("is trimmed with single spaces, empty allowed, at most 50 characters", () => {
+    expect(cleanDisplayName("  Sam \t  Smith ")).toBe("Sam Smith");
+    expect(cleanDisplayName("   ")).toBe("");
+    expect(cleanDisplayName("x".repeat(50))).toHaveLength(50);
+    expect(() => cleanDisplayName("x".repeat(51))).toThrow(UserFacingError);
+  });
+
+  it("greets by the display name, else the email", () => {
+    expect(greeting("Sam", "sam@example.com")).toBe("Hi, Sam");
+    expect(greeting("", "sam@example.com")).toBe("Hi, sam@example.com");
   });
 });

@@ -65,7 +65,7 @@ test("Manage keeps its list on the left and opens each option beside it", async 
   // With nothing chosen, Envelope groups is open beside the list.
   const groups = page.getByRole("region", { name: "Envelope groups" });
   await expect(groups).toBeVisible();
-  await expect(list.getByRole("link", { name: /^Envelope groups/ })).toHaveAttribute(
+  await expect(list.getByRole("link", { name: /^Envelopes/ })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -79,6 +79,14 @@ test("Manage keeps its list on the left and opens each option beside it", async 
   expect(t!.width).toBeGreaterThan(l!.width);
   await expect(list).toBeVisible();
   await expect(page.locator(".manage-back")).toHaveCount(0);
+
+  // Household opens beside the list too; saving says so there.
+  await list.getByRole("link", { name: /^Household/ }).click();
+  const form = page.locator(".manage-detail").getByRole("form", { name: "Rename household" });
+  await form.getByLabel("Household name").fill("The Smiths");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form.getByRole("status")).toHaveText("The household’s name was saved.");
+  await expect(list.getByRole("link", { name: /^Household/ })).toContainText("The Smiths");
 });
 
 test("no page menu on a desktop: sort, order and Sign out stay on the page", async ({ page }) => {
@@ -94,5 +102,5 @@ test("no page menu on a desktop: sort, order and Sign out stay on the page", asy
   await sort.selectOption("name");
   await expect(order).toHaveValue("asc");
   await goTo(page, "Manage");
-  await expect(page.getByRole("button", { name: /^Sign out/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Sign Out/ })).toBeVisible();
 });

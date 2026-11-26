@@ -18,6 +18,8 @@ import type { AccountType, Allocation, BudgetData, IsoDate } from "./types";
 export interface UserSession {
   userId: string;
   email: string;
+  /** The name the user chose (Manage → Account Info), "" when none. */
+  displayName: string;
 }
 
 /** The account details that can be edited after it is added. */
@@ -74,17 +76,23 @@ export interface DataStore {
   /** Sets the signed-in user's password (at least MIN_PASSWORD_LENGTH characters). */
   setPassword(password: string): Promise<void>;
   /**
-   * Manage → Change password: checks the current password (WRONG_PASSWORD
+   * Manage → Account Info → Change password: checks the current password (WRONG_PASSWORD
    * in signInDetails.ts), then sets the new one.
    */
   changePassword(currentPassword: string, newPassword: string): Promise<void>;
   /**
-   * Manage → Change email: checks the current password, then asks Supabase
+   * Manage → Account Info → Change email: checks the current password, then asks Supabase
    * Auth to email a confirmation link to the old and the new address. The
    * email changes once both are opened. EMAIL_TAKEN when another account
    * already uses it.
    */
   changeEmail(currentPassword: string, newEmail: string): Promise<void>;
+  /**
+   * Manage → Account Info: sets the signed-in user's display name (kept with
+   * their sign-in, not the household; "" removes it). Session listeners hear
+   * the change. The name is checked by cleanDisplayName.
+   */
+  setDisplayName(name: string): Promise<void>;
   /** Emails a Reset password link. Says nothing about whether the account exists. */
   sendPasswordReset(email: string): Promise<void>;
 

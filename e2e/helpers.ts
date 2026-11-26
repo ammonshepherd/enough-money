@@ -249,7 +249,7 @@ export const goTo = (page: Page, name: "Budget" | "Accounts" | "Manage") =>
     .first()
     .click();
 
-/** Opens one of Manage's options by its title ("Tags", "Envelope groups"). */
+/** Opens one of Manage's options by its title ("Tags", "Envelopes"). */
 export async function openManage(page: Page, option: string) {
   await goTo(page, "Manage");
   await page
@@ -275,7 +275,7 @@ export const closeImportCsv = (page: Page) =>
 
 /** Adds a group in Manage, then its envelopes with the group's + button on Budget. */
 export async function addGroupWithEnvelopes(page: Page, group: string, envelopes: string[]) {
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   await groups.getByLabel("Group name").fill(group);
   await groups.getByRole("button", { name: "Add group" }).click();

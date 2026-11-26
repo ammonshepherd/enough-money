@@ -4,11 +4,13 @@ import type { Budget } from "../../controllers/useBudget";
 import { useHousehold } from "../../controllers/useHousehold";
 import { APP_VERSION } from "../../models/appInfo";
 import { manageHref, type ManageSection } from "../../models/routes";
+import { greeting } from "../../models/signInDetails";
 import type { BudgetData } from "../../models/types";
+import { About } from "../About";
 import { AppearanceSettings } from "../AppearanceSettings";
 import { BackupExport, BackupRestore } from "../Backup";
 import { CardDebt } from "../CardDebt";
-import { ErrorMessage } from "../components";
+import { ErrorMessage, Sheet } from "../components";
 import { EnvelopeGroups } from "../EnvelopeGroups";
 import { EnvelopePlanImport } from "../EnvelopePlanImport";
 import { Feedback } from "../Feedback";
@@ -20,22 +22,27 @@ import {
   HomeIcon,
   IncomeIcon,
   InfoIcon,
-  KeyIcon,
-  MailIcon,
   MessageIcon,
   MoonIcon,
-  PencilIcon,
   PersonIcon,
   PlanIcon,
   RestoreIcon,
   SignOutIcon,
   TagIcon,
   UserIcon,
+  VersionIcon,
 } from "../icons";
 import { MenuItem, PageMenu } from "../PageMenu";
 import { PayeeSettings } from "../PayeeSettings";
-import { ChangeEmail, ChangePassword } from "../SignInSettings";
+import { AccountInfo } from "../SignInSettings";
 import { TagSettings } from "../TagSettings";
+
+interface PageProps {
+  budget: Budget;
+  data: BudgetData;
+  email: string;
+  displayName: string;
+}
 
 interface Option {
   section: ManageSection;
@@ -44,27 +51,90 @@ interface Option {
   description: string;
   Icon: () => JSX.Element;
   /** The option's page. */
-  Page: (props: { budget: Budget; data: BudgetData; email: string }) => JSX.Element;
+  Page: (props: PageProps) => JSX.Element;
+  /** Red, as a warning (Restore from Backup). */
+  danger?: boolean;
 }
 
-/** Manage's list, in its groups. Restore sits apart, in the danger zone. */
+/** Manage → Household: the household's name, renamed in a sheet (or beside the list on a desktop). */
+function HouseholdPage({ budget, data, onDone }: PageProps & { onDone?: () => void }) {
+  const household = useHousehold(budget, data);
+  return (
+    // In the phone's sheet (onDone) the sheet is its frame, so no card.
+    <section className={onDone ? "stack" : "list-card"} aria-labelledby="household-title">
+      <div className="section-heading">
+        <h2 id="household-title">Household</h2>
+      </div>
+      <RenameHousehold name={household.name} onSave={household.rename} onDone={onDone} />
+    </section>
+  );
+}
+
+const ACCOUNT: Option = {
+  section: "account",
+  title: "Account Info",
+  description: "Your display name, email and password",
+  Icon: UserIcon,
+  Page: AccountInfo,
+};
+
+/**
+ * Manage's list, in its groups (v0.52.0). Household's description is its
+ * name, and Settings ends with Sign out and Information with the version
+ * (rows that open no page).
+ */
 const GROUPS: { title: string; options: Option[] }[] = [
+  {
+    title: "Settings",
+    options: [
+      {
+        section: "appearance",
+        title: "Appearance",
+        description: "Light, dark or match this device",
+        Icon: MoonIcon,
+        Page: AppearanceSettings,
+      },
+      ACCOUNT,
+      {
+        section: "household",
+        title: "Household",
+        description: "Household name",
+        Icon: HomeIcon,
+        Page: HouseholdPage,
+      },
+    ],
+  },
   {
     title: "Budget",
     options: [
       {
         section: "groups",
-        title: "Envelope groups",
+        title: "Envelopes",
         description: "Add, rename and order groups and envelopes",
         Icon: GroupsIcon,
         Page: EnvelopeGroups,
       },
       {
         section: "plan",
-        title: "Import envelope plan",
+        title: "Import Envelope Plan",
         description: "Upload Planned amounts for a month",
         Icon: PlanIcon,
         Page: EnvelopePlanImport,
+      },
+      {
+        section: "backup",
+        title: "Backup",
+        description: "Save all your data to a file",
+        Icon: ExportIcon,
+        Page: BackupExport,
+      },
+      {
+        section: "restore",
+        title: "Restore from Backup",
+        description: "Load a backup file into an empty household",
+        Icon: RestoreIcon,
+        Page: BackupRestore,
+        danger: true,
       },
     ],
   },
@@ -72,11 +142,11 @@ const GROUPS: { title: string; options: Option[] }[] = [
     title: "Transactions",
     options: [
       {
-        section: "income-rules",
-        title: "Income rules",
-        description: "Mark matching deposits as Income",
-        Icon: IncomeIcon,
-        Page: IncomeRules,
+        section: "payees",
+        title: "Payees",
+        description: "Names suggested when you add a transaction",
+        Icon: PersonIcon,
+        Page: PayeeSettings,
       },
       {
         section: "tags",
@@ -86,23 +156,23 @@ const GROUPS: { title: string; options: Option[] }[] = [
         Page: TagSettings,
       },
       {
-        section: "payees",
-        title: "Payees",
-        description: "Names suggested when you add a transaction",
-        Icon: PersonIcon,
-        Page: PayeeSettings,
+        section: "income-rules",
+        title: "Income Rules",
+        description: "Mark matching deposits as Income",
+        Icon: IncomeIcon,
+        Page: IncomeRules,
       },
     ],
   },
   {
-    title: "Household",
+    title: "Information",
     options: [
       {
-        section: "backup",
-        title: "Backup",
-        description: "Save all your data to a file",
-        Icon: ExportIcon,
-        Page: BackupExport,
+        section: "about",
+        title: "About Enough Money",
+        description: "What the app is for",
+        Icon: InfoIcon,
+        Page: About,
       },
       {
         // Also the "Give Feedback" link that ends every page.
@@ -116,51 +186,20 @@ const GROUPS: { title: string; options: Option[] }[] = [
   },
 ];
 
-/** The Settings group's pages (its other rows are the household and who is signed in). */
-const SETTINGS: Option[] = [
-  {
-    section: "appearance",
-    title: "Appearance",
-    description: "Light, dark or match this device",
-    Icon: MoonIcon,
-    Page: AppearanceSettings,
-  },
-  {
-    section: "password",
-    title: "Change password",
-    description: "Choose a new password to sign in with",
-    Icon: KeyIcon,
-    Page: ChangePassword,
-  },
-  {
-    section: "email",
-    title: "Change email",
-    description: "Sign in with a different email",
-    Icon: MailIcon,
-    Page: ChangeEmail,
-  },
-];
-
-const RESTORE: Option = {
-  section: "restore",
-  title: "Restore from a backup",
-  description: "Load a backup file into an empty household",
-  Icon: RestoreIcon,
-  Page: BackupRestore,
-};
-
-const OPTIONS = [...SETTINGS, ...GROUPS.flatMap((g) => g.options), RESTORE];
+const OPTIONS = GROUPS.flatMap((g) => g.options);
 
 /**
- * Manage: a list of options, each opening its own page ("#manage/tags").
- * On a phone the page replaces the list (its back arrow returns to it); on
- * a desktop the list stays on the left and the page opens beside it
- * (Envelope groups when none is chosen).
+ * Manage: a greeting, then a list of options, each opening its own page
+ * ("#manage/tags"). On a phone the page replaces the list (its back arrow
+ * returns to it), except Household, whose sheet opens over the list; on a
+ * desktop the list stays on the left and the page opens beside it
+ * (Envelopes when none is chosen).
  */
 export function ManagePage({
   budget,
   data,
   email,
+  displayName,
   onSignOut,
   desktop = false,
   section = null,
@@ -168,6 +207,7 @@ export function ManagePage({
   budget: Budget;
   data: BudgetData;
   email: string;
+  displayName: string;
   onSignOut: () => Promise<void>;
   desktop?: boolean;
   /** The open option, from the URL; null shows the list. */
@@ -175,13 +215,18 @@ export function ManagePage({
 }) {
   const signOut = useAsyncAction(onSignOut);
   const shown = section ?? (desktop ? "groups" : null);
-  const option = OPTIONS.find((o) => o.section === shown) ?? null;
+  // On a phone Household is a sheet over the list, not a page.
+  const renaming = !desktop && shown === "household";
+  const option = renaming ? null : (OPTIONS.find((o) => o.section === shown) ?? null);
   const listShown = desktop || !option;
+  const pageProps = { budget, data, email, displayName };
+  // Back to the list, in place of the sheet's address, so Back does not reopen it.
+  const closeHousehold = () => window.location.replace(manageHref());
 
   // A phone opens a page (or returns to the list) at its top.
   useEffect(() => {
-    if (!desktop) window.scrollTo(0, 0);
-  }, [desktop, section]);
+    if (!desktop && !renaming) window.scrollTo(0, 0);
+  }, [desktop, section, renaming]);
 
   return (
     <section className="page-view stack manage-page" aria-labelledby="manage-title">
@@ -191,55 +236,53 @@ export function ManagePage({
         </MenuItem>
       </PageMenu>
       {listShown && <CardDebt data={data} />}
-      <header className={listShown ? "page-heading" : "visually-hidden"}>
-        <h1 id="manage-title">Manage</h1>
-        {listShown && <p>Set up your budget and look after your household’s data.</p>}
-      </header>
+      {/* For screen readers only (v0.52.0): the greeting heads the page. */}
+      <h1 id="manage-title" className="visually-hidden">
+        Manage
+      </h1>
+      {listShown && <p className="manage-greeting">{greeting(displayName, email)}</p>}
 
       <div className="manage-layout">
         {listShown && (
           <nav className="manage-list" aria-label="Manage options">
-            <OptionGroup title="Settings" options={SETTINGS} shown={shown}>
-              <SettingsRows budget={budget} data={data} email={email} />
-            </OptionGroup>
             {GROUPS.map((group) => (
               <OptionGroup
                 key={group.title}
                 title={group.title}
                 options={group.options}
                 shown={shown}
+                household={data.household.name}
               >
-                {group.title === "Household" && (
-                  <li className="manage-row manage-info">
+                {group.title === "Settings" ? (
+                  <li>
+                    <button
+                      className="manage-row"
+                      type="button"
+                      disabled={signOut.pending}
+                      onClick={() => signOut.run()}
+                    >
+                      <span className="settings-row-icon" aria-hidden="true">
+                        <SignOutIcon />
+                      </span>
+                      <span className="settings-row-copy">
+                        <strong>Sign Out</strong>
+                        <small>Leave Enough Money on this device</small>
+                      </span>
+                    </button>
+                  </li>
+                ) : group.title === "Information" ? (
+                  <li className="manage-row manage-version">
                     <span className="settings-row-icon" aria-hidden="true">
-                      <InfoIcon />
+                      <VersionIcon />
                     </span>
                     <span className="settings-row-copy">
-                      <strong>About Enough Money</strong>
-                      <small>Version {APP_VERSION}</small>
+                      <strong>Version</strong>
+                      <small>{APP_VERSION}</small>
                     </span>
                   </li>
-                )}
+                ) : undefined}
               </OptionGroup>
             ))}
-            <OptionGroup title="Danger zone" options={[RESTORE]} shown={shown} danger>
-              <li>
-                <button
-                  className="manage-row"
-                  type="button"
-                  disabled={signOut.pending}
-                  onClick={() => signOut.run()}
-                >
-                  <span className="settings-row-icon" aria-hidden="true">
-                    <SignOutIcon />
-                  </span>
-                  <span className="settings-row-copy">
-                    <strong>Sign out</strong>
-                    <small>Leave Enough Money on this device</small>
-                  </span>
-                </button>
-              </li>
-            </OptionGroup>
             <ErrorMessage error={signOut.error} />
           </nav>
         )}
@@ -253,10 +296,26 @@ export function ManagePage({
               </a>
             )}
             {/* key: each page starts fresh (a half-typed form is not carried over). */}
-            <option.Page key={option.section} budget={budget} data={data} email={email} />
+            <option.Page key={option.section} {...pageProps} />
           </div>
         )}
       </div>
+
+      <Sheet
+        open={renaming}
+        label="Household"
+        className="sheet bottom"
+        onClose={() => {
+          if (renaming) closeHousehold();
+        }}
+      >
+        {() => (
+          <div className="household-sheet">
+            <span className="sheet-handle" aria-hidden="true" />
+            <HouseholdPage {...pageProps} onDone={closeHousehold} />
+          </div>
+        )}
+      </Sheet>
     </section>
   );
 }
@@ -265,24 +324,26 @@ function OptionGroup({
   title,
   options,
   shown,
-  danger = false,
+  household,
   children,
 }: {
   title: string;
   options: Option[];
   shown: ManageSection | null;
-  danger?: boolean;
-  children?: JSX.Element | false;
+  /** The household's name, shown as Household's description. */
+  household: string;
+  /** Rows after the options (Sign Out, Version). */
+  children?: JSX.Element;
 }) {
   const id = `manage-group-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
-    <section className={danger ? "manage-group danger" : "manage-group"} aria-labelledby={id}>
+    <section className="manage-group" aria-labelledby={id}>
       <h2 id={id}>{title}</h2>
       <ul>
-        {options.map(({ section, title: name, description, Icon }) => (
+        {options.map(({ section, title: name, description, Icon, danger }) => (
           <li key={section}>
             <a
-              className="manage-row"
+              className={danger ? "manage-row danger" : "manage-row"}
               href={manageHref(section)}
               aria-current={section === shown ? "page" : undefined}
             >
@@ -291,7 +352,7 @@ function OptionGroup({
               </span>
               <span className="settings-row-copy">
                 <strong>{name}</strong>
-                <small>{description}</small>
+                <small>{section === "household" ? household : description}</small>
               </span>
               <span className="settings-row-chevron" aria-hidden="true">
                 ›
@@ -306,64 +367,10 @@ function OptionGroup({
 }
 
 /**
- * The Settings group's rows: the household's name (its pencil renames it in
- * place) and who is signed in.
+ * The household's name in a form. In the phone's sheet, saving or Cancel
+ * closes it (`onDone`); beside the desktop list, saving says so and Cancel
+ * puts the name back.
  */
-function SettingsRows({
-  budget,
-  data,
-  email,
-}: {
-  budget: Budget;
-  data: BudgetData;
-  email: string;
-}) {
-  const household = useHousehold(budget, data);
-  const [editing, setEditing] = useState(false);
-
-  return (
-    <>
-      <li className="manage-row manage-household">
-        <span className="settings-row-icon" aria-hidden="true">
-          <HomeIcon />
-        </span>
-        {editing ? (
-          <RenameHousehold
-            name={household.name}
-            onSave={household.rename}
-            onDone={() => setEditing(false)}
-          />
-        ) : (
-          <>
-            <span className="settings-row-copy">
-              <strong>{household.name}</strong>
-              <small>Household name</small>
-            </span>
-            <button
-              className="pane-icon-button"
-              type="button"
-              aria-label="Rename household"
-              title="Rename household"
-              onClick={() => setEditing(true)}
-            >
-              <PencilIcon />
-            </button>
-          </>
-        )}
-      </li>
-      <li className="manage-row manage-user">
-        <span className="settings-row-icon" aria-hidden="true">
-          <UserIcon />
-        </span>
-        <span className="settings-row-copy">
-          <strong>{email}</strong>
-          <small>Signed in as</small>
-        </span>
-      </li>
-    </>
-  );
-}
-
 function RenameHousehold({
   name: current,
   onSave,
@@ -371,14 +378,25 @@ function RenameHousehold({
 }: {
   name: string;
   onSave: (name: string) => Promise<void>;
-  onDone: () => void;
+  onDone?: () => void;
 }) {
   const [name, setName] = useState(current);
+  const [saved, setSaved] = useState(false);
   const save = useAsyncAction(onSave);
+  const cancel = () => {
+    if (onDone) onDone();
+    else {
+      setName(current);
+      setSaved(false);
+      save.clearError();
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if ((await save.run(name)).ok) onDone();
+    if (!(await save.run(name)).ok) return;
+    if (onDone) onDone();
+    else setSaved(true);
   };
 
   return (
@@ -388,15 +406,16 @@ function RenameHousehold({
         <input
           value={name}
           maxLength={100}
-          autoFocus
+          data-autofocus
           onChange={(e) => {
             setName(e.target.value);
+            setSaved(false);
             save.clearError();
           }}
           onKeyDown={(e) => {
-            if (e.key === "Escape") {
+            if (e.key === "Escape" && !onDone) {
               e.preventDefault();
-              onDone();
+              cancel();
             }
           }}
         />
@@ -405,10 +424,13 @@ function RenameHousehold({
         <button className="primary-button" type="submit" disabled={save.pending}>
           Save
         </button>
-        <button className="secondary-button" type="button" onClick={onDone}>
+        <button className="secondary-button" type="button" onClick={cancel}>
           Cancel
         </button>
       </div>
+      <p className="feedback-status" role="status">
+        {saved && "The household’s name was saved."}
+      </p>
       <ErrorMessage error={save.error} />
     </form>
   );

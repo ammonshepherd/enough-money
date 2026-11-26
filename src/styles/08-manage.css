@@ -286,15 +286,16 @@
   gap: 1rem;
 }
 
-/* Manage → Settings: the household's name, with its pencil; renaming puts
-   the form beside the icon. */
+/* v0.52.0: the greeting heads Manage's list, in place of a page title. */
 
-.manage-household .form {
-  grid-column: 2 / -1;
-}
-
-.manage-household:has(.form) {
-  align-items: start;
+.manage-greeting {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--text);
+  font-size: clamp(1.9rem, 9vw, 2.6rem);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
 }
 
 .manage-group h2 {
@@ -353,17 +354,22 @@ button.manage-row:hover {
   box-shadow: inset 3px 0 0 var(--brand-text);
 }
 
-.manage-group.danger h2 {
+/* Restore from Backup: red, as a warning. */
+
+.manage-row.danger .settings-row-copy strong {
   color: var(--spend-text);
 }
 
-.manage-group.danger ul {
-  border-color: color-mix(in srgb, var(--spend-text) 35%, var(--border));
-}
-
-.manage-group.danger .settings-row-icon {
+.manage-row.danger .settings-row-icon {
   color: var(--spend-text);
   background: color-mix(in srgb, var(--spend) 10%, transparent);
+}
+
+/* v0.52.0: a phone renames the household in a bottom sheet over the list. */
+
+.household-sheet {
+  display: grid;
+  gap: 1rem;
 }
 
 /* A phone's way back from an option's page to the list. */

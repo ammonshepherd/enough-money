@@ -26,7 +26,7 @@ const CHECKING = [
 async function setUp(page: Page) {
   await signInWithHousehold(page);
   await addAccount(page, { name: "Checking", balance: "100", date: "2030-01-01" });
-  await openManage(page, "Income rules");
+  await openManage(page, "Income Rules");
 }
 
 const rules = (page: Page) => page.getByRole("region", { name: "Income rules" });
@@ -76,7 +76,7 @@ test("a rule added later marks the inflows already waiting", async ({ page }) =>
   await card.getByRole("button", { name: "Import 3 transactions" }).click();
   await expect(card.getByRole("status")).toContainText("Imported 3 transactions");
   await closeImportCsv(page);
-  await openManage(page, "Income rules");
+  await openManage(page, "Income Rules");
 
   // A rule too short to be useful is refused.
   await rules(page).getByLabel("Description contains").fill("a");
@@ -95,7 +95,7 @@ test("a rule added later marks the inflows already waiting", async ({ page }) =>
   await expect(available(page)).toContainText("$1,600.00");
 
   // Deleting the rule leaves what it marked alone.
-  await openManage(page, "Income rules");
+  await openManage(page, "Income Rules");
   await rules(page).getByRole("button", { name: "Delete" }).click();
   await expect(rules(page).getByRole("list", { name: "Income rules" })).toHaveCount(0);
   await page.goto("./#budget/2030-01");
@@ -108,7 +108,7 @@ test("Activity applies the rules to the review list", async ({ page }) => {
   await card.getByRole("button", { name: "Import 3 transactions" }).click();
   await expect(card.getByRole("status")).toContainText("Imported 3 transactions");
   await closeImportCsv(page);
-  await openManage(page, "Income rules");
+  await openManage(page, "Income Rules");
   await addRule(page, "refund");
 
   await openAllAccounts(page);

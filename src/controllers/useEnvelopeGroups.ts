@@ -15,7 +15,7 @@ function withOrder<T extends { id: string; position: number }>(items: T[], ids: 
 }
 
 /**
- * Manage → Envelope groups: add, rename, reorder, and delete empty groups;
+ * Manage → Envelopes: add, rename, reorder, and delete empty groups;
  * rename, reorder and move envelopes.
  */
 export function useEnvelopeGroups(budget: Budget, data: BudgetData) {

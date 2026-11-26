@@ -14,7 +14,13 @@ import type { Database, Json } from "./database.types";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { APP_VERSION } from "./appInfo";
 import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
-import { BAD_EMAIL, EMAIL_TAKEN, SAME_PASSWORD, WRONG_PASSWORD } from "./signInDetails";
+import {
+  BAD_EMAIL,
+  cleanDisplayName,
+  EMAIL_TAKEN,
+  SAME_PASSWORD,
+  WRONG_PASSWORD,
+} from "./signInDetails";
 import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
 import { checkGoalDetails } from "./goals";
@@ -37,8 +43,16 @@ function check(error: PostgrestError | null): void {
   throw new Error(`${error.message} (${error.code})`);
 }
 
-function toSession(user: { id: string; email?: string } | null | undefined): UserSession | null {
-  return user ? { userId: user.id, email: user.email ?? "" } : null;
+function toSession(
+  user: { id: string; email?: string; user_metadata?: Record<string, unknown> } | null | undefined,
+): UserSession | null {
+  if (!user) return null;
+  const name = user.user_metadata?.display_name;
+  return {
+    userId: user.id,
+    email: user.email ?? "",
+    displayName: typeof name === "string" ? name : "",
+  };
 }
 
 export function createSupabaseStore(
@@ -140,6 +154,15 @@ export function createSupabaseStore(
       }
       if (error.code === "email_address_invalid") throw new UserFacingError(BAD_EMAIL);
       throw new UserFacingError(error.message);
+    },
+
+    async setDisplayName(name) {
+      // Kept in Supabase Auth's user metadata, which the user may edit
+      // themselves: it is only ever shown back to them, as text.
+      const { error } = await db().auth.updateUser({
+        data: { display_name: cleanDisplayName(name) },
+      });
+      if (error) throw new UserFacingError(error.message);
     },
 
     async sendPasswordReset(email) {

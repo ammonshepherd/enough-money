@@ -13,10 +13,49 @@ const openOption = async (page: Page, name: string) => {
     .click();
 };
 
+test("Account Info holds the display name, email and password", async ({ page }) => {
+  await signInWithHousehold(page);
+  await openOption(page, "Account Info");
+  await expect(page).toHaveURL(/#manage\/account$/);
+  await expect(page.locator(".manage-detail").getByRole("heading", { level: 2 })).toHaveText([
+    "Display name",
+    "Change email",
+    "Change password",
+  ]);
+  // The old Change password and Change email links open it too.
+  for (const old of ["password", "email"]) {
+    await page.evaluate((hash) => (location.hash = hash), `#manage/${old}`);
+    await expect(page.getByRole("form", { name: "Change display name" })).toBeVisible();
+  }
+});
+
+test("a display name greets the user on Manage", async ({ page }) => {
+  await signInWithHousehold(page);
+  await goTo(page, "Manage");
+  const greeting = page.locator(".manage-greeting");
+  await expect(greeting).toHaveText("Hi, test@example.com");
+
+  await openOption(page, "Account Info");
+  const form = page.getByRole("form", { name: "Change display name" });
+  await form.getByLabel("Display name").fill("  Sam   Smith ");
+  await form.getByRole("button", { name: "Save name" }).click();
+  await expect(form.getByRole("status")).toHaveText("Your display name was saved.");
+  await expect(form.getByLabel("Display name")).toHaveValue("Sam Smith");
+  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await expect(greeting).toHaveText("Hi, Sam Smith");
+
+  // Emptied, the greeting uses the email again.
+  await openOption(page, "Account Info");
+  await form.getByLabel("Display name").fill("");
+  await form.getByRole("button", { name: "Save name" }).click();
+  await expect(form.getByRole("status")).toHaveText("Your display name was saved.");
+  await page.getByRole("link", { name: "Manage", exact: true }).first().click();
+  await expect(greeting).toHaveText("Hi, test@example.com");
+});
+
 test("Change password checks the current one and the new one", async ({ page }) => {
   await signInWithHousehold(page);
-  await openOption(page, "Change password");
-  await expect(page).toHaveURL(/#manage\/password$/);
+  await openOption(page, "Account Info");
   const form = page.getByRole("form", { name: "Change password" });
   const save = form.getByRole("button", { name: "Change password" });
   const fill = async (current: string, next: string, confirm = next) => {
@@ -43,8 +82,7 @@ test("Change password checks the current one and the new one", async ({ page }) 
 
 test("Change email refuses an email in use and sends links for a new one", async ({ page }) => {
   await signInWithHousehold(page);
-  await openOption(page, "Change email");
-  await expect(page).toHaveURL(/#manage\/email$/);
+  await openOption(page, "Account Info");
   const form = page.getByRole("form", { name: "Change email" });
   const send = async (email: string, password = "password123") => {
     await form.getByLabel("New email").fill(email);
@@ -64,7 +102,7 @@ test("Change email refuses an email in use and sends links for a new one", async
   );
   // Still signed in as before until the links are opened.
   await page.getByRole("link", { name: "Manage", exact: true }).first().click();
-  await expect(page.locator(".manage-user")).toContainText("test@example.com");
+  await expect(page.locator(".manage-greeting")).toHaveText("Hi, test@example.com");
 });
 
 test("a Change email address link says what happened", async ({ page }) => {

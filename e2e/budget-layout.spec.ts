@@ -42,7 +42,7 @@ test("the Budget page is envelopes under a sticky Available to Assign", async ({
 
 test("the + button adds envelopes, and groups are managed in Manage", async ({ page }) => {
   await signInWithHousehold(page);
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   const groups = page.getByRole("region", { name: "Envelope groups" });
   for (const name of ["Bills", "Spare"]) {
     await groups.getByLabel("Group name").fill(name);
@@ -59,7 +59,7 @@ test("the + button adds envelopes, and groups are managed in Manage", async ({ p
 
   // Only an empty group can be deleted, from its sheet.
   page.on("dialog", (dialog) => void dialog.accept()); // confirm()
-  await openManage(page, "Envelope groups");
+  await openManage(page, "Envelopes");
   const list = groups.getByRole("list", { name: "Envelope groups" });
   await expect(list.getByRole("listitem").filter({ hasText: "Bills" })).toContainText("1 envelope");
   await list.getByRole("button", { name: /^Bills/ }).click();

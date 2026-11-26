@@ -7,7 +7,7 @@ test("each month shows only the envelopes it uses", async ({ page }) => {
   await addAccount(page, { name: "Checking", balance: "1000", date: "2030-01-01" });
 
   // January's plan has Rent and Trip; February's has only Rent.
-  await openManage(page, "Import envelope plan");
+  await openManage(page, "Import Envelope Plan");
   const card = page.getByRole("region", { name: "Import envelope plan" });
   for (const [month, text] of [
     ["2030-01", "Rent,Bills,1200\nTrip,Fun,300"],

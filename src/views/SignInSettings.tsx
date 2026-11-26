@@ -2,11 +2,89 @@ import { useState, type FormEvent } from "react";
 import { useAsyncAction } from "../controllers/useAsyncAction";
 import type { Budget } from "../controllers/useBudget";
 import { MIN_PASSWORD_LENGTH } from "../models/emailLink";
-import { checkNewEmail, checkPasswordChange } from "../models/signInDetails";
+import {
+  checkNewEmail,
+  checkPasswordChange,
+  cleanDisplayName,
+  MAX_DISPLAY_NAME,
+} from "../models/signInDetails";
 import { ErrorMessage } from "./components";
 
-/** Manage → Change password: the current password, then the new one twice. */
-export function ChangePassword({ budget, email }: { budget: Budget; email: string }) {
+/**
+ * Manage → Account Info (v0.52.0): the user's display name, email and
+ * password, one card each.
+ */
+export function AccountInfo({
+  budget,
+  email,
+  displayName,
+}: {
+  budget: Budget;
+  email: string;
+  displayName: string;
+}) {
+  return (
+    <div className="stack account-info">
+      <ChangeDisplayName budget={budget} displayName={displayName} />
+      <ChangeEmail budget={budget} email={email} />
+      <ChangePassword budget={budget} email={email} />
+    </div>
+  );
+}
+
+/** Account Info → Display name: the name Manage greets the user by. */
+function ChangeDisplayName({ budget, displayName }: { budget: Budget; displayName: string }) {
+  const [name, setName] = useState(displayName);
+  const [done, setDone] = useState(false);
+  const save = useAsyncAction(async () => budget.setDisplayName(cleanDisplayName(name)));
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if ((await save.run()).ok) {
+      setName(cleanDisplayName(name));
+      setDone(true);
+    }
+  };
+
+  return (
+    <section className="list-card" aria-labelledby="display-name-title">
+      <div className="section-heading">
+        <h2 id="display-name-title">Display name</h2>
+      </div>
+      <form className="form" onSubmit={submit} aria-label="Change display name">
+        <label className="field">
+          Display name
+          <input
+            autoComplete="nickname"
+            maxLength={MAX_DISPLAY_NAME}
+            aria-describedby="display-name-hint"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setDone(false);
+              save.clearError();
+            }}
+          />
+        </label>
+        <p id="display-name-hint" className="field-hint">
+          What Enough Money calls you. Leave it empty to be greeted by your email.
+        </p>
+        <div className="form-actions">
+          <button className="primary-button" type="submit" disabled={save.pending}>
+            {save.pending ? "Saving…" : "Save name"}
+          </button>
+        </div>
+        <p className="feedback-status" role="status">
+          {done && "Your display name was saved."}
+        </p>
+        <ErrorMessage error={save.error} />
+      </form>
+    </section>
+  );
+}
+
+/** Account Info → Change password: the current password, then the new one twice. */
+function ChangePassword({ budget, email }: { budget: Budget; email: string }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -73,11 +151,11 @@ export function ChangePassword({ budget, email }: { budget: Budget; email: strin
 }
 
 /**
- * Manage → Change email: the new email and the current password. Supabase
+ * Account Info → Change email: the new email and the current password. Supabase
  * then emails a link to both addresses; the email changes once both are
  * opened, so until then the old one still signs in.
  */
-export function ChangeEmail({ budget, email }: { budget: Budget; email: string }) {
+function ChangeEmail({ budget, email }: { budget: Budget; email: string }) {
   const [newEmail, setNewEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);

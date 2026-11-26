@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.51.1.
+Version described: 0.52.0.
 
 ## 1. Purpose
 
@@ -400,7 +400,7 @@ whether or not the account exists. Its link (`type=recovery`) leads to
 "Choose a new password" the same way.
 
 Changing the password or email while signed in (v0.51.0) is in Manage →
-Settings (below). A Change email address email's link
+Account Info (below). A Change email address email's link
 (`type=email_change`) is taken out of the address bar the same way but
 asks for no password: Supabase sends one link to the old address and one
 to the new (Secure email change, on by default), and the email changes
@@ -452,7 +452,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   month summary only.
 - Notices: "N transactions to review ($X in, $Y out) are not in Available to
   Assign yet. Review them in All accounts."; no accounts → link to Accounts; no
-  groups → link to Manage → Envelope groups.
+  groups → link to Manage → Envelopes.
 - "No plan for ⟨month⟩ yet" (a dashed purple card under the notices), when the
   month opens with every Planned at $0.00: "Copy ⟨last month⟩’s Planned" and
   "Copy ⟨last month⟩’s Spent" (each only when last month has some; they fill
@@ -916,53 +916,63 @@ the matching inflow in ⟨account⟩.", "Also updates the ⟨account⟩ side.").
 
 ### Manage
 
-Named Settings until v0.46.0 (`src/views/pages/ManagePage.tsx`). A list of
-options, each opening its own page at its own address (`#manage/tags`).
-The list, under the heading "Manage" and the Credit card debt strip:
+Named Settings until v0.46.0 (`src/views/pages/ManagePage.tsx`; list
+redesigned in v0.52.0). A list of options, each opening its own page at its
+own address (`#manage/tags`). The page shows no title or introduction (its
+"Manage" heading is for screen readers only). Over the list, after the
+Credit card debt strip, a greeting in large type: "Hi, ⟨display name⟩", or
+"Hi, ⟨email⟩" when no display name is set (`greeting` in
+`src/models/signInDetails.ts`).
 
 - Groups, each a small uppercase heading over a rounded list. Every option
   is a row with an icon, its name, one short line saying what it does, and
   a chevron:
-  - **Settings** (v0.46.1): first Appearance ("Light, dark or match this
-    device", v0.48.0: Match system, Light or Dark, and the theme colour since
-    v0.49.0; see §8), Change password ("Choose a new password to sign in
-    with") and Change email ("Sign in with a different email", both
-    v0.51.0, below); then rows that open no page, so
-    no chevron: the
-    household's name over "Household name", with a pencil ("Rename
-    household") that turns the row into a form in place (Household name,
-    Save, Cancel; Escape cancels; 1–100 characters once trimmed,
-    `useHousehold`, `renameHousehold`); then the email signed in over
-    "Signed in as".
-  - **Budget:** Envelope groups ("Add, rename and order groups and
-    envelopes"), Import envelope plan ("Upload Planned amounts for a
-    month").
-  - **Transactions:** Income rules ("Mark matching deposits as Income"),
-    Tags ("Labels for your transactions"), Payees ("Names suggested when
-    you add a transaction").
-  - **Household:** Backup ("Save all your data to a file"), Give Feedback
-    ("Report a problem or suggest an idea"; v0.47.0), then About Enough
-    Money with the version (not a link).
-  - **Danger zone** (red heading, icons and border): Restore from a backup
-    ("Load a backup file into an empty household") and Sign out ("Leave
-    Enough Money on this device"; a phone also has it in the page menu).
+  - **Settings:** Appearance ("Light, dark or match this device", v0.48.0:
+    Match system, Light or Dark, and the theme colour since v0.49.0; see
+    §8), Account Info ("Your display name, email and password", below),
+    Household (its line is the household's name; below), and Sign Out
+    ("Leave Enough Money on this device", a button with no chevron; a
+    phone also has it in the page menu).
+  - **Budget:** Envelopes (`#manage/groups`, "Add, rename and order groups
+    and envelopes"), Import Envelope Plan ("Upload Planned amounts for a
+    month"), Backup ("Save all your data to a file"), and Restore from
+    Backup ("Load a backup file into an empty household"; its name and
+    icon in red, as a warning).
+  - **Transactions:** Payees ("Names suggested when you add a
+    transaction"), Tags ("Labels for your transactions"), Income Rules
+    ("Mark matching deposits as Income").
+  - **Information:** About Enough Money ("What the app is for"; a short
+    page saying what the app is, with a link to enoughmoney.app and the
+    version), Give Feedback ("Report a problem or suggest an idea";
+    v0.47.0), and Version with the version number (not a link).
 
 Bank CSVs are imported from each account (Accounts → Import CSV, §6); Manage
 has no Import transactions since v0.46.0.
 
-Change password and Change email (v0.51.0, `src/views/SignInSettings.tsx`,
-checks in `src/models/signInDetails.ts`) both ask for the current
+**Account Info** (`#manage/account`, v0.52.0, `src/views/SignInSettings.tsx`;
+the old `#manage/password` and `#manage/email` open it) shows three cards
+one under another: Display name, Change email and Change password.
+
+- **Display name:** one field (at most 50 characters) and Save name. It is
+  what Manage greets the user by; trimmed with runs of spaces made one
+  (`cleanDisplayName`), and empty removes it. It is kept with the sign-in
+  in Supabase Auth's user metadata (`display_name`), not in the household,
+  so other members never see it and Backup does not carry it. Saved, it
+  says "Your display name was saved." and the greeting changes at once.
+
+Change password and Change email (v0.51.0, checks in
+`src/models/signInDetails.ts`) both ask for the current
 password, which the store checks by signing in with it again (wrong:
 "Your current password is not right."), so an unlocked device is not
 enough to take the account over.
 
-- **Change password** (`#manage/password`): Current password, New password
+- **Change password:** Current password, New password
   (at least 12 characters) and Confirm new password, like Choose a password
   (`checkNewPassword`), and not the same as the current one. Saved, the
   fields clear, every other device signed in as this user is signed out
   (`signOut({ scope: "others" })`), and it says "Your password was changed.
   Other devices signed in as you are signed out."
-- **Change email** (`#manage/email`): New email and Current password. The
+- **Change email:** New email and Current password. The
   email is trimmed and lower-cased, and must look like an email and differ
   from the current one (`checkNewEmail`). One account per email: Supabase
   Auth refuses an email another account uses, and the app says "Another
@@ -971,13 +981,20 @@ enough to take the account over.
   old email still signs in (see Sign in). The household's data does not
   store the email, so nothing else changes.
 
+**Household** (`#manage/household`): the household's name in a form
+(Household name, Save, Cancel; 1–100 characters once trimmed,
+`useHousehold`, `renameHousehold`). On a phone it is a bottom sheet over
+the list: Save, Cancel, Escape or Back close it and return to `#manage`.
+On a desktop it opens beside the list like any option; saving says "The
+household’s name was saved." and Cancel or Escape put the name back.
+
 On a phone an option's page replaces the list: a purple "← Manage" link
 (back to `#manage`, as is the Manage tab) above the option's card, no
-Credit card debt strip, and the page scrolls to the top. On a desktop the
-list stays in a left column and the option opens beside it, its
-row highlighted; with none chosen, Envelope groups is open.
+greeting or Credit card debt strip, and the page scrolls to the top. On a
+desktop the list stays in a left column and the option opens beside it,
+its row highlighted; with none chosen, Envelopes is open.
 
-- **Envelope groups:** list with envelope counts. The card payments group
+- **Envelopes** (its page is headed Envelope groups): list with envelope counts. The card payments group
   (when there is one) is pinned first with a card icon in place of a handle
   and "Always first on Budget · N envelopes"; it cannot be dragged, and the
   others always save after it (v0.42.2). The rest have a six-dot drag handle on the
@@ -1029,7 +1046,7 @@ row highlighted; with none chosen, Envelope groups is open.
   saved payees (`payees`: name and `created_at`; a file from before
   v0.45.0 has none and restores with the payees of its typed transactions,
   as the trigger lists them).
-- **Restore from a backup** (danger zone, `BackupRestore`) reads a file, checks every database rule first
+- **Restore from Backup** (red, under Budget, `BackupRestore`) reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
   envelopes/import keys per account, tag and payee names ignoring case, tags per
   transaction (≤ 20), links, goals (amount above $0.00, one active per
