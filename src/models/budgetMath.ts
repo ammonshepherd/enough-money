@@ -509,7 +509,7 @@ export function availableToAssignFor(data: BudgetData, month: Month): Cents {
 }
 
 /** Income counted in `month` alone (see availableToAssignFor). */
-function incomeIn(data: BudgetData, month: Month): Cents {
+export function incomeIn(data: BudgetData, month: Month): Cents {
   const cards = cardPaymentEnvelopes(data);
   let income = 0;
   for (const tx of budgetTransactions(data)) {
@@ -605,6 +605,83 @@ export interface GroupRows {
   envelopes: EnvelopeRow[];
 }
 
+/**
+ * The month's plan against its Expected income (decided in v0.55.0). Display
+ * only, like Planned: it changes no other number, and only stops a Planned
+ * from being raised past what is left to plan (see plannedRaiseAllowed).
+ */
+export interface MonthPlanView {
+  /** The income expected this month; null when not set (no limit). */
+  expected: Cents | null;
+  /** Σ Planned this month, card payment envelopes left out. */
+  planned: Cents;
+  /** Expected − planned (below zero when over); null when not set. */
+  left: Cents | null;
+  /** max(0, −left): how far the plan is over the Expected income. */
+  over: Cents;
+}
+
+/**
+ * Left to plan(M) = Expected income(M) − Σ Planned(M), card payment
+ * envelopes left out (their purchases are planned in their own envelopes).
+ * No carry-over: each month's plan stands alone. Null when not set.
+ */
+export function planLeft(expected: Cents | null, planned: Cents): Cents | null {
+  if (expected === null) return null;
+  assertCents(expected, "expected income");
+  assertCents(planned, "planned");
+  return expected - planned;
+}
+
+/** The month's plan (see MonthPlanView). */
+export function monthPlanView(expected: Cents | null, planned: Cents): MonthPlanView {
+  const left = planLeft(expected, planned);
+  return { expected, planned, left, over: left === null ? 0 : Math.max(0, -left) };
+}
+
+/**
+ * Whether an envelope's Planned may change from `from` to `to`: lowering is
+ * always allowed, and so is anything when no Expected income is set or on a
+ * card's payment envelope (left out of the plan). Raising may use at most
+ * what is left to plan; a plan already over can only come down.
+ */
+export function plannedRaiseAllowed(
+  plan: MonthPlanView,
+  from: Cents,
+  to: Cents,
+  cardPayment = false,
+): boolean {
+  if (to <= from || cardPayment || plan.left === null) return true;
+  return to - from <= plan.left;
+}
+
+/** The Expected income stored for `month`, or null. */
+export function expectedIncomeFor(data: BudgetData, month: Month): Cents | null {
+  return data.monthPlans.find((p) => p.month === month)?.expectedIncome ?? null;
+}
+
+/** Amounts offered when setting a month's Expected income (each null when there is none). */
+export interface IncomeSuggestions {
+  /** Last month's Expected income. */
+  lastExpected: Cents | null;
+  /** Income received last month (inflows marked Income). */
+  lastActual: Cents | null;
+  /** The average income received over the last three months, rounded to the cent. */
+  average: Cents | null;
+}
+
+/** What to offer as `month`'s Expected income, from the months before it. */
+export function incomeSuggestions(data: BudgetData, month: Month): IncomeSuggestions {
+  const previous = addMonths(month, -1);
+  const actual = [1, 2, 3].map((back) => incomeIn(data, addMonths(month, -back)));
+  const sum = actual.reduce((a, b) => a + b, 0);
+  return {
+    lastExpected: expectedIncomeFor(data, previous),
+    lastActual: actual[0]! > 0 ? actual[0]! : null,
+    average: sum > 0 ? Math.round(sum / 3) : null,
+  };
+}
+
 export interface BudgetMonthView {
   month: Month;
   availableToAssign: Cents;
@@ -615,6 +692,8 @@ export interface BudgetMonthView {
   overAssigned: Cents;
   /** What the Assign action may add this month (see assignableIn). */
   assignable: Cents;
+  /** This month's plan against its Expected income. */
+  plan: MonthPlanView;
   totals: { planned: Cents; assigned: Cents; spent: Cents; remaining: Cents; saved: Cents };
   /** Every group and envelope; use visibleGroups for what to show. */
   groups: GroupRows[];
@@ -708,6 +787,7 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
   for (const tx of data.transactions) tx.allocations.forEach((a) => used.add(a.envelopeId));
   const cards = cardPaymentEnvelopes(data);
   const totals = { planned: 0, assigned: 0, spent: 0, remaining: 0, saved: 0 };
+  let plannedForIncome = 0;
   let unusedCount = 0;
 
   const rowFor = (envelope: Envelope): EnvelopeRow => {
@@ -746,6 +826,7 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
       later: laterReserve(history, month),
     };
     totals.planned += row.planned;
+    if (!card) plannedForIncome += row.planned;
     totals.assigned += row.assigned;
     // A payment envelope's "Spent" is card purchases moving in, not spending.
     if (!card) totals.spent += row.outflow;
@@ -774,6 +855,7 @@ export function buildBudgetMonth(data: BudgetData, month: Month): BudgetMonthVie
     toReview: { count, inflow, outflow },
     overAssigned: overAssigned(available),
     assignable: assignableIn(data, month),
+    plan: monthPlanView(expectedIncomeFor(data, month), plannedForIncome),
     totals,
     groups,
     unusedCount,
@@ -845,6 +927,19 @@ export function transactionShortfalls(
     if (payment && tx.isTransfer && tx.amount > 0) check(payment, month, tx.amount);
   }
   return shortfalls;
+}
+
+/** The budget with `month`'s Expected income set (null clears it), for showing a save at once. */
+export function withExpectedIncome(
+  data: BudgetData,
+  month: Month,
+  amount: Cents | null,
+): BudgetData {
+  const others = data.monthPlans.filter((p) => p.month !== month);
+  return {
+    ...data,
+    monthPlans: amount === null ? others : [...others, { month, expectedIncome: amount }],
+  };
 }
 
 /** A change to one envelope's stored month, such as a cover makes. */

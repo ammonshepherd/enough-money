@@ -144,7 +144,18 @@ export interface DataStore {
    * exist yet (matching names ignoring case) and sets each one's Planned for
    * the month.
    */
-  importEnvelopePlan(householdId: string, month: Month, rows: EnvelopePlanRow[]): Promise<void>;
+  importEnvelopePlan(
+    householdId: string,
+    month: Month,
+    rows: EnvelopePlanRow[],
+    /** The plan file's Income row, when it has one: the month's Expected income. */
+    expectedIncome?: Cents,
+  ): Promise<void>;
+  /**
+   * Sets a month's Expected income (null clears it: no limit on Planned).
+   * Display only, like Planned: no other number changes.
+   */
+  setExpectedIncome(householdId: string, month: Month, amount: Cents | null): Promise<void>;
 
   /**
    * Sets an envelope's goal: changes its active goal, or adds one when it has

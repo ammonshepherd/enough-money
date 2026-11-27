@@ -46,6 +46,7 @@ function budget(transactions: Transaction[]): BudgetData {
     accounts: [account("checking"), account("visa")],
     groups: [],
     envelopes: [],
+    monthPlans: [],
     envelopeMonths: [],
     transactions,
   };

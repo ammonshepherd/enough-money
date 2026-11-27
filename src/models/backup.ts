@@ -7,8 +7,8 @@
  * would lose: reconciled and voided marks, import keys (so later bank CSV
  * imports still skip rows already imported), where a row came from (`source`),
  * transfer links, splits, closed accounts, each card's payment envelope, the
- * saved CSV column mappings, tags, envelope goals, saved payees and when rows were created (ties in a day keep
- * their order). The SQL functions export_backup / restore_backup read and
+ * saved CSV column mappings, tags, envelope goals, saved payees, each month's
+ * Expected income and when rows were created (ties in a day keep their order). The SQL functions export_backup / restore_backup read and
  * write it; see supabase/migrations/20261020105751_backup_restore.sql.
  *
  * validateBackup checks the same rules the database enforces, so a broken or
@@ -120,6 +120,12 @@ export interface BackupPayee {
   created_at: string | null;
 }
 
+/** A month's Expected income. */
+export interface BackupMonthPlan {
+  month: string;
+  expected_income: number;
+}
+
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: typeof BACKUP_VERSION;
@@ -145,6 +151,8 @@ export interface Backup {
    * its typed transactions, as the database does when they are saved.
    */
   payees?: BackupPayee[];
+  /** Missing in files made before v0.55.0 (no Expected income then). */
+  month_plans?: BackupMonthPlan[];
 }
 
 /** Largest amount the database accepts (its bigint checks). */
@@ -301,6 +309,11 @@ export function validateBackup(value: unknown): Backup {
     created_at: timestamp,
   });
 
+  const monthPlans = optionalRows<BackupMonthPlan>(value, "month_plans", {
+    month: (v) => typeof v === "string" && isMonth(v),
+    expected_income: notNegative,
+  });
+
   const unique = <T>(list: T[], key: (row: T) => string, what: string) => {
     const seen = new Set<string>();
     for (const row of list) {
@@ -319,6 +332,7 @@ export function validateBackup(value: unknown): Backup {
   unique(tags, (t) => tagKey(t.name), "a tag name");
   unique(tagLinks, (x) => `${x.transaction_id} ${x.tag_id}`, "a tag on one transaction");
   unique(payees, (p) => payeeKey(p.name), "a payee name");
+  unique(monthPlans, (m) => m.month, "a month's Expected income");
   unique(
     transactions.filter((t) => t.import_key !== null),
     (t) => `${t.account_id} ${t.import_key}`,
@@ -544,7 +558,8 @@ export function isEmptyHousehold(data: BudgetData): boolean {
     data.transactions.length === 0 &&
     data.incomeRules.length === 0 &&
     data.tags.length === 0 &&
-    data.payees.length === 0
+    data.payees.length === 0 &&
+    data.monthPlans.length === 0
   );
 }
 

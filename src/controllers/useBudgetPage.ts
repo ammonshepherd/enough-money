@@ -6,9 +6,12 @@ import {
   goalProgress,
   groupLeft,
   givable,
+  incomeSuggestions,
   movableFrom,
+  plannedRaiseAllowed,
   visibleGroups,
   withEnvelopeMonth,
+  withExpectedIncome,
   type EnvelopeRow,
 } from "../models/budgetMath";
 import { evaluateAmount } from "../models/amountEquation";
@@ -77,6 +80,15 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
     [data, month, previous, offer],
   );
 
+  const suggestions = useMemo(() => incomeSuggestions(data, month), [data, month]);
+  // The plan strip shows with an Expected income, or when the month opened
+  // with a plan; typing the first Planned does not make it appear (and push
+  // the envelopes down under the user's finger) until the month opens again.
+  const [stripAtOpen, setStripAtOpen] = useState({ month, show: monthHasPlan(view) });
+  if (stripAtOpen.month !== month) setStripAtOpen({ month, show: monthHasPlan(view) });
+  const showPlanStrip =
+    view.plan.expected !== null || (stripAtOpen.month === month && stripAtOpen.show);
+
   const envelope = (id: string): EnvelopeRow => {
     const row = view.groups.flatMap((g) => g.envelopes).find((e) => e.id === id);
     if (!row) throw new UserFacingError("Envelope not found");
@@ -131,6 +143,38 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
      * to copy), or upload a plan CSV.
      */
     planStart,
+    /**
+     * This month's plan against its Expected income (left and over; no limit
+     * when not set) and the amounts to offer for it: last month's Expected
+     * income, last month's income and the average of the last three months.
+     */
+    plan: view.plan,
+    /** Whether the plan strip shows (see showPlanStrip above). */
+    showPlanStrip,
+    incomeSuggestions: suggestions,
+    previousLabel: formatMonth(previous),
+
+    /**
+     * Sets this month's Expected income (typed, rounded to the cent); an
+     * empty field clears it, so Planned has no limit. Display only: no other
+     * number changes.
+     */
+    setExpectedIncome: async (text: string) => {
+      const amount = text.trim() === "" ? null : amountTyped(text, "Expected income");
+      if (amount === view.plan.expected) return;
+      await budget.change(
+        (store) => store.setExpectedIncome(householdId, month, amount),
+        (current) => withExpectedIncome(current, month, amount),
+      );
+    },
+    /** Sets this month's Expected income to one of the suggested amounts. */
+    pickExpectedIncome: async (amount: Cents) => {
+      await budget.change(
+        (store) => store.setExpectedIncome(householdId, month, amount),
+        (current) => withExpectedIncome(current, month, amount),
+      );
+    },
+
     /** Stops offering ways to start the plan (after an upload). */
     planStarted: () => setOffer({ month, show: false }),
 
@@ -283,11 +327,18 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
 
     /**
      * Sets this month's Planned (typed in the row; rounded to the cent).
-     * Planned is a forecast only: nothing else changes.
+     * Planned is a forecast only: nothing else changes. With an Expected
+     * income set, raising it may use at most what is left to plan.
      */
     setPlanned: async (envelopeId: string, text: string) => {
       const planned = amountTyped(text, "Planned");
-      if (planned === envelope(envelopeId).planned) return;
+      const row = envelope(envelopeId);
+      if (planned === row.planned) return;
+      if (!plannedRaiseAllowed(view.plan, row.planned, planned, row.card !== null)) {
+        throw new UserFacingError(
+          `Only ${formatCents(Math.max(0, view.plan.left ?? 0))} left to plan in ${formatMonth(month)}.`,
+        );
+      }
       await budget.change(
         (store) => store.setPlanned(householdId, envelopeId, month, planned),
         (current) => withEnvelopeMonth(current, envelopeId, month, { planned }),

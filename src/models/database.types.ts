@@ -313,6 +313,35 @@ export type Database = {
           },
         ]
       }
+      month_plans: {
+        Row: {
+          created_at: string
+          expected_income: number
+          household_id: string
+          month: string
+        }
+        Insert: {
+          created_at?: string
+          expected_income: number
+          household_id: string
+          month: string
+        }
+        Update: {
+          created_at?: string
+          expected_income?: number
+          household_id?: string
+          month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "month_plans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payees: {
         Row: {
           created_at: string

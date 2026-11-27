@@ -115,6 +115,10 @@ function sample(): Backup {
       { name: "Corner Café", created_at: null },
       { name: "Market", created_at: "2030-01-05T10:00:00Z" },
     ],
+    month_plans: [
+      { month: "2030-01", expected_income: 420_000 },
+      { month: "2030-02", expected_income: 0 },
+    ],
   };
 }
 
@@ -304,6 +308,21 @@ describe("validateBackup with payees", () => {
   });
 });
 
+describe("validateBackup with Expected income", () => {
+  it("reads a file made before Expected income as having none", () => {
+    const old: Partial<Backup> = sample();
+    delete old.month_plans;
+    expect(() => validateBackup(old)).not.toThrow();
+  });
+
+  it("checks Expected income like the database", () => {
+    refuses((b) => (b.month_plans![0]!.expected_income = -1), "bad expected_income");
+    refuses((b) => (b.month_plans![0]!.expected_income = 1.5), "bad expected_income");
+    refuses((b) => (b.month_plans![0]!.month = "2030-13"), "bad month");
+    refuses((b) => (b.month_plans![1]!.month = "2030-01"), "Expected income appears twice");
+  });
+});
+
 describe("withFreshIds", () => {
   it("replaces every id and keeps every link", () => {
     let n = 0;
@@ -380,6 +399,7 @@ describe("helpers", () => {
       accounts: [],
       groups: [],
       envelopes: [],
+      monthPlans: [],
       envelopeMonths: [],
       transactions: [],
       incomeRules: [],
@@ -395,5 +415,8 @@ describe("helpers", () => {
       false,
     );
     expect(isEmptyHousehold({ ...empty, payees: [{ id: "p", name: "Market" }] })).toBe(false);
+    expect(
+      isEmptyHousehold({ ...empty, monthPlans: [{ month: "2030-01", expectedIncome: 1 }] }),
+    ).toBe(false);
   });
 });

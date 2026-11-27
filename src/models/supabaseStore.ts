@@ -23,6 +23,8 @@ import {
 } from "./signInDetails";
 import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
+import { checkExpectedIncome } from "./envelopePlan";
+import type { Cents } from "./money";
 import { checkGoalDetails } from "./goals";
 import { cleanPayeeName } from "./payees";
 import { asTagColor, cleanTagDetails, duplicateTagMessage } from "./tags";
@@ -82,6 +84,21 @@ export function createSupabaseStore(
     throw new UserFacingError(
       signIn.error.code === "invalid_credentials" ? WRONG_PASSWORD : signIn.error.message,
     );
+  };
+
+  /** One month_plans row per month; clearing (null) deletes it. */
+  const setExpectedIncome = async (householdId: string, month: string, amount: Cents | null) => {
+    checkExpectedIncome(month, amount);
+    const { error } =
+      amount === null
+        ? await db().from("month_plans").delete().eq("household_id", householdId).eq("month", month)
+        : await db()
+            .from("month_plans")
+            .upsert(
+              { household_id: householdId, month, expected_income: amount },
+              { onConflict: "household_id,month" },
+            );
+    check(error);
   };
 
   return {
@@ -179,7 +196,7 @@ export function createSupabaseStore(
       // Each query is paged, so each ends its order on a unique key: rows
       // tied on the earlier columns then keep their place between pages.
       const exact = { count: "exact" } as const;
-      const [accounts, groups, envelopes, months, transactions, rules, tags, goals, payees] =
+      const [accounts, groups, envelopes, months, transactions, rules, tags, goals, payees, plans] =
         await Promise.all([
           fetchAll(
             (from, to) =>
@@ -252,6 +269,15 @@ export function createSupabaseStore(
             (from, to) => db().from("payees").select("id, name", exact).order("id").range(from, to),
             check,
           ),
+          fetchAll(
+            (from, to) =>
+              db()
+                .from("month_plans")
+                .select("month, expected_income", exact)
+                .order("month")
+                .range(from, to),
+            check,
+          ),
         ]);
 
       return {
@@ -314,6 +340,7 @@ export function createSupabaseStore(
           archivedAt: g.archived_at,
         })),
         payees: payees.map((p) => ({ id: p.id, name: p.name })),
+        monthPlans: plans.map((p) => ({ month: p.month, expectedIncome: p.expected_income })),
       };
     },
 
@@ -483,14 +510,20 @@ export function createSupabaseStore(
       check(error);
     },
 
-    async importEnvelopePlan(householdId, month, rows) {
+    async importEnvelopePlan(householdId, month, rows, expectedIncome) {
+      if (expectedIncome !== undefined) checkExpectedIncome(month, expectedIncome);
       const { error } = await db().rpc("import_envelope_plan", {
         p_household_id: householdId,
         p_month: month,
         p_rows: rows.map(({ group, envelope, planned }) => ({ group, envelope, planned })),
       });
       check(error);
+      // Checked above, so only a lost connection can stop this after the plan
+      // is in; Expected income is display only and can be set again by hand.
+      if (expectedIncome !== undefined) await setExpectedIncome(householdId, month, expectedIncome);
     },
+
+    setExpectedIncome,
 
     async saveTransaction(_householdId, input) {
       const { error } = await db().rpc("save_transaction", {

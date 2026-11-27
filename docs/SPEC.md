@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.54.3.
+Version described: 0.55.0.
 
 ## 1. Purpose
 
@@ -170,6 +170,7 @@ visitors get nothing.
 | `tags`                    | name (1–30 chars, trimmed; unique per household ignoring case), `color` (grey, red, orange, yellow, green, teal, blue, purple or pink). Deleting one takes it off its transactions.                                                                                     |
 | `transaction_tags`        | (transaction, tag), each pair once; at most 20 tags per transaction (checked by the save functions). Cascades when either is deleted.                                                                                                                                   |
 | `envelope_goals`          | envelope, `amount` (> 0), `goal_date`, `archived_at` (null = active). At most one active goal per envelope (partial unique index); never on a card's payment envelope (trigger). Cascades when the envelope is deleted. Display only (v0.44.0).                         |
+| `month_plans`             | (household, `YYYY-MM`) → `expected_income` (0 to 999,999,999,999 cents): the month's Expected income (v0.55.0). No row = not set (no limit on Planned). Display only: the limit is the app's check.                                                                     |
 | `payees`                  | name (1–200 chars, trimmed; unique per household ignoring case). The saved payees the form suggests (v0.45.0); transactions keep their payee as text, with no link to this table. Filled by a trigger (below); deleting one changes no transaction.                     |
 
 Database checks (constraint triggers, deferred to commit where noted):
@@ -254,7 +255,25 @@ These are implemented in `budgetMath.ts` and the controllers:
   `laterReleaseCuts`): each such month releases what it is short of less, so its Saved stays at $0.00 and
   its Remaining drops by the same; no money moves between envelopes.
 - **Release from Saved:** amount above 0 and at most Saved.
-- **Planned:** 0 or more; input only.
+- **Planned:** 0 or more; input only, except for the Expected income limit
+  below.
+- **Expected income** (decided in v0.55.0, `planLeft`, `monthPlanView`
+  and `plannedRaiseAllowed` in `budgetMath.ts`; display only like Planned,
+  it changes no other number): each month may have one Expected income
+  (`month_plans`; none = no limit). Left to plan(M) = Expected income(M) −
+  Σ Planned(M), card payment envelopes left out (their purchases are
+  planned in their own envelopes); no carry-over between months; Over
+  planned = max(0, −Left to plan). Only raising a Planned is limited: the
+  rise may use at most what is left ("Only $X left to plan in ⟨Month
+  YYYY⟩."), so a plan already over can only come down. Everything else is
+  allowed and may leave the plan over: lowering or clearing the Expected
+  income, copying last month's Planned or Spent, a plan CSV import, and two
+  people raising Planned at once (the check is the app's). Every Planned
+  counts in full, even one meant to be paid from Saved (decided: keep it
+  simple). Suggested amounts (`incomeSuggestions`): last month's Expected
+  income, last month's income (inflows marked Income) and the average of
+  the last three months' income (rounded to the cent), each offered once
+  and only when above $0.00 or set.
 - **Cover prompt** (spending into an envelope, or a card payment from its payment
   envelope, that would make Remaining negative): title "⟨Envelope⟩ would be $X
   short in ⟨Month⟩". After the undo above (when offered), a new
@@ -471,12 +490,29 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   over assigned it is "Take back from an envelope" with "Amount to take back"
   (starting at the amount over; at most the envelope's Remaining), which
   returns money to Available to Assign. This month's income is on the desktop
-  month summary only.
+  month summary and in the Expected income sheet.
+- Plan strip (v0.55.0, `PlanStrip` in `src/views/budget/ExpectedIncome.tsx`),
+  shown when the month has an Expected income or opened with a plan (as the
+  plan card, decided when the month opens, so typing the first Planned does
+  not push the envelopes down): shaped like the
+  Available to Assign banner, under it in the same sticky area, in the
+  Planned cells' colours (purple tint, purple text; orange when over). Left
+  "PLANNED $X of $Y" (no "of" without an Expected income), right "$Z left to
+  plan", "Over planned $Z" or "Set Expected income". On a desktop it sits at
+  the right of the purple band. Tapping it opens "Expected income for
+  ⟨month⟩" (a dialog): "Income so far: $A of $E expected", the suggested
+  amounts as one-tap buttons ("⟨last month⟩’s Expected income $X",
+  "⟨last month⟩’s income $X", "3-month average income $X"), the amount field
+  with Save, and "Clear Expected income (no limit on Planned)" when one is
+  set.
 - Notices: "N transactions to review ($X in, $Y out) are not in Available to
   Assign yet. Review them in All accounts."; no accounts → link to Accounts; no
   groups → link to Manage → Envelopes.
 - "No plan for ⟨month⟩ yet" (a dashed purple card under the notices), when the
-  month opens with every Planned at $0.00: "Copy ⟨last month⟩’s Planned" and
+  month opens with every Planned at $0.00, in two steps, neither required:
+  "1. Set the income you expect this month…" with the suggested amounts and
+  the Expected income field (as in the plan strip's dialog), then "2. Fill in
+  Planned…" with "Copy ⟨last month⟩’s Planned" and
   "Copy ⟨last month⟩’s Spent" (each only when last month has some; they fill
   Planned only where it is still $0.00, card payment envelopes left out) and
   "Upload a plan CSV" (a bottom sheet with the plan import for this month, no
@@ -1097,7 +1133,9 @@ none chosen, Envelopes is open.
   ones too (`envelope_goals`; files from before v0.44.0 have none), and
   saved payees (`payees`: name and `created_at`; a file from before
   v0.45.0 has none and restores with the payees of its typed transactions,
-  as the trigger lists them).
+  as the trigger lists them), and each month's Expected income
+  (`month_plans`: month and `expected_income`; a file from before v0.55.0
+  has none).
 - **Restore from Backup** (red, under Budget, `BackupRestore`) reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
   envelopes/import keys per account, tag and payee names ignoring case, tags per
@@ -1187,7 +1225,14 @@ Columns `category, group, planned amount` (header optional; with a header the
 columns may be in any order: `category|envelope`, `group|categorygroup|
 envelopegroup`, `plannedamount|planned|plan|amount`). A first row whose third
 cell is an amount is data. ≤ 500 rows; names ≤ 100 characters; planned ≥ 0.
-Envelopes not in the file are left alone.
+Envelopes not in the file are left alone. One row with category `Income`
+or `Expected income` (any case) and an empty group sets the month's
+Expected income (v0.55.0; a second such row is invalid; an envelope named
+Income with a group is an ordinary row). The preview shows the Expected
+income and the month's Planned after the import against it ("Planned after
+the import: $X of $Y, $Z left to plan", or over planned by $Z in orange);
+the import is allowed when over. The Income row counts in "Import N rows"
+and is saved with the plan (`importEnvelopePlan`'s `expectedIncome`).
 
 ## 8. Look and feel
 

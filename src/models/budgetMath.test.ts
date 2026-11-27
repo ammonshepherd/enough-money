@@ -17,9 +17,15 @@ import {
   movableFrom,
   overAssigned,
   spentFromAmounts,
+  buildBudgetMonth,
+  incomeSuggestions,
+  monthPlanView,
+  planLeft,
+  plannedRaiseAllowed,
   type EnvelopeMonthInput,
   type EnvelopeRow,
 } from "./budgetMath";
+import type { BudgetData, Transaction } from "./types";
 
 describe("computeEnvelopeMonth", () => {
   it("computes Remaining = Assigned + Released − Spent", () => {
@@ -455,5 +461,149 @@ describe("goalProgress", () => {
 
   it("counts a short envelope as holding nothing", () => {
     expect(goalProgress(goal, -500, "2026-11-19")).toMatchObject({ have: 0, left: 120_000 });
+  });
+});
+
+describe("Expected income and the plan (v0.55.0)", () => {
+  const data = (over: Partial<BudgetData> = {}): BudgetData => ({
+    household: { id: "h", name: "Home" },
+    incomeRules: [],
+    tags: [],
+    goals: [],
+    payees: [],
+    accounts: [
+      {
+        id: "chk",
+        name: "Checking",
+        type: "checking",
+        openingBalance: 0,
+        openingDate: "2026-01-01",
+        onBudget: true,
+        closedAt: null,
+        importFormat: null,
+      },
+      {
+        id: "visa",
+        name: "Visa",
+        type: "credit_card",
+        openingBalance: 0,
+        openingDate: "2026-01-01",
+        onBudget: true,
+        closedAt: null,
+        importFormat: null,
+      },
+    ],
+    groups: [
+      { id: "cards", name: "Credit card payments", position: 0 },
+      { id: "bills", name: "Bills", position: 1 },
+    ],
+    envelopes: [
+      { id: "pay", groupId: "cards", name: "Visa", position: 0, cardAccountId: "visa" },
+      { id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null },
+      { id: "food", groupId: "bills", name: "Food", position: 1, cardAccountId: null },
+    ],
+    monthPlans: [{ month: "2026-11", expectedIncome: 300_000 }],
+    envelopeMonths: [
+      { envelopeId: "rent", month: "2026-11", assigned: 0, released: 0, planned: 150_000 },
+      { envelopeId: "food", month: "2026-11", assigned: 0, released: 0, planned: 50_000 },
+      // Left out of the plan: card purchases are planned in their own envelopes.
+      { envelopeId: "pay", month: "2026-11", assigned: 0, released: 0, planned: 90_000 },
+    ],
+    transactions: [],
+    ...over,
+  });
+  const income = (id: string, date: string, amount: number, accountId = "chk"): Transaction => ({
+    id,
+    accountId,
+    date,
+    amount,
+    payee: "Pay",
+    memo: "",
+    isTransfer: false,
+    isIncome: true,
+    transferId: null,
+    voided: false,
+    allocations: [],
+    importKey: null,
+    reconciled: false,
+    tagIds: [],
+  });
+
+  it("leaves Expected income − Σ Planned to plan, card payment envelopes left out", () => {
+    expect(buildBudgetMonth(data(), "2026-11").plan).toEqual({
+      expected: 300_000,
+      planned: 200_000,
+      left: 100_000,
+      over: 0,
+    });
+  });
+
+  it("shows how far a plan is over, and sets no limit without Expected income", () => {
+    expect(monthPlanView(150_000, 200_000)).toEqual({
+      expected: 150_000,
+      planned: 200_000,
+      left: -50_000,
+      over: 50_000,
+    });
+    expect(buildBudgetMonth(data(), "2026-12").plan).toEqual({
+      expected: null,
+      planned: 0,
+      left: null,
+      over: 0,
+    });
+    expect(planLeft(null, 5_000)).toBeNull();
+  });
+
+  it("does not carry what is left to plan into the next month", () => {
+    const next = data({
+      monthPlans: [
+        { month: "2026-11", expectedIncome: 300_000 },
+        { month: "2026-12", expectedIncome: 10_000 },
+      ],
+    });
+    expect(buildBudgetMonth(next, "2026-12").plan.left).toBe(10_000);
+  });
+
+  it("allows raising a Planned only within what is left; lowering always", () => {
+    const plan = monthPlanView(300_000, 200_000);
+    expect(plannedRaiseAllowed(plan, 50_000, 150_000)).toBe(true);
+    expect(plannedRaiseAllowed(plan, 50_000, 150_001)).toBe(false);
+    expect(plannedRaiseAllowed(plan, 50_000, 0)).toBe(true);
+    const over = monthPlanView(100_000, 200_000);
+    expect(plannedRaiseAllowed(over, 50_000, 50_001)).toBe(false);
+    expect(plannedRaiseAllowed(over, 50_000, 40_000)).toBe(true);
+    expect(plannedRaiseAllowed(over, 0, 999_999, true)).toBe(true);
+    expect(plannedRaiseAllowed(monthPlanView(null, 200_000), 0, 999_999)).toBe(true);
+  });
+
+  it("changes no other number", () => {
+    const without = buildBudgetMonth(data({ monthPlans: [] }), "2026-11");
+    const withPlan = buildBudgetMonth(data(), "2026-11");
+    expect({ ...withPlan, plan: null }).toEqual({ ...without, plan: null });
+  });
+
+  it("suggests last month's Expected, last month's income and a three-month average", () => {
+    const suggestions = incomeSuggestions(
+      data({
+        transactions: [
+          income("t1", "2026-11-03", 280_000),
+          income("t2", "2026-10-03", 260_000),
+          income("t3", "2026-09-03", 250_001),
+          income("t4", "2026-08-03", 999_999), // four months back: not counted
+          income("t5", "2026-11-09", 50_000, "visa"), // never Income on a card
+        ],
+      }),
+      "2026-12",
+    );
+    expect(suggestions).toEqual({
+      lastExpected: 300_000,
+      lastActual: 280_000,
+      average: 263_334,
+    });
+    expect(incomeSuggestions(data(), "2026-06")).toEqual({
+      lastExpected: null,
+      lastActual: null,
+      average: null,
+    });
   });
 });

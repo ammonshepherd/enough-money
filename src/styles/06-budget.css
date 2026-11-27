@@ -42,6 +42,8 @@
   position: sticky;
   inset-block-start: 0;
   z-index: 5;
+  display: grid;
+  gap: 6px;
   padding: max(8px, env(safe-area-inset-top)) 16px 8px;
   background: var(--app-background);
 }
@@ -94,6 +96,92 @@
   font-size: 26px;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+/* The plan strip (v0.55.0): Planned against the Expected income and what is
+   left to plan, shaped like Available to Assign in the Planned cells'
+   colours (orange when over). Tapping it opens the Expected income sheet. */
+
+.plan-strip {
+  border: 1px solid var(--border-strong);
+  border-radius: 0.875rem;
+  color: var(--brand-text);
+  background: var(--brand-tint);
+}
+
+.plan-strip.over {
+  color: var(--over);
+  background: var(--over-bg);
+}
+
+.plan-strip button {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  inline-size: 100%;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: start;
+  cursor: pointer;
+}
+
+.plan-strip button:hover {
+  background: var(--brand-tint-hover);
+}
+
+.plan-strip.over button:hover {
+  background: var(--over-bg);
+}
+
+.plan-strip .money {
+  color: inherit;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.plan-strip-total {
+  white-space: nowrap;
+}
+
+.plan-strip-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The Expected income form: in the plan card and the plan strip's sheet. */
+
+.expected-income {
+  gap: 0.5rem;
+}
+
+.expected-income-options {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.expected-income-options .secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--surface);
+  text-align: start;
+}
+
+.expected-income-note {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  line-height: 1.45;
 }
 
 /* Groups: a full-width bar. The name collapses the group (no numbers while
@@ -626,16 +714,14 @@ button.cell::after {
   margin: var(--desktop-gap) 0 0;
 }
 
-.desktop .budget-page > .plan-start {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-}
-
-.desktop .budget-page > .plan-start .plan-start-actions {
-  grid-row: 1 / span 2;
-  grid-column: 2;
+.desktop .budget-page > .plan-start .plan-start-actions,
+.desktop .budget-page > .plan-start .expected-income-options {
   display: flex;
   flex-wrap: wrap;
+}
+
+.desktop .budget-page > .plan-start .expected-income {
+  max-inline-size: 40rem;
 }
 
 /* The month and Available to Assign share one purple band, pinned to the top. */
@@ -679,6 +765,20 @@ button.cell::after {
 
 .budget-band .assign-card button {
   padding-block: 9px;
+}
+
+.budget-band .plan-strip {
+  grid-column: 3;
+  justify-self: end;
+  border-color: transparent;
+}
+
+.budget-band .plan-strip button {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  padding-block: 6px;
+  font-size: 13px;
 }
 
 .budget-work {

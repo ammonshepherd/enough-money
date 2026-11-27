@@ -18,6 +18,7 @@ import { SidePanel } from "../SidePanel";
 import { PanelAddTransaction, TransactionDialog, TransactionEntry } from "../TransactionEntry";
 import { GroupSection } from "../budget/GroupSection";
 import { MonthSummary } from "../budget/MonthSummary";
+import { ExpectedIncome, PlanStrip } from "../budget/ExpectedIncome";
 import { PlanStart } from "../budget/PlanStart";
 
 export function BudgetPage({
@@ -50,6 +51,7 @@ export function BudgetPage({
   const over = view.overAssigned > 0;
   const [uploading, setUploading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [settingIncome, setSettingIncome] = useState(false);
   // The envelope whose left amount was tapped: the move dialog is open for it.
   const [movingId, setMovingId] = useState<string | null>(null);
   const moving = movingId ? (page.detail(movingId)?.row ?? null) : null;
@@ -97,6 +99,10 @@ export function BudgetPage({
       </button>
     </section>
   );
+  // The plan against the Expected income (v0.55.0).
+  const planStrip = page.showPlanStrip && (
+    <PlanStrip page={page} onOpen={() => setSettingIncome(true)} />
+  );
   const groupSection = (group: (typeof page.groups)[number]) => (
     <GroupSection
       key={group.id}
@@ -143,6 +149,7 @@ export function BudgetPage({
         <div className="budget-band">
           {monthNav}
           {assignCard}
+          {planStrip}
         </div>
       ) : (
         <>
@@ -167,7 +174,12 @@ export function BudgetPage({
           </PageMenu>
           <CardDebt data={data} />
           {/* Stays at the top while the envelopes scroll under it. */}
-          {assignCard && <div className="assign-wrap">{assignCard}</div>}
+          {(assignCard || planStrip) && (
+            <div className="assign-wrap">
+              {assignCard}
+              {planStrip}
+            </div>
+          )}
         </>
       )}
       {desktop && <CardDebt data={data} />}
@@ -324,6 +336,27 @@ export function BudgetPage({
         onClose={() => setAssigning(false)}
       >
         {() => <AssignFromAvailable page={page} onDone={() => setAssigning(false)} />}
+      </Sheet>
+
+      <Sheet
+        open={settingIncome}
+        label={`Expected income for ${page.monthLabel}`}
+        className="sheet assign-sheet"
+        onClose={() => setSettingIncome(false)}
+      >
+        {() => (
+          <div className="assign-form">
+            <div className="section-heading">
+              <h2>Expected income</h2>
+            </div>
+            <ExpectedIncome page={page} inSheet onDone={() => setSettingIncome(false)} />
+            <div className="assign-form-actions">
+              <button className="text-button" type="button" onClick={() => setSettingIncome(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </Sheet>
 
       <Sheet

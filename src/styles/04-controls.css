@@ -351,6 +351,17 @@
   line-height: 1.5;
 }
 
+/* A plan import's total against the Expected income (orange when over). */
+.plan-total {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.plan-total.over {
+  color: var(--over);
+  font-weight: 700;
+}
+
 .field input[type="file"] {
   padding-block: 0.55rem;
 }
