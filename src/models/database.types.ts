@@ -541,10 +541,6 @@ export type Database = {
         Returns: number
       }
       mark_income: { Args: { p_ids: string[] }; Returns: number }
-      move_transactions: {
-        Args: { p_account_id: string; p_ids: string[] }
-        Returns: number
-      }
       move_between_envelopes: {
         Args: {
           p_amount: number
@@ -553,6 +549,10 @@ export type Database = {
           p_to_category_id: string
         }
         Returns: undefined
+      }
+      move_transactions: {
+        Args: { p_account_id: string; p_ids: string[] }
+        Returns: number
       }
       redate_transactions: {
         Args: { p_date: string; p_ids: string[] }
