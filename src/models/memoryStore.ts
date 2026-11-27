@@ -13,6 +13,7 @@ import {
   validateBackup,
   withFreshIds,
 } from "./backup";
+import { BATCH_MESSAGES, MAX_BATCH } from "./batchEdits";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
 import { nameKey } from "./envelopePlan";
@@ -125,6 +126,22 @@ export function createMemoryStore(): DataStore {
       b.envelopeMonths.push(record);
     }
     return record;
+  };
+
+  /** Like the SQL batch functions' shared check (private.batch_transactions). */
+  const batchOf = (transactionIds: string[]): Transaction[] => {
+    if (transactionIds.length > MAX_BATCH) throw new UserFacingError(BATCH_MESSAGES.tooMany);
+    const b = budget();
+    const unique = new Set(transactionIds);
+    const txs = b.transactions.filter((t) => unique.has(t.id));
+    if (txs.length !== unique.size) throw new UserFacingError(BATCH_MESSAGES.notFound);
+    if (txs.some((t) => t.isTransfer || t.allocations.length > 1)) {
+      throw new UserFacingError(BATCH_MESSAGES.notBasic);
+    }
+    if (txs.some((t) => b.accounts.find((a) => a.id === t.accountId)?.closedAt)) {
+      throw new UserFacingError(BATCH_MESSAGES.closed);
+    }
+    return txs;
   };
 
   const checkCurrentPassword = (typed: string) => {
@@ -675,6 +692,44 @@ export function createMemoryStore(): DataStore {
       releaseTransfer(transactionId);
       const b = budget();
       b.transactions = b.transactions.filter((t) => t.id !== transactionId);
+    },
+    async deleteTransactions(transactionIds) {
+      const doomed = new Set(batchOf(transactionIds).map((t) => t.id));
+      const b = budget();
+      b.transactions = b.transactions.filter((t) => !doomed.has(t.id));
+      return doomed.size;
+    },
+    async moveTransactions(transactionIds, accountId) {
+      const b = budget();
+      const txs = batchOf(transactionIds);
+      const target = b.accounts.find((a) => a.id === accountId && !a.closedAt);
+      const kinds = new Set(
+        txs.map((t) => {
+          const a = b.accounts.find((x) => x.id === t.accountId)!;
+          return `${a.type}|${a.onBudget}`;
+        }),
+      );
+      if (!target || kinds.size > 1 || !kinds.has(`${target.type}|${target.onBudget}`)) {
+        throw new UserFacingError(BATCH_MESSAGES.moveTarget);
+      }
+      if (txs.some((t) => t.importKey !== null)) throw new UserFacingError(BATCH_MESSAGES.imported);
+      if (txs.some((t) => t.date < target.openingDate)) {
+        throw new UserFacingError(BATCH_MESSAGES.beforeOpening);
+      }
+      const moving = txs.filter((t) => t.accountId !== accountId);
+      moving.forEach((t) => (t.accountId = accountId));
+      return moving.length;
+    },
+    async redateTransactions(transactionIds, date) {
+      const b = budget();
+      const txs = batchOf(transactionIds);
+      if (txs.some((t) => date < b.accounts.find((a) => a.id === t.accountId)!.openingDate)) {
+        throw new UserFacingError(BATCH_MESSAGES.beforeOpening);
+      }
+      const changing = txs.filter((t) => t.date !== date);
+      changing.forEach((t) => (t.date = date));
+      b.transactions.sort((x, y) => y.date.localeCompare(x.date));
+      return changing.length;
     },
 
     // The memory store keeps no created_at or source: an import key stands

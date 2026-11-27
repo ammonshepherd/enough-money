@@ -139,6 +139,66 @@
   color: var(--on-brand);
 }
 
+/* Change date, Move and Delete for ticked rows: the confirmation dialog
+   (v0.54.0). Each list of rows it cannot take, or of what it would leave
+   short, sits on the warning colour with its Untick button. */
+
+.batch-dialog h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.batch-warning {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.9rem;
+  background: var(--warning-bg);
+  font-size: 0.88rem;
+}
+
+.batch-warning h3 {
+  margin: 0;
+  color: var(--warning-text);
+  font-size: 0.92rem;
+}
+
+.batch-warning p {
+  margin: 0;
+}
+
+.batch-warning ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.batch-warning li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 0.75rem;
+}
+
+.batch-warning li em {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.batch-summary {
+  margin: 0;
+  font-weight: 700;
+}
+
+.batch-dialog .primary-button.danger {
+  color: var(--on-solid);
+  background: var(--danger);
+}
+
 .activity-page > .activity-notice,
 .activity-page > .activity-review {
   margin: 0.6rem 1rem;

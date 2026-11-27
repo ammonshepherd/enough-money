@@ -76,6 +76,20 @@ async function setUp(makeStore: StoreFactory) {
   return { store, householdId, ids, save, side, prefix: tag };
 }
 
+/** A bank file layout: date, description, signed amount. */
+const BATCH_FORMAT: ImportFormat = {
+  version: 1,
+  hasHeader: true,
+  headers: ["date", "description", "amount"],
+  columnCount: 3,
+  date: 0,
+  dateOrder: "YMD",
+  description: 1,
+  memo: -1,
+  amount: { kind: "signed", column: 2, flip: false },
+  bankId: -1,
+};
+
 /** The promise fails with a message the user can be shown, matching `message`. */
 async function rejects(promise: Promise<unknown>, message: RegExp) {
   const error: unknown = await promise.then(
@@ -249,6 +263,63 @@ export function storeRuleTests(makeStore: StoreFactory) {
       data.transactions.find((t) => t.accountId === accountId && t.payee === "Dividend")!.isIncome;
     expect(income(ids.tracking)).toBe(false);
     expect(income(ids.checking)).toBe(true);
+  });
+
+  it("deletes, moves and redates basic ticked transactions, all or nothing", async () => {
+    const { store, ids, save, side, prefix } = await setUp(makeStore);
+    await save(ids.checking, -1_000, [[ids.a, -1_000]]);
+    await save(ids.checking, -2_000, []);
+    await save(ids.checking, -3_000, [
+      [ids.a, -1_000],
+      [ids.b, -2_000],
+    ]);
+    await store.saveTransfer({
+      transferId: null,
+      sides: [side(ids.checking, -4_000), side(ids.savings, 4_000)],
+    });
+    await store.importTransactions(ids.checking, BATCH_FORMAT, [
+      {
+        date: "2026-10-08",
+        amount: -5_000,
+        payee: prefix,
+        memo: "",
+        importKey: `b-${ids.checking}`,
+        isIncome: false,
+        matchId: null,
+      },
+    ]);
+    const mine = async () =>
+      (await store.load())!.transactions.filter(
+        (t) => t.payee === prefix && [ids.checking, ids.savings].includes(t.accountId),
+      );
+    const by = async (amount: number) => (await mine()).find((t) => t.amount === amount)!.id;
+    const [plain, uncategorized, split, transfer, imported] = await Promise.all(
+      [-1_000, -2_000, -3_000, -4_000, -5_000].map(by),
+    );
+
+    // Transfers and splits are refused, and the whole batch with them.
+    await rejects(store.deleteTransactions([plain!, split!]), /one at a time/);
+    await rejects(store.redateTransactions([plain!, transfer!], "2026-10-20"), /one at a time/);
+    await rejects(store.deleteTransactions([plain!, crypto.randomUUID()]), /Tick them again/);
+    expect(await by(-1_000)).toBe(plain);
+
+    // New date: never before the account opened.
+    await rejects(store.redateTransactions([plain!], "2026-09-30"), /before its account opened/);
+    expect(await store.redateTransactions([plain!, imported!], "2026-10-20")).toBe(2);
+    expect((await mine()).filter((t) => t.date === "2026-10-20")).toHaveLength(2);
+
+    // Move: typed in only, to an open account of the same kind.
+    await rejects(store.moveTransactions([imported!], ids.savings), /typed in/);
+    await rejects(store.moveTransactions([plain!], ids.visa), /same kind/);
+    await rejects(store.moveTransactions([plain!], ids.tracking), /same kind/);
+    expect(await store.moveTransactions([plain!, uncategorized!], ids.savings)).toBe(2);
+    const moved = (await mine()).find((t) => t.id === plain)!;
+    expect(moved.accountId).toBe(ids.savings);
+    expect(moved.allocations).toEqual([{ envelopeId: ids.a, amount: -1_000 }]);
+
+    // Delete: imported rows too.
+    expect(await store.deleteTransactions([plain!, imported!])).toBe(2);
+    expect((await mine()).map((t) => t.id)).not.toContain(imported);
   });
 
   it("renames the household, never to a blank name", async () => {

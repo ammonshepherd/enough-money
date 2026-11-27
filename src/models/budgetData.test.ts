@@ -3,6 +3,7 @@ import {
   accountBalance,
   assignableIn,
   availableToAssignFor,
+  batchShortfalls,
   budgetWith,
   buildBudgetMonth,
   coverSources,
@@ -810,5 +811,80 @@ describe("Spent and Refunded as shown", () => {
     );
     // $164.43 bought − $47.34 refunded = $117.09 spent, matching Assigned.
     expect(home).toMatchObject({ assigned: 11_709, outflow: 11_709, refunded: 0, remaining: 0 });
+  });
+});
+
+describe("batchShortfalls", () => {
+  const find = (data: BudgetData, id: string) => data.transactions.find((t) => t.id === id)!;
+  const redate = (data: BudgetData, id: string, date: string) => ({
+    before: find(data, id),
+    after: { ...find(data, id), date },
+  });
+
+  it("is empty when nothing would go short", () => {
+    const data = household();
+    expect(batchShortfalls(data, [{ before: find(data, "cash"), after: null }])).toEqual([]);
+    expect(batchShortfalls(data, [redate(data, "cash", "2026-09-20")])).toEqual([]);
+  });
+
+  it("finds spending moved to a month without the money", () => {
+    // Food in September: $400 assigned, $320 spent; October's $350 moved there.
+    const data = household();
+    expect(batchShortfalls(data, [redate(data, "g2", "2026-09-25")])).toEqual([
+      { envelopeId: "food", month: "2026-09", short: 27_000, transactionIds: ["g2"] },
+    ]);
+  });
+
+  it("finds a later month whose release would no longer be there", () => {
+    // September's $320 moved to October: October now spends $670 of $350.
+    const data = household();
+    const [short] = batchShortfalls(data, [redate(data, "g1", "2026-10-02")]);
+    expect(short).toMatchObject({ envelopeId: "food", month: "2026-10", transactionIds: ["g1"] });
+  });
+
+  it("finds a deleted refund that the envelope had already spent", () => {
+    const data = household();
+    data.transactions.push(
+      tx({
+        id: "refund",
+        date: "2026-10-07",
+        amount: 5_000,
+        allocations: [{ envelopeId: "fun", amount: 5_000 }],
+      }),
+      tx({
+        id: "show",
+        date: "2026-10-08",
+        amount: -15_000,
+        allocations: [{ envelopeId: "fun", amount: -15_000 }],
+      }),
+    );
+    const changes = [
+      { before: find(data, "refund"), after: null },
+      { before: find(data, "cash"), after: null },
+    ];
+    expect(batchShortfalls(data, changes)).toEqual([
+      { envelopeId: "fun", month: "2026-10", short: 5_000, transactionIds: ["refund"] },
+    ]);
+  });
+
+  it("finds income deleted from under what was assigned", () => {
+    const data = withEnvelopeMonth(household(), "fun", "2026-10", { assigned: 200_000 });
+    expect(batchShortfalls(data, [{ before: find(data, "pay"), after: null }])).toEqual([
+      { envelopeId: null, month: "2026-10", short: 130_000, transactionIds: ["pay"] },
+    ]);
+  });
+
+  it("counts only what the batch makes worse", () => {
+    // Fun is already $50.00 short; deleting other spending leaves it as it was.
+    const data = household();
+    data.transactions.push(
+      tx({
+        id: "over",
+        date: "2026-10-09",
+        amount: -15_000,
+        allocations: [{ envelopeId: "fun", amount: -15_000 }],
+      }),
+    );
+    expect(batchShortfalls(data, [{ before: find(data, "cash"), after: null }])).toEqual([]);
   });
 });

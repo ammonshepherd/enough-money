@@ -3,19 +3,34 @@ import { useAsyncAction } from "../../controllers/useAsyncAction";
 import type { useAccountView } from "../../controllers/useAccountView";
 import { formatSignedCents } from "../../models/money";
 import type { Transaction } from "../../models/types";
-import { ErrorMessage, Money } from "../components";
+import { ErrorMessage, Money, Sheet } from "../components";
 import { TagChip } from "../Tags";
+import { BatchDialog, type BatchKind } from "./BatchDialog";
 
 type View = ReturnType<typeof useAccountView>;
 
 /**
  * Ticked rows: how many, their total, Mark reconciled / unreconciled, and
- * Tags (adds a tag to every ticked row or takes it off them). The count is
- * always in the page (visually hidden), so screen readers hear it change.
+ * Tags (adds a tag to every ticked row or takes it off them). In an open
+ * account also Change date, Move and Delete, each confirmed in a dialog
+ * (BatchDialog). The count is always in the page (visually hidden), so
+ * screen readers hear it change.
  */
 export function SelectionBar({ view }: { view: View }) {
   const reconcile = useAsyncAction(view.setReconciled);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [batchKind, setBatchKind] = useState<BatchKind | null>(null);
+  const batch = view.batch;
+  // The dialog starts from the first ticked row's date (kept while it is open).
+  const [firstDate, setFirstDate] = useState("");
+  const openBatch = (kind: BatchKind) => {
+    const first = view.days
+      .flatMap((d) => d.rows)
+      .concat(view.flatRows?.map((f) => f.row) ?? [])
+      .find((r) => view.selected.has(r.tx.id));
+    setFirstDate(first?.tx.date ?? "");
+    setBatchKind(kind);
+  };
   const text =
     view.selectedCount > 0
       ? `${view.selectedCount} selected, ${formatSignedCents(view.selectedTotal)}`
@@ -60,6 +75,33 @@ export function SelectionBar({ view }: { view: View }) {
           >
             Tags
           </button>
+          {batch && (
+            <>
+              <button
+                className="selection-action quiet"
+                type="button"
+                onClick={() => openBatch("redate")}
+              >
+                Change date
+              </button>
+              {batch.moveTargets.length > 0 && (
+                <button
+                  className="selection-action quiet"
+                  type="button"
+                  onClick={() => openBatch("move")}
+                >
+                  Move
+                </button>
+              )}
+              <button
+                className="selection-action quiet"
+                type="button"
+                onClick={() => openBatch("delete")}
+              >
+                Delete
+              </button>
+            </>
+          )}
           <button
             className="selection-clear"
             type="button"
@@ -75,6 +117,22 @@ export function SelectionBar({ view }: { view: View }) {
           <ErrorMessage error={reconcile.error} />
           {tagsOpen && <SelectionTags view={view} />}
         </div>
+      )}
+      {batch && (
+        <Sheet
+          open={batchKind !== null}
+          label="Change ticked transactions"
+          onClose={() => setBatchKind(null)}
+        >
+          {() => (
+            <BatchDialog
+              batch={batch}
+              kind={batchKind!}
+              firstDate={firstDate}
+              onClose={() => setBatchKind(null)}
+            />
+          )}
+        </Sheet>
       )}
     </>
   );

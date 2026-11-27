@@ -530,6 +530,7 @@ export type Database = {
         Returns: undefined
       }
       create_household: { Args: { p_name: string }; Returns: string }
+      delete_transactions: { Args: { p_ids: string[] }; Returns: number }
       export_backup: { Args: { p_household_id: string }; Returns: Json }
       import_envelope_plan: {
         Args: { p_household_id: string; p_month: string; p_rows: Json }
@@ -548,6 +549,14 @@ export type Database = {
           p_to_category_id: string
         }
         Returns: undefined
+      }
+      move_transactions: {
+        Args: { p_account_id: string; p_ids: string[] }
+        Returns: number
+      }
+      redate_transactions: {
+        Args: { p_date: string; p_ids: string[] }
+        Returns: number
       }
       rename_payee: { Args: { p_id: string; p_name: string }; Returns: string }
       reorder_categories: {

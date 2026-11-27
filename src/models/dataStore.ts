@@ -216,6 +216,20 @@ export interface DataStore {
     rows: ImportedTransaction[],
   ): Promise<number>;
   deleteTransaction(transactionId: string): Promise<void>;
+  /**
+   * The ticked-rows actions (batchEdits.ts), each all or nothing, resolving
+   * to how many changed. Only basic transactions: in an open account, not a
+   * transfer and not a split; a list naming any other (or one not found)
+   * changes nothing. Imported rows can be deleted (their import key goes).
+   */
+  deleteTransactions(transactionIds: string[]): Promise<number>;
+  /**
+   * Moves typed-in transactions (no import key) to another open account of
+   * the same kind, never dated before it opened. Envelopes and Income stay.
+   */
+  moveTransactions(transactionIds: string[], accountId: string): Promise<number>;
+  /** Gives transactions a new date, never before their account opened. */
+  redateTransactions(transactionIds: string[], date: IsoDate): Promise<number>;
 
   /** Everything in the household, read as one consistent snapshot (see backup.ts). */
   exportBackup(householdId: string): Promise<Backup>;

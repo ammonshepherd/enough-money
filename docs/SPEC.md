@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.53.1.
+Version described: 0.54.0.
 
 ## 1. Purpose
 
@@ -191,6 +191,9 @@ SQL functions (all `security invoker` except `create_household`):
 | `import_envelope_plan(household, month, rows)`                 | Creates missing groups/envelopes (names match ignoring case) and sets Planned for the month (≤ 500 rows).                                                                                                                                                                                                                                       |
 | `mark_income(ids)`                                             | Marks plain Uncategorized inflows (not on cards or tracking accounts) as Income; returns the count.                                                                                                                                                                                                                                             |
 | `tag_transactions(ids, tag, on)`                               | Adds a tag to (or takes it off) up to 2000 transactions; rows already so, or already at 20 tags, are left alone; returns how many changed.                                                                                                                                                                                                      |
+| `delete_transactions(ids)`                                     | Deletes up to 2000 basic transactions (in an open account, not a transfer, not a split), imported ones too; all or nothing; returns how many.                                                                                                                                                                                                   |
+| `move_transactions(ids, account)`                              | Moves up to 2000 basic, typed-in (no import key) transactions to another open account of the same type and `on_budget`, none dated before it opened; all or nothing; returns how many changed.                                                                                                                                                  |
+| `redate_transactions(ids, date)`                               | Gives up to 2000 basic transactions one date, never before their account opened; all or nothing; returns how many changed.                                                                                                                                                                                                                      |
 | `set_reconciled(ids, reconciled)`                              | Marks (or unmarks) up to 2000 transactions reconciled with the bank; rows already so are left alone; returns how many changed.                                                                                                                                                                                                                  |
 | `reorder_category_groups(household, ids)`                      | Saves the order of the household's groups; the list must name every group once.                                                                                                                                                                                                                                                                 |
 | `reorder_categories(group, ids)`                               | Saves the order of a group's envelopes; the list must name every envelope of the group once.                                                                                                                                                                                                                                                    |
@@ -825,6 +828,25 @@ picker it shows is gone).
   have no checkboxes. While a search or chip hides some rows, the count,
   total and Mark reconciled cover only the ticked rows shown, and ticking
   then drops hidden ticks, so nothing out of sight is ever marked.
+- Batch actions (v0.54.0, `src/models/batchEdits.ts`, an open account
+  only, not a closed one): the bar also offers Change date, Move (when
+  another open account of the same kind exists: checking, card or
+  tracking) and Delete. Each opens a dialog ("Change ticked transactions",
+  `BatchDialog`) with the new date or the account to move to, and changes
+  only basic transactions: never a transfer or a split; Move only typed-in
+  ones (no import key) dated on or after the target opened; Change date
+  never before the account opened. Ticked rows that are not basic are
+  listed with the reason ("Transfer", "Split", "Imported from the bank",
+  "Before ⟨account⟩ opened") and "Untick these N rows"; nothing is skipped
+  quietly. The batch never prompts to cover: when it would leave an
+  envelope further below $0.00 (Remaining, or a later month's Saved after
+  its release) or the budget further Over Assigned, in any month
+  (`batchShortfalls` in `budgetMath.ts`), the dialog says so ("Groceries
+  would be $12.40 short in October 2026") with "Untick the N rows causing
+  this" (the rows taking money from it in that month or earlier).
+  Confirming is possible only once nothing is listed. Delete takes imported
+  rows and warns that the next import covering their dates adds them
+  again. Each saves in one all-or-nothing step and clears the ticks.
 - A transfer is one row: its money-out side's date and payee, "From → To".
 - A split shows a "Split (N)" pill (`aria-expanded`, "Close/Open split for
   ⟨payee⟩", chevron) instead of an envelope, and its parts underneath (dashed
@@ -1230,9 +1252,11 @@ Decided or wanted, but not in the app:
 - Tags: tags per split line (a split shares the transaction's), totals or
   reports by tag, tags set by import or income-style rules, tags in the CSV
   import preview, merging two tags.
-- Bulk actions on ticked rows on Accounts beyond Mark reconciled and Tags: Delete, Mark
-  as Income, Assign to an envelope, Move to account, and ticking rows in To
-  review. Open decisions are in `docs/proposals/bulk-actions.md`.
+- Bulk actions on ticked rows on Accounts beyond Mark reconciled, Tags,
+  Change date, Move and Delete: Mark as Income, Assign to an envelope,
+  batch actions on All accounts, on transfers and splits, moving imported
+  rows, and ticking rows in To review. Open decisions are in
+  `docs/proposals/bulk-actions.md`.
 - Reconciliation beyond the mark: entering a statement balance and
   finishing only when the ticked rows match it, locking reconciled rows,
   a separate cleared status, "Select all" for a day or month. Statement

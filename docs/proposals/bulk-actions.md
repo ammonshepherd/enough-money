@@ -10,8 +10,16 @@ month or account changes, and Mark reconciled / Mark unreconciled. The owner
 decided then that reconciled is only a mark (`transactions.reconciled`): no
 statement balance, no lock on edits, no budget math.
 
-Still to build: Delete, Mark as Income, Assign to an envelope and Move to
-account for ticked rows, and selecting in the To review list. They should
+Built in v0.54.0, in an open account: Delete, Move to account and Change
+date for basic transactions (not transfers or splits; Move only typed-in
+ones to an open account of the same kind). Rows that are not basic are
+listed in the confirmation with "Untick these N rows"; a batch that would
+leave an envelope or Available to Assign short is refused with "Untick the
+N rows causing this" (no multi-month cover prompt). Delete takes imported
+rows and warns that they come back on the next import (problem 1 stays).
+
+Still to build: Mark as Income, Assign to an envelope, and selecting in the
+To review list. They should
 reuse that selection and bar instead of the separate select mode described
 below.
 
