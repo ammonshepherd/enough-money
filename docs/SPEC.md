@@ -1278,8 +1278,17 @@ Decided or wanted, but not in the app:
   own branch).
 - Tracking accounts: transfers between two tracking accounts, a total for
   the Tracking group, a net worth figure, closing one with a balance left.
-- Inviting a second member into an existing household (an invite
-  creates a new household, v0.50.0).
+- Inviting someone into your household from the app (today an invite
+  from the Supabase dashboard creates a new household, v0.50.0), perhaps
+  with a limit of 5 members per household.
+- Envelope due dates: a due date per envelope (a bill's due day, say),
+  shown on its Budget row while its group is open (not when collapsed).
+  Display only, like Planned; open decisions: one date or a monthly day,
+  and whether it shows in Compact rows.
+- A short "what's new" blurb in the Refresh banner (`useAppUpdate`),
+  written for each release. The owner reviews every blurb before it ships.
+- Landing page How it works: a new step 3, before Make a plan, to work out
+  how much income you'll have this month.
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a
