@@ -2,8 +2,10 @@
  * Links in Supabase Auth's emails (v0.50.0). The Invite user and Reset
  * password emails link to the app as `?token_hash=…&type=invite|recovery`
  * (their templates are set in the Supabase dashboard; see docs/SPEC.md).
- * The app exchanges the token for a session, removes it from the address
- * bar, and asks for a new password before anything else.
+ * The app removes the token from the address bar and, only once the
+ * person taps the page's button (v0.54.3; mail scanners open links in a
+ * real browser and used it up first), exchanges it for a session and asks
+ * for a new password before anything else.
  *
  * The Change email address email (v0.51.0) links the same way with
  * `type=email_change`. It sets no password: Supabase sends one link to the
@@ -48,6 +50,38 @@ export function withoutEmailLink(url: string): string {
   next.searchParams.delete("token_hash");
   next.searchParams.delete("type");
   return next.href;
+}
+
+/** What the page asks before a link's token is used (EmailLinkPage). */
+export function emailLinkPrompt(type: EmailLinkType): {
+  eyebrow: string;
+  title: string;
+  text: string;
+  button: string;
+} {
+  switch (type) {
+    case "invite":
+      return {
+        eyebrow: "Welcome",
+        title: "You're invited",
+        text: "Accept your invite to choose a password and start budgeting.",
+        button: "Accept invite",
+      };
+    case "recovery":
+      return {
+        eyebrow: "Forgot password",
+        title: "Reset your password",
+        text: "Continue to choose a new password.",
+        button: "Continue",
+      };
+    case "email_change":
+      return {
+        eyebrow: "Change email",
+        title: "Confirm your email",
+        text: "Confirm to go on changing your email address.",
+        button: "Confirm",
+      };
+  }
 }
 
 /** Shown when a link cannot be used (Supabase says only that it is invalid or expired). */

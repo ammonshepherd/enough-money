@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UserFacingError } from "./dataStore";
 import {
   checkNewPassword,
+  emailLinkPrompt,
   loadPasswordNeeded,
   MIN_PASSWORD_LENGTH,
   needsPassword,
@@ -111,5 +112,13 @@ describe("password needed", () => {
     expect(loadPasswordNeeded(broken, "u1")).toBeNull();
     expect(() => savePasswordNeeded(broken, "u1", "invite")).not.toThrow();
     expect(loadPasswordNeeded(null, "u1")).toBeNull();
+  });
+});
+
+describe("emailLinkPrompt", () => {
+  it("names a button for every kind of link", () => {
+    expect(emailLinkPrompt("invite").button).toBe("Accept invite");
+    expect(emailLinkPrompt("recovery").button).toBe("Continue");
+    expect(emailLinkPrompt("email_change").button).toBe("Confirm");
   });
 });
