@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.54.1.
+Version described: 0.54.2.
 
 ## 1. Purpose
 
@@ -102,8 +102,9 @@ always show what the store holds.
 - `landing/`: the landing page at the site root, plain static files (rules
   in `landing/README.md`). Since v0.45.1 it holds the content: a hero
   ("Enough Money." and "No matter how much money you make, it is
-  enough."), "Why it's different" (envelopes can't go negative, no
-  autopilot, leftover money becomes Saved, debt stays in view), "How it
+  enough."), "Why it's different" (first, since v0.54.2, every month
+  starts with a plan; then envelopes can't go negative, no autopilot,
+  leftover money becomes Saved, debt stays in view), "How it
   works" (set up once: add accounts, create envelopes; then every month:
   make a plan, assign, record spending, reconcile, watch Saved grow, as
   numbered cards with pictures, and two unnumbered ones: no money, no
