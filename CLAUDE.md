@@ -412,7 +412,17 @@ non-card budget balances − all envelope money (P included)`.
   (decided in v0.27.0: `transactions.reconciled` is only a mark: no
   statement balance, no lock on edits, no budget math). The transaction
   form sets it too (v0.53.0): a small Reconciled switch, off for a new
-  transaction (for a transfer, this side only). A transfer shows
+  transaction (for a transfer, this side only). In an open account the
+  bar also has Change date, Move and Delete (decided in v0.54.0,
+  `src/models/batchEdits.ts`): only basic transactions (no transfer or
+  split; Move only typed-in ones, to an open account of the same kind;
+  never dated before the account opened). Ticked rows that are not basic
+  are listed with the reason and "Untick these N rows", never skipped
+  quietly; a batch never prompts to cover, and is refused while it would
+  leave an envelope or Available to Assign further short in any month
+  (`batchShortfalls` in `budgetMath.ts`), offering to untick the rows
+  causing it. Delete takes imported rows, warning they come back on the
+  next import. A transfer shows
   once, from its money-out side ("From → To", signed and coloured by its
   side in the open account, or on All accounts by the side shown). A split
   shows a "Split (N)" pill and its parts, open until closed (not
@@ -532,7 +542,8 @@ spending.
 Later: matching a transaction typed after its bank row was imported (import
 already matches typed transactions, and transfers link to bank rows),
 statement reconciliation (v0.27.0 added only the reconciled mark),
-bulk actions on ticked rows beyond reconciling and tagging
+bulk actions on ticked rows beyond reconciling, tagging, Change date,
+Move and Delete
 (`docs/proposals/bulk-actions.md`), tithing/fast-offering rules. See
 `docs/SPEC.md` §9 for everything not built yet.
 
@@ -546,7 +557,8 @@ transaction_allocations, income_rules, tags, transaction_tags, envelope_goals, p
 writes go through SQL functions (`create_household`, `save_transaction`,
 `adjust_category_month`, `move_between_envelopes`,
 `import_envelope_plan`, `import_transactions`, `save_transfer`, `mark_income`,
-`set_reconciled`, `tag_transactions`, `rename_payee`, `reorder_category_groups`, `reorder_categories`,
+`set_reconciled`, `tag_transactions`, `delete_transactions`,
+`move_transactions`, `redate_transactions`, `rename_payee`, `reorder_category_groups`, `reorder_categories`,
 `export_backup`, `restore_backup`). Triggers create, rename and protect
 each credit card's payment envelope and reject allocations (and goals) to it;
 another lists typed payees (`remember_payee`). Imported transactions carry an

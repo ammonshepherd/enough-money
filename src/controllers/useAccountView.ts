@@ -8,9 +8,17 @@ import {
   firstRows,
   selectionTotal,
 } from "../models/activity";
-import { isToReview, transactionsToReview } from "../models/budgetMath";
+import {
+  batchChange,
+  batchExclusion,
+  importedCount,
+  moveTargets,
+  type BatchAction,
+} from "../models/batchEdits";
+import { batchShortfalls, isToReview, transactionsToReview } from "../models/budgetMath";
 import { inflowsMatchingRules } from "../models/incomeRules";
 import { addMonths, formatMonth, todayIso, type Month } from "../models/month";
+import type { Cents } from "../models/money";
 import { accountsHref } from "../models/routes";
 import { sortTags } from "../models/tags";
 import {
@@ -37,6 +45,27 @@ import type { Budget } from "./useBudget";
 import { addNamedTag } from "./useTags";
 
 const NOTHING: ReadonlySet<string> = new Set();
+
+/** What a batch action would do to the ticked rows, shown before it is confirmed. */
+export interface BatchPlan {
+  /** The rows it would change (the basic ones). */
+  ready: Transaction[];
+  /** Their amounts added up, signed. */
+  total: Cents;
+  /** Ticked rows that are not basic for this action, and why. */
+  excluded: { tx: Transaction; reason: string }[];
+  /** What it would leave short (budgetMath.ts batchShortfalls), named. */
+  shortfalls: {
+    /** The envelope's name, or "Available to Assign". */
+    name: string;
+    month: Month;
+    short: Cents;
+    /** The ready rows taking that money; unticking them fixes it. */
+    transactionIds: string[];
+  }[];
+  /** Delete: ready rows from a bank file, which the next import can add again. */
+  imported: number;
+}
 
 interface SearchState {
   accountId: string | null;
@@ -135,6 +164,79 @@ export function useAccountView(
   const selectedRows = rows.filter((r) => selected.has(r.tx.id));
   const clearSelection = () => setTicked({ view, ids: NOTHING });
 
+  // Batch actions on ticked rows: in an open account only (batchEdits.ts).
+  const planBatch = (action: BatchAction): BatchPlan => {
+    const excluded: BatchPlan["excluded"] = [];
+    const ready: Transaction[] = [];
+    for (const { tx } of selectedRows) {
+      const reason = batchExclusion(data, tx, action);
+      if (reason) excluded.push({ tx, reason });
+      else ready.push(tx);
+    }
+    const envelopeNames = new Map(data.envelopes.map((e) => [e.id, e.name]));
+    return {
+      ready,
+      total: ready.reduce((sum, tx) => sum + tx.amount, 0),
+      excluded,
+      shortfalls: batchShortfalls(
+        data,
+        ready.map((tx) => batchChange(tx, action)),
+      ).map((s) => ({
+        name:
+          s.envelopeId === null
+            ? "Available to Assign"
+            : (envelopeNames.get(s.envelopeId) ?? "An envelope"),
+        month: s.month,
+        short: s.short,
+        transactionIds: s.transactionIds,
+      })),
+      imported: action.kind === "delete" ? importedCount(ready) : 0,
+    };
+  };
+  const batch =
+    account && !account.closedAt
+      ? {
+          /** Accounts the ticked rows can move to: open, of the same kind. */
+          moveTargets: moveTargets(data, account),
+          plan: planBatch,
+          /** Unticks these rows (those a batch cannot change). */
+          untick: (ids: readonly string[]) => {
+            const next = new Set(selected);
+            ids.forEach((id) => next.delete(id));
+            setTicked({ view, ids: next });
+          },
+          /**
+           * Saves the action on the ready rows, all or nothing, then unticks
+           * everything. Refused while the plan leaves something out or short.
+           */
+          run: async (action: BatchAction) => {
+            const plan = planBatch(action);
+            if (plan.excluded.length > 0 || plan.shortfalls.length > 0 || plan.ready.length === 0) {
+              throw new Error("Untick the rows listed first");
+            }
+            const ids = plan.ready.map((tx) => tx.id);
+            const changed = new Map(
+              plan.ready.map((tx) => [tx.id, batchChange(tx, action).after] as const),
+            );
+            await budget.change(
+              async (store) => {
+                if (action.kind === "delete") await store.deleteTransactions(ids);
+                else if (action.kind === "move")
+                  await store.moveTransactions(ids, action.accountId);
+                else await store.redateTransactions(ids, action.date);
+              },
+              (d) => ({
+                ...d,
+                transactions: d.transactions.flatMap((t) =>
+                  changed.has(t.id) ? (changed.get(t.id) ? [changed.get(t.id)!] : []) : [t],
+                ),
+              }),
+            );
+            clearSelection();
+          },
+        }
+      : null;
+
   return {
     monthLabel: formatMonth(month),
     previousHref: accountsHref(accountId ?? "all", addMonths(month, -1)),
@@ -216,6 +318,8 @@ export function useAccountView(
       setTicked({ view, ids });
     },
     clearSelection,
+    /** Delete, Move and Change date for ticked rows; null unless an open account is shown. */
+    batch,
     /** Marks the ticked rows reconciled with the bank (or not), then unticks them. */
     setReconciled: async (reconciled: boolean) => {
       const ids = selectedRows.flatMap((r) => r.sideIds);

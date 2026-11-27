@@ -680,6 +680,27 @@ export function createSupabaseStore(
     async deleteTransaction(transactionId) {
       check((await db().from("transactions").delete().eq("id", transactionId)).error);
     },
+    async deleteTransactions(transactionIds) {
+      const { data, error } = await db().rpc("delete_transactions", { p_ids: transactionIds });
+      check(error);
+      return data ?? 0;
+    },
+    async moveTransactions(transactionIds, accountId) {
+      const { data, error } = await db().rpc("move_transactions", {
+        p_ids: transactionIds,
+        p_account_id: accountId,
+      });
+      check(error);
+      return data ?? 0;
+    },
+    async redateTransactions(transactionIds, date) {
+      const { data, error } = await db().rpc("redate_transactions", {
+        p_ids: transactionIds,
+        p_date: date,
+      });
+      check(error);
+      return data ?? 0;
+    },
 
     async exportBackup(householdId) {
       const { data, error } = await db().rpc("export_backup", { p_household_id: householdId });

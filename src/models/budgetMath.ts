@@ -932,6 +932,125 @@ export function withEnvelopeMonth(
   return { ...data, envelopeMonths };
 }
 
+/** A transaction as a batch change leaves it: changed, or null when deleted. */
+export interface BatchChange {
+  before: Transaction;
+  after: Transaction | null;
+}
+
+/**
+ * What a batch change would leave short (decided in v0.54.0): an envelope
+ * (`envelopeId`) or Available to Assign (`envelopeId` null), from `month`
+ * on, by `short` more than it already was. `transactionIds` are the
+ * changed transactions that take money from it in that month or earlier:
+ * unticking them is what fixes it.
+ */
+export interface BatchShortfall {
+  envelopeId: string | null;
+  month: Month;
+  short: Cents;
+  transactionIds: string[];
+}
+
+/** Money one transaction puts into each envelope (null: Available to Assign) per month. */
+function transactionEffects(
+  data: BudgetData,
+  tx: Transaction | null,
+): { envelopeId: string | null; month: Month; amount: Cents }[] {
+  if (!tx || tx.voided) return [];
+  const account = data.accounts.find((a) => a.id === tx.accountId);
+  if (!account?.onBudget) return [];
+  const month = monthOf(tx.date);
+  const payment = cardPaymentEnvelopes(data).get(tx.accountId);
+  const effects: { envelopeId: string | null; month: Month; amount: Cents }[] = tx.allocations.map(
+    (a) => ({ envelopeId: a.envelopeId, month, amount: a.amount }),
+  );
+  const settled = tx.isTransfer || (tx.amount < 0 && tx.allocations.length > 0);
+  if (payment && settled) effects.push({ envelopeId: payment, month, amount: -tx.amount });
+  if (tx.isIncome && !payment) effects.push({ envelopeId: null, month, amount: tx.amount });
+  return effects;
+}
+
+/** How far an envelope month is below $0.00: Remaining, and Saved after a later release. */
+const shortOf = (row: EnvelopeMonth) => Math.max(0, -row.remaining) + Math.max(0, -row.saved);
+
+/**
+ * The budget after a batch of deletes, moves or new dates (no cover asked:
+ * a batch never prompts), and what it would leave short that was not
+ * already: each envelope's first month whose Remaining or Saved would be
+ * further below $0.00, and the first month that would be further Over
+ * Assigned. Empty when the batch is safe to save.
+ */
+export function batchShortfalls(
+  data: BudgetData,
+  changes: readonly BatchChange[],
+): BatchShortfall[] {
+  const replaced = new Map(changes.map((c) => [c.before.id, c.after]));
+  const after: BudgetData = {
+    ...data,
+    transactions: data.transactions.flatMap((tx) => {
+      if (!replaced.has(tx.id)) return [tx];
+      const next = replaced.get(tx.id);
+      return next ? [next] : [];
+    }),
+  };
+  // How each change moves money, per envelope and month (negative = takes).
+  const diffs = changes.map((c) => {
+    const diff = new Map<string, Cents>();
+    const add = (e: { envelopeId: string | null; month: Month; amount: Cents }, sign: number) => {
+      const key = `${e.envelopeId ?? ""}|${e.month}`;
+      diff.set(key, (diff.get(key) ?? 0) + sign * e.amount);
+    };
+    transactionEffects(after, c.after).forEach((e) => add(e, 1));
+    transactionEffects(data, c.before).forEach((e) => add(e, -1));
+    return { id: c.before.id, diff };
+  });
+  const takers = (envelopeId: string | null, month: Month) =>
+    diffs
+      .filter(({ diff }) =>
+        [...diff].some(([key, amount]) => {
+          const [e, m] = key.split("|") as [string, Month];
+          return e === (envelopeId ?? "") && m <= month && amount < 0;
+        }),
+      )
+      .map(({ id }) => id);
+
+  const shortfalls: BatchShortfall[] = [];
+  const beforeHistories = envelopeHistories(data);
+  for (const [envelopeId, history] of envelopeHistories(after)) {
+    const old = beforeHistories.get(envelopeId) ?? [];
+    for (const row of history) {
+      const short = shortOf(row) - shortOf(envelopeAsOf(old, row.month));
+      if (short > 0) {
+        shortfalls.push({
+          envelopeId,
+          month: row.month,
+          short,
+          transactionIds: takers(envelopeId, row.month),
+        });
+        break;
+      }
+    }
+  }
+
+  const months = changes.flatMap((c) =>
+    [c.before, c.after ?? c.before].map((t) => monthOf(t.date)),
+  );
+  if (months.length > 0) {
+    const first = months.reduce((a, b) => (a < b ? a : b));
+    const last = lastMonthWithData(data, lastMonthWithData(after, first));
+    for (let m = first; m <= last; m = addMonths(m, 1)) {
+      const short =
+        overAssigned(availableToAssignFor(after, m)) - overAssigned(availableToAssignFor(data, m));
+      if (short > 0) {
+        shortfalls.push({ envelopeId: null, month: m, short, transactionIds: takers(null, m) });
+        break;
+      }
+    }
+  }
+  return shortfalls;
+}
+
 /** Envelopes that could give `amount` in `month` without going negative (cover step 2). */
 export function coverSources(
   view: BudgetMonthView,
