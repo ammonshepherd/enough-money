@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.54.0.
+Version described: 0.54.1.
 
 ## 1. Purpose
 
@@ -104,8 +104,10 @@ always show what the store holds.
   ("Enough Money." and "No matter how much money you make, it is
   enough."), "Why it's different" (envelopes can't go negative, no
   autopilot, leftover money becomes Saved, debt stays in view), "How it
-  works" (set up once, then every month, as numbered cards with
-  pictures), an FAQ and a closing band, each picture a phone screenshot
+  works" (set up once: add accounts, create envelopes; then every month:
+  make a plan, assign, record spending, reconcile, watch Saved grow, as
+  numbered cards with pictures, and two unnumbered ones: no money, no
+  spending, and reviewing imported transactions; v0.54.1), an FAQ and a closing band, each picture a phone screenshot
   in `landing/images/` (see Commands). `legacy-redirect.js` sends old
   `/#route` links and home screen icons saved before v0.43.0 to `/app/`,
   but leaves the page's own sections (`#why`, `#how-it-works`, `#faq`); `sw.js` retires

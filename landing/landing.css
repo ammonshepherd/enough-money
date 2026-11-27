@@ -221,6 +221,15 @@ p {
   border-end-end-radius: 0.6rem;
 }
 
+/* A picture cut from the middle of a screen. */
+.phone.cut {
+  border-radius: 1rem;
+}
+
+.phone.cut img {
+  border-radius: 0.6rem;
+}
+
 /* ---------- Hero ---------- */
 
 .hero {
@@ -366,23 +375,13 @@ p {
   font-weight: 800;
 }
 
-/* 4.1 belongs to step 4: no number of its own in the count. */
-.sub-step {
+/* A step without a number of its own, left out of the count. */
+.unnumbered {
   counter-increment: none;
 }
 
-.sub-step .step-text::before {
+.unnumbered .step-text::before {
   content: none;
-}
-
-.sub-number {
-  display: table;
-  margin-block-end: 0.75rem;
-  padding: 0.05rem 0.55rem;
-  border-radius: 999px;
-  background: var(--brand-light);
-  color: var(--brand);
-  font-weight: 800;
 }
 
 .step .phone {

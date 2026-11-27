@@ -41,6 +41,11 @@ test("budget: the page, its top and its envelopes", async ({ page }) => {
   await shot(page, "debt", 420);
   await page.mouse.wheel(0, 420);
   await shot(page, "envelopes");
+  // The Everyday group alone: its envelopes' sparkling Saved pills.
+  const everyday = page.getByRole("region", { name: "Everyday" });
+  await everyday.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
+  await everyday.screenshot({ path: `${OUT}/saved-grow.png`, animations: "disabled" });
 });
 
 test("assign from the green banner", async ({ page }) => {
