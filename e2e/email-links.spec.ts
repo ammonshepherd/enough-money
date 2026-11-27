@@ -1,12 +1,16 @@
 import { expect, test } from "@playwright/test";
 
 // The in-memory store signs in an invited user for any token but "expired".
+// A link's token is used only after a tap (v0.54.3), so mail scanners that
+// open the link cannot use it up first.
 
 test("an invite link asks for a password, then for a household", async ({ page }) => {
   await page.goto("./?token_hash=abc123&type=invite#budget");
-  await expect(page.getByRole("heading", { level: 1, name: "Choose a password" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "You're invited" })).toBeVisible();
   // The token leaves the address bar at once; the route stays.
   await expect(page).toHaveURL(/\/app\/#budget$/);
+  await page.getByRole("button", { name: "Accept invite" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Choose a password" })).toBeVisible();
   await expect(page.getByLabel("Email")).toHaveValue("invited@example.com");
 
   const save = page.getByRole("button", { name: "Save password" });
@@ -33,6 +37,8 @@ test("an invite link asks for a password, then for a household", async ({ page }
 
 test("a reset link asks for a new password; signing out leaves it", async ({ page }) => {
   await page.goto("./?token_hash=abc123&type=recovery");
+  await expect(page.getByRole("heading", { level: 1, name: "Reset your password" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "Choose a new password" }),
   ).toBeVisible();
@@ -42,8 +48,18 @@ test("a reset link asks for a new password; signing out leaves it", async ({ pag
 
 test("a used or expired link says so on the sign-in page", async ({ page }) => {
   await page.goto("./?token_hash=expired&type=invite");
+  await page.getByRole("button", { name: "Accept invite" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
   await expect(page.getByRole("alert")).toContainText("This link has expired or was already used");
+  await expect(page).toHaveURL(/\/app\/$/);
+});
+
+test("Not now leaves a link unused and goes to sign in", async ({ page }) => {
+  // "expired" would show an error if the token were tried.
+  await page.goto("./?token_hash=expired&type=invite");
+  await page.getByRole("button", { name: "Not now" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page).toHaveURL(/\/app\/$/);
 });
 

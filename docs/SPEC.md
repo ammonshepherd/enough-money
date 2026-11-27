@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.54.2.
+Version described: 0.54.3.
 
 ## 1. Purpose
 
@@ -390,8 +390,13 @@ Inviting someone (v0.50.0, `src/models/emailLink.ts`,
 `src/controllers/useEmailLink.ts`): the owner uses the Supabase dashboard,
 Authentication → Users → Invite user, with the person's email. Bird sends
 the invite. Its link opens the app as `?token_hash=…&type=invite`; the app
-takes the token out of the address bar at once, exchanges it for a session
-(`verifyOtp`), and shows "Choose a password" (new password twice, at least
+takes the token out of the address bar at once and shows "You're invited"
+with an Accept invite button and Not now (`EmailLinkPage`, v0.54.3). Only
+the tap exchanges the token for a session (`verifyOtp`): mail scanners
+(Gmail's among them) open links in a real browser, and a token used on
+page load went to them, leaving the person "This link has expired". Not
+now leaves the token unused and goes to Sign in. After the tap it shows
+"Choose a password" (new password twice, at least
 12 characters, `checkNewPassword`) before anything else. Then the usual
 Create household page follows, so each invited person gets their own
 household. Until the password is saved, a reload or sign-in on that device
@@ -403,11 +408,13 @@ still works too.
 Forgot password? (under Sign in) asks for an email and sends Supabase's
 Reset password email (`resetPasswordForEmail`); the page says the same
 whether or not the account exists. Its link (`type=recovery`) leads to
-"Choose a new password" the same way.
+"Reset your password" (Continue) and then "Choose a new password" the
+same way.
 
 Changing the password or email while signed in (v0.51.0) is in Manage →
 Account Info (below). A Change email address email's link
-(`type=email_change`) is taken out of the address bar the same way but
+(`type=email_change`) is taken out of the address bar the same way, asks
+for a tap on "Confirm your email" (Confirm) before its token is used, but
 asks for no password: Supabase sends one link to the old address and one
 to the new (Secure email change, on by default), and the email changes
 only once both are opened. The first answers with no session, and the app

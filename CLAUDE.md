@@ -58,8 +58,10 @@ always describes the app as of that version (including §9, not built yet).
   `{{ .SiteURL }}?token_hash={{ .TokenHash }}&type=invite|recovery|email_change`
   (never `{{ .ConfirmationURL }}`, whose `#` session clashes with hash
   routing; the emails' HTML is kept in `supabase/templates/`, v0.52.1,
-  and pasted into the dashboard); the app exchanges the token, removes it from the URL and, after
-  an invite or reset, asks for a password before anything else
+  and pasted into the dashboard); the app removes the token from the URL, exchanges it only once
+  the person taps the link page's button (v0.54.3: never on page load,
+  since mail scanners open links in a real browser and used tokens up)
+  and, after an invite or reset, asks for a password before anything else
   (`src/models/emailLink.ts`,
   `src/controllers/useEmailLink.ts`, docs/SPEC.md → Sign in). The whole site
   (landing page included) carries one Content Security Policy

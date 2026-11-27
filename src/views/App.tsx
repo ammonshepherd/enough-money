@@ -26,6 +26,7 @@ import {
 import { store } from "../models/store";
 import { CreateHouseholdPage } from "./CreateHouseholdPage";
 import { ErrorMessage } from "./components";
+import { EmailLinkPage } from "./EmailLinkPage";
 import { AccountsIcon, BudgetIcon, ChevronLeftIcon, InstallIcon, ManageIcon } from "./icons";
 import { AccountsPage } from "./pages/AccountsPage";
 import { BudgetPage } from "./pages/BudgetPage";
@@ -62,10 +63,8 @@ export function App() {
   const { install } = useInstallPrompt();
   const update = useAppUpdate();
   // The budget itself shows only once the email link (if any) is dealt with.
-  const inBudget =
-    session.status === "signedIn" &&
-    emailLink.state.status !== "checking" &&
-    !emailLink.passwordNeeded;
+  const linkOpen = emailLink.state.status === "waiting" || emailLink.state.status === "checking";
+  const inBudget = session.status === "signedIn" && !linkOpen && !emailLink.passwordNeeded;
   const desktop = useDesktop() && inBudget;
   // The header's spot for the page menu (a state, so pages re-render once it exists).
   const [menuSlot, setMenuSlot] = useState<HTMLElement | null>(null);
@@ -104,13 +103,21 @@ export function App() {
           </header>
         )}
 
-        {emailLink.state.status === "checking" ? (
+        {emailLink.state.status === "waiting" ? (
+          <main className="page-content">
+            <EmailLinkPage
+              type={emailLink.state.type}
+              onAccept={emailLink.accept}
+              onDismiss={emailLink.dismiss}
+            />
+          </main>
+        ) : emailLink.state.status === "checking" ? (
           <Message text="Checking your link..." />
         ) : (
           session.status === "loading" && <Message text="Loading Enough Money..." />
         )}
         {session.status === "error" && <Message error={session.error} />}
-        {session.status === "signedOut" && emailLink.state.status !== "checking" && (
+        {session.status === "signedOut" && !linkOpen && (
           <main className="page-content">
             <SignInPage
               onSignIn={emailLink.signIn}

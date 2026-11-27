@@ -109,6 +109,8 @@ test("Change email refuses an email in use and sends links for a new one", async
 test("a Change email address link says what happened", async ({ page }) => {
   // The first of the two links changes nothing yet.
   await page.goto("./?token_hash=half&type=email_change#manage");
+  await expect(page.getByRole("heading", { level: 1, name: "Confirm your email" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
   const banner = page.getByRole("status").filter({ hasText: "Link accepted" });
   await expect(banner).toContainText("also open the link sent to your other address");
   await expect(page).toHaveURL(/\/app\/#manage$/);
@@ -118,6 +120,7 @@ test("a Change email address link says what happened", async ({ page }) => {
 
   // The second signs in with the new email, with no password to choose.
   await page.goto("./?token_hash=abc&type=email_change");
+  await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Your email is now" })).toContainText(
     "Your email is now changed@example.com.",
   );
