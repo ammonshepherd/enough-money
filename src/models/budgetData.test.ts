@@ -65,8 +65,8 @@ function household(): BudgetData {
     ],
     groups: [{ id: "g", name: "Everyday", position: 0 }],
     envelopes: [
-      { id: "food", groupId: "g", name: "Food", position: 0, cardAccountId: null },
-      { id: "fun", groupId: "g", name: "Fun", position: 1, cardAccountId: null },
+      { id: "food", groupId: "g", name: "Food", position: 0, cardAccountId: null, dueDay: null },
+      { id: "fun", groupId: "g", name: "Fun", position: 1, cardAccountId: null, dueDay: null },
     ],
     monthPlans: [],
     envelopeMonths: [
@@ -578,9 +578,23 @@ describe("envelopes in use per month", () => {
       { id: "empty", name: "Empty", position: 2 },
     );
     data.envelopes.push(
-      { id: "trip", groupId: "extra", name: "Trip", position: 0, cardAccountId: null },
-      { id: "gifts", groupId: "extra", name: "Gifts", position: 1, cardAccountId: null },
-      { id: "new", groupId: "extra", name: "New", position: 2, cardAccountId: null },
+      {
+        id: "trip",
+        groupId: "extra",
+        name: "Trip",
+        position: 0,
+        cardAccountId: null,
+        dueDay: null,
+      },
+      {
+        id: "gifts",
+        groupId: "extra",
+        name: "Gifts",
+        position: 1,
+        cardAccountId: null,
+        dueDay: null,
+      },
+      { id: "new", groupId: "extra", name: "New", position: 2, cardAccountId: null, dueDay: null },
     );
     data.envelopeMonths.push(
       // Planned in September only, never funded.
@@ -798,6 +812,7 @@ describe("Spent and Refunded as shown", () => {
       name: "Home",
       position: 2,
       cardAccountId: null,
+      dueDay: null,
     });
     const spend = (id: string, amount: number) =>
       tx({ id, date: "2026-10-12", amount, allocations: [{ envelopeId: "home", amount }] });

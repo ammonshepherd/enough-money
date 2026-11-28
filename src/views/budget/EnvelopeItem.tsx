@@ -6,10 +6,11 @@ import { asDebt, formatCents } from "../../models/money";
 import { ErrorMessage, Money, SpentAmount } from "../components";
 import { EnvelopeIcon } from "../icons";
 import { EditableCell } from "./EditableCell";
+import { DueChip } from "./DueDay";
 import { SavedChip } from "./SavedChip";
 
 /**
- * One envelope: name, Saved and what is left; then Planned (tap to edit in
+ * One envelope: name, Saved, its due day and what is left; then Planned (tap to edit in
  * place) and Spent. Tapping the top line opens its sheet.
  * On a desktop it is one table row (name and Saved, Planned, Assigned,
  * Spent, Remaining) and the name shows the envelope in the panel.
@@ -86,6 +87,7 @@ export function EnvelopeItem({
               {!envelope.inUse && <small> · not used this month</small>}
             </span>
             {!card && <SavedChip cents={envelope.saved} />}
+            <DueChip due={page.due(envelope.id)} />
           </span>
         </button>
         {/* On a desktop, what is left is the row's last column instead. */}

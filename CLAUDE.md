@@ -259,7 +259,7 @@ non-card budget balances − all envelope money (P included)`.
   to…"). Renaming and moving go through `src/controllers/envelopeEdits.ts`.
 - Envelope rows run edge to edge. Line 1: the envelope icon (`EnvelopeIcon`,
   decorative), name and a Saved pill ("Saved $X": solid purple with a star,
-  six sparkles and a glow once above $0.00, quiet at $0.00), and what is left
+  six sparkles and a glow once above $0.00, quiet at $0.00), its due day ("Due 15th", v0.57.0) and what is left
   on the right (muted at $0.00; no visible caption, screen readers hear
   "remaining"). Line 2: Planned and Spent cells (decided in v0.40.0:
   phone rows show no Assigned, which is set from the Available to Assign
@@ -485,7 +485,7 @@ non-card budget balances − all envelope money (P included)`.
 - Backup (decided in v0.28.0, `src/models/backup.ts`): Manage → Backup exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings, income rules, tags, goals, payees and Expected income); Restore from Backup (Manage → Budget, in red) loads such a file only into an empty
+  CSV mappings, income rules, tags, goals, payees, Expected income and envelope due days); Restore from Backup (Manage → Budget, in red) loads such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).
@@ -512,6 +512,16 @@ non-card budget balances − all envelope money (P included)`.
   full ring, "Goal reached" and Archive goal (kept with `archived_at`, no
   longer shown; a new goal can be set). Past its date unmet: "$X short,
   date passed", no per-period figures. Set with a date from today on.
+- Envelope due days (decided in v0.57.0, `src/models/dueDates.ts`): a
+  day of the month (1–31) an envelope's bill is due, the same every month
+  (`categories.due_day`, null = none; card payment envelopes too). Display
+  only, like Planned: it changes no other number and nothing tracks
+  payment. Set in the envelope sheet (a picker under Planned, Assigned and
+  Spent: None, 1st–31st), shown as "Due 15th" on line 1 of the row after
+  the name and Saved pill (Compact rows and desktop too; never on a
+  collapsed group's bar). A day past a short month's end falls on its last
+  day. Amber ("soon") from 3 days before through the due day, only in the
+  current month.
 - Light and dark (decided in v0.48.0, `src/models/theme.ts`, display
   only): Manage → Appearance offers Match system (default), Light and
   Dark, kept per device and user in localStorage (never in Supabase). Dark

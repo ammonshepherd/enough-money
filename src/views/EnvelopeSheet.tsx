@@ -8,6 +8,7 @@ import { formatShortDay } from "../models/month";
 import { PadAmount } from "./AssignPad";
 import { EditableTitle, ErrorMessage, Money, SingleFieldForm, SpentAmount } from "./components";
 import { AmountInput } from "./AmountInput";
+import { DueDayField } from "./budget/DueDay";
 import { GoalPanel } from "./GoalPanel";
 import { TagChips } from "./Tags";
 
@@ -18,7 +19,7 @@ const STAR = "M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z";
 /**
  * Everything about one envelope this month, in a sheet at the bottom of the
  * screen: its group (to move it) and name (to rename), what is left and its money flow, the plan, Planned and Assigned to
- * edit, Saved with "Move some into Remaining…", its goal, and its transactions (tap one
+ * edit, its due day, Saved with "Move some into Remaining…", its goal, and its transactions (tap one
  * to edit it).
  */
 export function EnvelopeSheet({
@@ -126,6 +127,11 @@ export function EnvelopeSheet({
             placeholder="0.00"
             onSubmit={(text) => page.assign(row.id, text)}
           />
+          <DueDayField
+            envelopeName={row.name}
+            dueDay={page.dueDayOf(row.id)}
+            onSave={(dueDay) => page.setDueDay(row.id, dueDay)}
+          />
           <SavedPanel saved={row.saved} onMove={(text) => page.release(row.id, text)} />
           <p className="empty-state">
             Card purchases move money in here from their envelopes; payments to the card (a Transfer
@@ -189,6 +195,11 @@ export function EnvelopeSheet({
             </div>
           </div>
           <ErrorMessage error={error} />
+          <DueDayField
+            envelopeName={row.name}
+            dueDay={page.dueDayOf(row.id)}
+            onSave={(dueDay) => page.setDueDay(row.id, dueDay)}
+          />
 
           <SavedPanel saved={row.saved} onMove={(text) => page.release(row.id, text)} />
 

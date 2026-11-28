@@ -1,3 +1,4 @@
 {
+  "0.57.0": "Envelopes can have a due day: pick it in the envelope's sheet, and its row shows “Due 15th”, amber when it's near.",
   "0.56.0": "The update notice now tells you what's new in each version."
 }

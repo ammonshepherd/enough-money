@@ -381,6 +381,29 @@ export function storeRuleTests(makeStore: StoreFactory) {
     expect(await goalOf(ids.a)).toEqual([]);
   });
 
+  it("keeps an envelope's due day from 1 to 31, card payment envelopes too", async () => {
+    const { store, ids } = await setUp(makeStore);
+    const dueDayOf = async (envelopeId: string) =>
+      (await store.load())!.envelopes.find((e) => e.id === envelopeId)!.dueDay;
+    expect(await dueDayOf(ids.a)).toBeNull();
+
+    await store.setDueDay(ids.a, 15);
+    await store.setDueDay(ids.visaPayment, 31);
+    expect(await dueDayOf(ids.a)).toBe(15);
+    expect(await dueDayOf(ids.visaPayment)).toBe(31);
+    expect(await dueDayOf(ids.b)).toBeNull();
+
+    await rejects(store.setDueDay(ids.a, 0), /from 1 to 31/);
+    await rejects(store.setDueDay(ids.a, 32), /from 1 to 31/);
+    await rejects(store.setDueDay(ids.a, 2.5), /from 1 to 31/);
+    expect(await dueDayOf(ids.a)).toBe(15);
+
+    await store.setDueDay(ids.a, null);
+    await store.setDueDay(ids.visaPayment, null);
+    expect(await dueDayOf(ids.a)).toBeNull();
+    expect(await dueDayOf(ids.visaPayment)).toBeNull();
+  });
+
   it("keeps one Expected income per month, $0.00 or more, cleared with null", async () => {
     const { store, householdId, prefix } = await setUp(makeStore);
     // A month far from the seeded data, put back to no Expected income after.

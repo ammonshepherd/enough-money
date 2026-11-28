@@ -7,7 +7,7 @@
  * would lose: reconciled and voided marks, import keys (so later bank CSV
  * imports still skip rows already imported), where a row came from (`source`),
  * transfer links, splits, closed accounts, each card's payment envelope, the
- * saved CSV column mappings, tags, envelope goals, saved payees, each month's
+ * saved CSV column mappings, envelope due days, tags, envelope goals, saved payees, each month's
  * Expected income and when rows were created (ties in a day keep their order). The SQL functions export_backup / restore_backup read and
  * write it; see supabase/migrations/20261020105751_backup_restore.sql.
  *
@@ -16,6 +16,7 @@
  * and the in-memory store (UI tests) behaves like the database.
  */
 import { UserFacingError } from "./dataStore";
+import { isDueDay } from "./dueDates";
 import { isMonth, monthOf, type Month } from "./month";
 import { MAX_PAYEE_NAME, payeeKey } from "./payees";
 import { MAX_TAGS_PER_TRANSACTION, MAX_TAG_NAME, TAG_COLORS, tagKey, type TagColor } from "./tags";
@@ -52,6 +53,8 @@ export interface BackupEnvelope {
   position: number;
   /** Set on a credit card's payment envelope. */
   card_account_id: string | null;
+  /** The day of the month (1–31) it is due; missing in files made before v0.56.0. */
+  due_day?: number | null;
   created_at: string | null;
 }
 
@@ -247,6 +250,7 @@ export function validateBackup(value: unknown): Backup {
     name,
     position: int,
     card_account_id: optionalId,
+    due_day: (v) => v === null || v === undefined || isDueDay(v),
     created_at: timestamp,
   });
   const months = rows<BackupEnvelopeMonth>(value, "category_months", {

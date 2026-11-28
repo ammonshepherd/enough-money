@@ -32,8 +32,15 @@ describe("checkGoalDetails", () => {
 
 describe("checkGoalEnvelope", () => {
   const envelopes = [
-    { id: "e", groupId: "g", name: "Trip", position: 0, cardAccountId: null },
-    { id: "p", groupId: "c", name: "Visa payment", position: 0, cardAccountId: "visa" },
+    { id: "e", groupId: "g", name: "Trip", position: 0, cardAccountId: null, dueDay: null },
+    {
+      id: "p",
+      groupId: "c",
+      name: "Visa payment",
+      position: 0,
+      cardAccountId: "visa",
+      dueDay: null,
+    },
   ];
   it("refuses a card's payment envelope or a missing one", () => {
     expect(() => checkGoalEnvelope(envelopes, "e")).not.toThrow();

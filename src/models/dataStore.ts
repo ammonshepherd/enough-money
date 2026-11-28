@@ -119,6 +119,8 @@ export interface DataStore {
   renameGroup(groupId: string, name: string): Promise<void>;
   /** A card's payment envelope cannot be renamed: it is named after its card. */
   renameEnvelope(envelopeId: string, name: string): Promise<void>;
+  /** Sets the day of the month (1–31) the envelope is due, or null for none. Card payment envelopes too. */
+  setDueDay(envelopeId: string, dueDay: number | null): Promise<void>;
   /**
    * Moves an envelope to another group, at `position` there. A card's payment
    * envelope stays in its group.

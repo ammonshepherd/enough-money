@@ -21,6 +21,7 @@ import {
   SAME_PASSWORD,
   WRONG_PASSWORD,
 } from "./signInDetails";
+import { checkDueDay } from "./dueDates";
 import { cleanFeedback } from "./feedback";
 import { fetchAll } from "./fetchAll";
 import { checkExpectedIncome } from "./envelopePlan";
@@ -304,6 +305,7 @@ export function createSupabaseStore(
           name: c.name,
           position: c.position,
           cardAccountId: c.card_account_id,
+          dueDay: c.due_day,
         })),
         envelopeMonths: months.map((m) => ({
           envelopeId: m.category_id,
@@ -431,6 +433,16 @@ export function createSupabaseStore(
       const { data, error } = await db()
         .from("categories")
         .update({ name })
+        .eq("id", envelopeId)
+        .select("id");
+      check(error);
+      if (!data?.length) throw new UserFacingError("Envelope not found");
+    },
+
+    async setDueDay(envelopeId, dueDay) {
+      const { data, error } = await db()
+        .from("categories")
+        .update({ due_day: checkDueDay(dueDay) })
         .eq("id", envelopeId)
         .select("id");
       check(error);
