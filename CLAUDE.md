@@ -640,6 +640,15 @@ the version, changed files, tests run, remaining limitations, and the PR link.
 
 - Display-only or cosmetic changes are a patch version (z); anything that changes
   the decided math needs the owner's approval first and is a feature version (y).
+- Every version bump adds its "what's new" note to `public/whats-new.json`
+  (decided in v0.56.0): one plain sentence for the household, at most 140
+  characters, saying what they will notice (not how it was built). Draft
+  it, show it to the owner in chat and wait for their approval before
+  committing it; a unit test fails while package.json's version has no
+  note. The new version banner fetches the file from the new deploy and
+  lists the notes of every version newer than the running one (at most 3,
+  `newerNotes` in `src/models/whatsNew.ts`); the service worker never
+  keeps it.
 - Check visible UI changes with a Playwright screenshot (a throwaway spec,
   deleted afterwards) at phone width before opening the PR.
 - Merge only when asked: run `npm run backup` first (each production

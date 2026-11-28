@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.55.1.
+Version described: 0.56.0.
 
 ## 1. Purpose
 
@@ -330,8 +330,15 @@ These are implemented in `budgetMath.ts` and the controllers:
   has downloaded, a white card floats over the top of the screen, signed in
   or not: "A new version of Enough Money is available." with Later (hides it
   until the next check) and Refresh (switches to the new version and
-  reloads). The open app checks every hour and whenever it comes back on
-  screen, besides the browser's own check on load; offline it does nothing.
+  reloads). Under that sentence it lists what's new (v0.56.0): the note of
+  each version newer than the running one, newest first, at most 3, from
+  `public/whats-new.json` (one sentence per version, at most 140
+  characters, `src/models/whatsNew.ts`). The old version cannot know the
+  new one's notes, so it fetches the file from the server (`no-store`; the
+  service worker does not keep .json files); offline, or with no note,
+  the banner shows only the sentence. The open app checks every hour and
+  whenever it comes back on screen, besides the browser's own check on
+  load; offline it does nothing.
 - Bottom navigation (fixed): Budget, Accounts, Manage, with icons; the
   current page is highlighted. Page title is "⟨Page⟩ | Enough Money".
 - Hash routes (`src/models/routes.ts`): `#budget`, `#budget/YYYY-MM`,
@@ -1338,8 +1345,6 @@ Decided or wanted, but not in the app:
   shown on its Budget row while its group is open (not when collapsed).
   Display only, like Planned; open decisions: one date or a monthly day,
   and whether it shows in Compact rows.
-- A short "what's new" blurb in the Refresh banner (`useAppUpdate`),
-  written for each release. The owner reviews every blurb before it ships.
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a
