@@ -14,6 +14,7 @@ function household(): BudgetData {
     accounts: [],
     groups: [{ id: "bills", name: "Bills", position: 0 }],
     envelopes: [{ id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null }],
+    monthPlans: [],
     envelopeMonths: [
       { envelopeId: "rent", month: "2026-10", assigned: 0, released: 0, planned: 100_000 },
     ],
@@ -228,5 +229,48 @@ describe("copying a month's plan", () => {
       envelopeMonths: data.envelopeMonths.map((r) => ({ ...r, planned: 0 })),
     };
     expect(monthHasPlan(buildBudgetMonth(zeroed, "2026-10"))).toBe(false);
+  });
+});
+
+describe("the plan file's Income row (v0.55.0)", () => {
+  it("sets Expected income from a row named Income with no group", () => {
+    const preview = previewEnvelopePlan(
+      household(),
+      "2026-10",
+      "category,group,planned amount\nIncome,,4200\nRent,Bills,1200\nWater,Bills,45",
+    );
+    expect(preview.invalid).toEqual([]);
+    expect(preview.expectedIncome).toBe(420_000);
+    expect(preview.rows.map((r) => r.envelope)).toEqual(["Rent", "Water"]);
+    // Rent replaced (1200), Water new (45).
+    expect(preview.plan).toEqual({
+      expected: 420_000,
+      planned: 124_500,
+      left: 295_500,
+      over: 0,
+    });
+  });
+
+  it("accepts Expected income as the name, and only one Income row", () => {
+    const preview = previewEnvelopePlan(
+      household(),
+      "2026-10",
+      "Expected income,,3000\nincome,,10\nRent,Bills,1000",
+    );
+    expect(preview.expectedIncome).toBe(300_000);
+    expect(preview.invalid).toEqual([{ line: 2, message: "Income is already on line 1" }]);
+  });
+
+  it("keeps an envelope named Income when it has a group, and checks the amount", () => {
+    const preview = previewEnvelopePlan(household(), "2026-10", "Income,Bills,5\nIncome,,-1");
+    expect(preview.rows).toEqual([expect.objectContaining({ envelope: "Income", planned: 500 })]);
+    expect(preview.invalid).toEqual([{ line: 2, message: "Income cannot be negative" }]);
+    expect(preview.expectedIncome).toBeNull();
+  });
+
+  it("compares with the month's stored Expected income when the file has none", () => {
+    const data = { ...household(), monthPlans: [{ month: "2026-10", expectedIncome: 100_000 }] };
+    const preview = previewEnvelopePlan(data, "2026-10", "Rent,Bills,1200");
+    expect(preview.plan).toMatchObject({ expected: 100_000, planned: 120_000, over: 20_000 });
   });
 });

@@ -62,6 +62,17 @@ export interface EnvelopeMonthRecord {
 }
 
 /**
+ * The income the household expects in one month, set on the Budget page.
+ * The month's Planned amounts may add up to no more than it.
+ * Display only, like Planned: it changes no other number. A month with no
+ * record has no Expected income, and so no limit.
+ */
+export interface MonthPlan {
+  month: string;
+  expectedIncome: Cents;
+}
+
+/**
  * An amount to have in an envelope (Saved + Remaining) by a date. Display
  * only, like Planned: it changes no other number. An envelope has at most one
  * active goal; an archived one is kept but no longer shown. A card's payment
@@ -121,6 +132,8 @@ export interface BudgetData {
   groups: EnvelopeGroup[];
   envelopes: Envelope[];
   envelopeMonths: EnvelopeMonthRecord[];
+  /** Expected income, one per month that has it (see MonthPlan). */
+  monthPlans: MonthPlan[];
   transactions: Transaction[];
   /** Rules that mark matching inflows as Income (see incomeRules.ts). */
   incomeRules: IncomeRule[];

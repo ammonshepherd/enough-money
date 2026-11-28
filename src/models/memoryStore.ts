@@ -16,7 +16,7 @@ import {
 import { BATCH_MESSAGES, MAX_BATCH } from "./batchEdits";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
-import { nameKey } from "./envelopePlan";
+import { checkExpectedIncome, nameKey } from "./envelopePlan";
 import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
@@ -35,6 +35,7 @@ import {
   type TagDetails,
 } from "./tags";
 import { asImportFormat } from "./transactionImport";
+import type { Cents } from "./money";
 import type { BudgetData, Transaction } from "./types";
 
 /** Same message as the import_transactions SQL function. */
@@ -114,6 +115,13 @@ export function createMemoryStore(): DataStore {
   const rememberPayee = (name: string) => {
     const b = budget();
     if (!findPayee(b.payees, name)) b.payees.push({ id: id(), name: name.trim() });
+  };
+  /** Like the month_plans table: one row per month, removed when cleared (null). */
+  const setExpectedIncome = (month: string, amount: Cents | null) => {
+    checkExpectedIncome(month, amount);
+    const b = budget();
+    b.monthPlans = b.monthPlans.filter((p) => p.month !== month);
+    if (amount !== null) b.monthPlans.push({ month, expectedIncome: amount });
   };
   const envelopeMonth = (envelopeId: string, month: string) => {
     const b = budget();
@@ -232,6 +240,7 @@ export function createMemoryStore(): DataStore {
         tags: [],
         goals: [],
         payees: [],
+        monthPlans: [],
       };
     },
     async renameHousehold(_householdId, name) {
@@ -378,10 +387,12 @@ export function createMemoryStore(): DataStore {
       }
       for (const row of rows) envelopeMonth(row.envelopeId, month).planned = row.planned;
     },
-    async importEnvelopePlan(_householdId, month, rows) {
+    async importEnvelopePlan(_householdId, month, rows, expectedIncome) {
       const b = budget();
       const byPosition = <T extends { position: number }>(items: T[]) =>
         [...items].sort((x, y) => x.position - y.position);
+      // Like the database: a bad Expected income fails the whole import.
+      if (expectedIncome !== undefined) checkExpectedIncome(month, expectedIncome);
       for (const row of rows) {
         let group = byPosition(b.groups).find((g) => nameKey(g.name) === nameKey(row.group));
         if (!group) {
@@ -402,6 +413,10 @@ export function createMemoryStore(): DataStore {
         }
         envelopeMonth(envelope.id, month).planned = row.planned;
       }
+      if (expectedIncome !== undefined) setExpectedIncome(month, expectedIncome);
+    },
+    async setExpectedIncome(_householdId, month, amount) {
+      setExpectedIncome(month, amount);
     },
 
     async saveTransaction(_householdId, input) {
@@ -809,6 +824,10 @@ export function createMemoryStore(): DataStore {
           created_at: null,
         })),
         payees: b.payees.map((p) => ({ name: p.name, created_at: null })),
+        month_plans: b.monthPlans.map((m) => ({
+          month: m.month,
+          expected_income: m.expectedIncome,
+        })),
       };
     },
     async restoreBackup(_householdId, backup) {
@@ -882,6 +901,10 @@ export function createMemoryStore(): DataStore {
           archivedAt: g.archived_at,
         })),
         payees: [],
+        monthPlans: (file.month_plans ?? []).map((m) => ({
+          month: m.month,
+          expectedIncome: m.expected_income,
+        })),
       };
       // Like restore_backup: the file's own list, else the typed payees.
       if (file.payees) {

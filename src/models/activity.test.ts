@@ -63,6 +63,7 @@ const budget = (transactions: Transaction[], accounts?: Account[]): BudgetData =
     { id: "groceries", groupId: "g", name: "Groceries", position: 0, cardAccountId: null },
     { id: "kids", groupId: "g", name: "Kids", position: 1, cardAccountId: null },
   ],
+  monthPlans: [],
   envelopeMonths: [],
   transactions,
   incomeRules: [],

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAsyncAction } from "../controllers/useAsyncAction";
 import type { Budget } from "../controllers/useBudget";
 import { useEnvelopePlanImport } from "../controllers/useEnvelopePlanImport";
-import type { PlanPreviewRow } from "../models/envelopePlan";
+import type { PlanPreview, PlanPreviewRow } from "../models/envelopePlan";
 import type { Month } from "../models/month";
 import type { BudgetData } from "../models/types";
 import { ErrorMessage, Money } from "./components";
@@ -28,6 +28,8 @@ export function EnvelopePlanImport({
   // Changing the key empties the file input after an import or a clear.
   const [inputKey, setInputKey] = useState(0);
   const { preview } = plan;
+  // The Income row is imported too.
+  const count = preview ? preview.rows.length + (preview.expectedIncome === null ? 0 : 1) : 0;
 
   const reset = () => {
     plan.clear();
@@ -44,10 +46,12 @@ export function EnvelopePlanImport({
         Upload a CSV with the columns <strong>category, group, planned amount</strong>. Missing
         groups and envelopes are created, and each envelope’s Planned is set for{" "}
         {month ? plan.monthLabel : "the month you choose"}. Envelopes not in the file keep their
-        Planned.
+        Planned. A row named <strong>Income</strong> with no group sets the month’s Expected income.
       </p>
       <pre className="csv-example" aria-label="Example CSV">
-        {"category,group,planned amount\nRent,Bills,1200.00\nGroceries,Everyday,450\n"}
+        {
+          "category,group,planned amount\nIncome,,4200.00\nRent,Bills,1200.00\nGroceries,Everyday,450\n"
+        }
       </pre>
 
       <div className="form">
@@ -80,8 +84,9 @@ export function EnvelopePlanImport({
 
       {plan.done && (
         <p className="notice" role="status">
-          Imported {plan.done.count} {plan.done.count === 1 ? "envelope" : "envelopes"} for{" "}
-          {plan.done.monthLabel}. <a href={plan.done.href}>Open that budget</a>
+          Imported {plan.done.count} {plan.done.count === 1 ? "envelope" : "envelopes"}
+          {plan.done.income && " and the Expected income"} for {plan.done.monthLabel}.{" "}
+          <a href={plan.done.href}>Open that budget</a>
         </p>
       )}
 
@@ -95,6 +100,7 @@ export function EnvelopePlanImport({
             {preview.invalid.length > 0 &&
               ` ${preview.invalid.length} invalid ${preview.invalid.length === 1 ? "row" : "rows"} will be skipped.`}
           </p>
+          <PlanTotal preview={preview} />
 
           {preview.invalid.length > 0 && (
             <ul className="item-list" aria-label="Invalid rows">
@@ -127,14 +133,14 @@ export function EnvelopePlanImport({
             <button
               className="primary-button"
               type="button"
-              disabled={save.pending || preview.rows.length === 0}
+              disabled={save.pending || count === 0}
               onClick={async () => {
                 if (!(await save.run()).ok) return;
                 setInputKey((k) => k + 1);
                 onDone?.();
               }}
             >
-              Import {preview.rows.length} {preview.rows.length === 1 ? "row" : "rows"}
+              Import {count} {count === 1 ? "row" : "rows"}
             </button>
             <button className="secondary-button" type="button" onClick={reset}>
               Cancel
@@ -144,6 +150,37 @@ export function EnvelopePlanImport({
         </div>
       )}
     </section>
+  );
+}
+
+/** The plan's total after the import, against the Expected income (the file's or the month's). */
+function PlanTotal({ preview }: { preview: PlanPreview }) {
+  const { plan, expectedIncome } = preview;
+  return (
+    <p className={plan.over > 0 ? "plan-total over" : "plan-total"}>
+      {expectedIncome !== null && (
+        <>
+          Expected income <Money cents={expectedIncome} />.{" "}
+        </>
+      )}
+      Planned after the import: <Money cents={plan.planned} />
+      {plan.expected !== null && (
+        <>
+          {" "}
+          of <Money cents={plan.expected} />
+          {plan.over > 0 ? (
+            <>
+              , over planned by <Money cents={plan.over} />
+            </>
+          ) : (
+            <>
+              , <Money cents={plan.left ?? 0} /> left to plan
+            </>
+          )}
+        </>
+      )}
+      .
+    </p>
   );
 }
 

@@ -10,7 +10,7 @@ import type { Budget } from "./useBudget";
 const MAX_FILE_BYTES = 1_000_000;
 
 type Loaded = { fileName: string; text: string };
-type Done = { month: Month; count: number };
+type Done = { month: Month; count: number; income: boolean };
 
 /**
  * Manage → Import envelope plan: pick a month and a CSV, see a preview,
@@ -72,19 +72,25 @@ export function useEnvelopePlanImport(budget: Budget, data: BudgetData, fixedMon
     },
 
     importPlan: async () => {
-      if (!preview || preview.rows.length === 0) {
+      if (!preview || (preview.rows.length === 0 && preview.expectedIncome === null)) {
         throw new UserFacingError("There are no valid rows to import.");
       }
+      const { expectedIncome } = preview;
       const rows = preview.rows.map(({ group, envelope, planned }) => ({
         group,
         envelope,
         planned,
       }));
       await budget.change((store) =>
-        store.importEnvelopePlan(data.household.id, preview.month, rows),
+        store.importEnvelopePlan(
+          data.household.id,
+          preview.month,
+          rows,
+          expectedIncome ?? undefined,
+        ),
       );
       setFile(null);
-      setDone({ month: preview.month, count: rows.length });
+      setDone({ month: preview.month, count: rows.length, income: expectedIncome !== null });
     },
   };
 }

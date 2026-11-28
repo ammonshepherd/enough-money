@@ -74,6 +74,7 @@ function household(): BudgetData {
         cardAccountId: "visa",
       },
     ],
+    monthPlans: [],
     envelopeMonths: [],
     transactions: [],
   };

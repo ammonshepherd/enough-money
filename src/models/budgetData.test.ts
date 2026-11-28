@@ -68,6 +68,7 @@ function household(): BudgetData {
       { id: "food", groupId: "g", name: "Food", position: 0, cardAccountId: null },
       { id: "fun", groupId: "g", name: "Fun", position: 1, cardAccountId: null },
     ],
+    monthPlans: [],
     envelopeMonths: [
       { envelopeId: "food", month: "2026-09", assigned: 40_000, released: 0, planned: 0 },
       { envelopeId: "food", month: "2026-10", assigned: 30_000, released: 5_000, planned: 45_000 },

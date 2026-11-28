@@ -381,6 +381,38 @@ export function storeRuleTests(makeStore: StoreFactory) {
     expect(await goalOf(ids.a)).toEqual([]);
   });
 
+  it("keeps one Expected income per month, $0.00 or more, cleared with null", async () => {
+    const { store, householdId, prefix } = await setUp(makeStore);
+    // A month far from the seeded data, put back to no Expected income after.
+    const month = "2091-03";
+    const plansOf = async () => (await store.load())!.monthPlans.filter((p) => p.month === month);
+    try {
+      await store.setExpectedIncome(householdId, month, 420_000);
+      await store.setExpectedIncome(householdId, month, 300_000);
+      expect(await plansOf()).toEqual([{ month, expectedIncome: 300_000 }]);
+
+      await rejects(store.setExpectedIncome(householdId, month, -1), /negative/);
+      await rejects(store.setExpectedIncome(householdId, "2091-13", 1_000), /Month/);
+      expect(await plansOf()).toEqual([{ month, expectedIncome: 300_000 }]);
+
+      // A plan file's Income row sets it with the plan.
+      await store.importEnvelopePlan(
+        householdId,
+        month,
+        [{ group: prefix, envelope: `${prefix} A`, planned: 25_000 }],
+        510_000,
+      );
+      expect(await plansOf()).toEqual([{ month, expectedIncome: 510_000 }]);
+
+      await store.setExpectedIncome(householdId, month, 0);
+      expect(await plansOf()).toEqual([{ month, expectedIncome: 0 }]);
+      await store.setExpectedIncome(householdId, month, null);
+      expect(await plansOf()).toEqual([]);
+    } finally {
+      await store.setExpectedIncome(householdId, month, null);
+    }
+  });
+
   it("keeps tag names unique per household, ignoring case, with a known colour", async () => {
     const { store, householdId, prefix } = await setUp(makeStore);
     const trip = await store.addTag(householdId, { name: `  ${prefix}   T1 `, color: "blue" });

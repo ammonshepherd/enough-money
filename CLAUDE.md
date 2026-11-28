@@ -114,11 +114,20 @@ Envelope money = Saved + Remaining
 
 - Saved is a reserve. It is only spendable after the user releases it into
   Remaining through a prompt.
-- Planned is user input only; it affects no other number.
+- Planned is user input only; it affects no other number. Since v0.55.0 a
+  month may have an Expected income (`month_plans`, display only like
+  Planned): `Left to plan = Expected income − Σ Planned` (card payment
+  envelopes left out, no carry-over), and raising a Planned may use at most
+  what is left (`plannedRaiseAllowed` in `budgetMath.ts`); lowering the
+  income, copying, CSV import and two people at once may leave it Over
+  planned, shown on the plan strip under Available to Assign. Every Planned
+  counts in full, even one paid from Saved. No Expected income = no limit.
 - A month whose Budget page opens with every Planned at $0.00 (Planned is stored
   per envelope and month; there is no separate plan record) offers to start the
-  plan: copy last month's Planned or Spent (as shown), or upload a plan CSV for
-  that month. Copying fills only envelopes still at $0.00 and skips card payment
+  plan: first the month's Expected income (one tap on last month's Expected
+  income, last month's income or the 3-month average, or typed), then copy
+  last month's Planned or Spent (as shown), or upload a plan CSV for that
+  month (a row "Income" with no group sets the Expected income). Copying fills only envelopes still at $0.00 and skips card payment
   envelopes (`planToCopy` in `src/models/envelopePlan.ts`). The offer is decided
   when the month opens, so typing a Planned does not make the page jump.
 
@@ -476,7 +485,7 @@ non-card budget balances − all envelope money (P included)`.
 - Backup (decided in v0.28.0, `src/models/backup.ts`): Manage → Backup exports the
   whole household to one JSON file (every column that matters, including
   reconciled, voided, import keys, source, transfer links, closed accounts,
-  CSV mappings, income rules, tags, goals and payees); Restore from Backup (Manage → Budget, in red) loads such a file only into an empty
+  CSV mappings, income rules, tags, goals, payees and Expected income); Restore from Backup (Manage → Budget, in red) loads such a file only into an empty
   household, all or nothing, with fresh ids. When a column or table is added,
   add it to `export_backup`, `restore_backup`, the `Backup` types and
   `validateBackup` (bump the format version if old files need converting).
@@ -555,7 +564,7 @@ The PR #4 prototype was replaced in v0.2.0 by the migrations in
 `supabase/migrations/` (applied to the dev project; file names match the
 project's migration history). Tables: households, household_members, accounts,
 category_groups, categories (= envelopes), category_months, transactions,
-transaction_allocations, income_rules, tags, transaction_tags, envelope_goals, payees. Every table has household-scoped RLS; multi-row
+transaction_allocations, income_rules, tags, transaction_tags, envelope_goals, payees, month_plans. Every table has household-scoped RLS; multi-row
 writes go through SQL functions (`create_household`, `save_transaction`,
 `adjust_category_month`, `move_between_envelopes`,
 `import_envelope_plan`, `import_transactions`, `save_transfer`, `mark_income`,
