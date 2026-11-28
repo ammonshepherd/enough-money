@@ -119,3 +119,10 @@ test("a new month offers last month's plan", async ({ page }) => {
   await page.getByRole("heading", { name: /No plan for/ }).scrollIntoViewIfNeeded();
   await shot(page, "new-month");
 });
+
+test("setting this month's Expected income", async ({ page }) => {
+  await signIn(page);
+  await page.getByRole("region", { name: "Plan" }).getByRole("button").click();
+  await page.getByRole("dialog").getByRole("group", { name: "Suggested amounts" }).waitFor();
+  await shot(page, "expected-income");
+});
