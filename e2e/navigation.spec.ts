@@ -241,6 +241,17 @@ test("assets and manifest are served from /app/", async ({ page }) => {
   }
 });
 
+test("the what's new notes are served beside the app and never kept by the service worker", async ({
+  page,
+}) => {
+  // The new version banner fetches them from the new deploy, so the old
+  // service worker must not answer with its own copy.
+  const notes = await (await page.request.get("/app/whats-new.json")).json();
+  const version = JSON.parse(readFileSync("package.json", "utf8")).version;
+  expect(typeof notes[version]).toBe("string");
+  expect(readFileSync("dist-e2e/app/sw.js", "utf8")).not.toContain("whats-new");
+});
+
 test("the build puts the landing page at the site root, beside app/", () => {
   // vite preview serves only the app, so this checks the files Cloudflare gets.
   const landing = readFileSync("dist-e2e/index.html", "utf8");
