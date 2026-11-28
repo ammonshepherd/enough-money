@@ -1,4 +1,4 @@
--- v0.56.0: envelope due days. An envelope may have a day of the month
+-- v0.57.0: envelope due days. An envelope may have a day of the month
 -- (1–31) its bill is due, repeating every month; card payment envelopes
 -- too. Display only, like Planned: it changes no other number. Backups
 -- carry it. No existing rows change (every envelope starts with none).
@@ -99,7 +99,7 @@ begin
 end;
 $$;
 
--- Envelopes restore with their due day; files from before v0.56.0 have
+-- Envelopes restore with their due day; files from before v0.57.0 have
 -- none (null).
 create or replace function public.restore_backup(p_household_id uuid, p_backup jsonb)
 returns void
