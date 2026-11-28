@@ -498,9 +498,30 @@ describe("Expected income and the plan (v0.55.0)", () => {
       { id: "bills", name: "Bills", position: 1 },
     ],
     envelopes: [
-      { id: "pay", groupId: "cards", name: "Visa", position: 0, cardAccountId: "visa" },
-      { id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null },
-      { id: "food", groupId: "bills", name: "Food", position: 1, cardAccountId: null },
+      {
+        id: "pay",
+        groupId: "cards",
+        name: "Visa",
+        position: 0,
+        cardAccountId: "visa",
+        dueDay: null,
+      },
+      {
+        id: "rent",
+        groupId: "bills",
+        name: "Rent",
+        position: 0,
+        cardAccountId: null,
+        dueDay: null,
+      },
+      {
+        id: "food",
+        groupId: "bills",
+        name: "Food",
+        position: 1,
+        cardAccountId: null,
+        dueDay: null,
+      },
     ],
     monthPlans: [{ month: "2026-11", expectedIncome: 300_000 }],
     envelopeMonths: [

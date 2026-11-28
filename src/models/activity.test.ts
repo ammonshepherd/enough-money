@@ -60,8 +60,15 @@ const budget = (transactions: Transaction[], accounts?: Account[]): BudgetData =
   ],
   groups: [{ id: "g", name: "Everyday", position: 0 }],
   envelopes: [
-    { id: "groceries", groupId: "g", name: "Groceries", position: 0, cardAccountId: null },
-    { id: "kids", groupId: "g", name: "Kids", position: 1, cardAccountId: null },
+    {
+      id: "groceries",
+      groupId: "g",
+      name: "Groceries",
+      position: 0,
+      cardAccountId: null,
+      dueDay: null,
+    },
+    { id: "kids", groupId: "g", name: "Kids", position: 1, cardAccountId: null, dueDay: null },
   ],
   monthPlans: [],
   envelopeMonths: [],

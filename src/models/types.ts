@@ -50,6 +50,11 @@ export interface Envelope {
    * fills and empties it; transactions are never categorized to it.
    */
   cardAccountId: string | null;
+  /**
+   * The day of the month (1–31) its bill is due, every month; null for none.
+   * Display only, like Planned (see dueDates.ts).
+   */
+  dueDay: number | null;
 }
 
 /** What was stored for one envelope in one month. */

@@ -52,6 +52,7 @@ function sample(): Backup {
         name: "Food",
         position: 0,
         card_account_id: null,
+        due_day: 15,
         created_at: null,
       },
       {
@@ -68,6 +69,7 @@ function sample(): Backup {
         name: "Visa payment",
         position: 0,
         card_account_id: "visa",
+        due_day: 31,
         created_at: null,
       },
     ],
@@ -320,6 +322,26 @@ describe("validateBackup with Expected income", () => {
     refuses((b) => (b.month_plans![0]!.expected_income = 1.5), "bad expected_income");
     refuses((b) => (b.month_plans![0]!.month = "2030-13"), "bad month");
     refuses((b) => (b.month_plans![1]!.month = "2030-01"), "Expected income appears twice");
+  });
+});
+
+describe("validateBackup with due days", () => {
+  it("reads a file made before due days as having none", () => {
+    const old = sample();
+    for (const e of old.categories) delete e.due_day;
+    expect(() => validateBackup(old)).not.toThrow();
+  });
+
+  it("checks due days like the database", () => {
+    refuses((b) => (b.categories[0]!.due_day = 0), "bad due_day");
+    refuses((b) => (b.categories[0]!.due_day = 32), "bad due_day");
+    refuses((b) => (b.categories[0]!.due_day = 1.5), "bad due_day");
+    expect(() =>
+      validateBackup({
+        ...sample(),
+        categories: sample().categories.map((e) => ({ ...e, due_day: null })),
+      }),
+    ).not.toThrow();
   });
 });
 

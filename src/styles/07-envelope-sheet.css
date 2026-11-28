@@ -166,6 +166,16 @@ div.sheet-field .sheet-field-value {
   background: var(--surface-sunken);
 }
 
+/* Due day: a picker on its own line under Planned, Assigned and Spent. */
+
+.due-day-field {
+  margin-block-start: 0.75rem;
+}
+
+.due-day-field .sheet-field {
+  max-inline-size: 16rem;
+}
+
 /* Saved: purple with sparkles, and the way to move some into Remaining. */
 
 .saved-panel {

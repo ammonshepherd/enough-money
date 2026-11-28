@@ -17,6 +17,7 @@ import { BATCH_MESSAGES, MAX_BATCH } from "./batchEdits";
 import { UserFacingError, type DataStore, type UserSession } from "./dataStore";
 import { EXPIRED_LINK, MIN_PASSWORD_LENGTH } from "./emailLink";
 import { checkExpectedIncome, nameKey } from "./envelopePlan";
+import { checkDueDay } from "./dueDates";
 import { cleanFeedback } from "./feedback";
 import { checkGoalDetails, checkGoalEnvelope } from "./goals";
 import { cleanPayeeName, findPayee, payeeKey, remembersPayee } from "./payees";
@@ -284,6 +285,7 @@ export function createMemoryStore(): DataStore {
           name: paymentEnvelopeName(account.name),
           position: nextPosition(b.envelopes.filter((e) => e.groupId === groupId)),
           cardAccountId: accountId,
+          dueDay: null,
         });
       }
     },
@@ -305,7 +307,14 @@ export function createMemoryStore(): DataStore {
       budget().groups.push({ id: id(), name, position });
     },
     async addEnvelope(_householdId, groupId, name, position) {
-      budget().envelopes.push({ id: id(), groupId, name, position, cardAccountId: null });
+      budget().envelopes.push({
+        id: id(),
+        groupId,
+        name,
+        position,
+        cardAccountId: null,
+        dueDay: null,
+      });
     },
     async deleteEnvelope(envelopeId) {
       const b = budget();
@@ -343,6 +352,11 @@ export function createMemoryStore(): DataStore {
         );
       }
       envelope.name = name;
+    },
+    async setDueDay(envelopeId, dueDay) {
+      const envelope = budget().envelopes.find((e) => e.id === envelopeId);
+      if (!envelope) throw new UserFacingError("Envelope not found");
+      envelope.dueDay = checkDueDay(dueDay);
     },
     async moveEnvelope(envelopeId, groupId, position) {
       const b = budget();
@@ -408,6 +422,7 @@ export function createMemoryStore(): DataStore {
             name: row.envelope.trim(),
             position: nextPosition(siblings),
             cardAccountId: null,
+            dueDay: null,
           };
           b.envelopes.push(envelope);
         }
@@ -775,6 +790,7 @@ export function createMemoryStore(): DataStore {
           name: e.name,
           position: e.position,
           card_account_id: e.cardAccountId,
+          due_day: e.dueDay,
           created_at: null,
         })),
         category_months: b.envelopeMonths.map((m) => ({
@@ -861,6 +877,7 @@ export function createMemoryStore(): DataStore {
           name: e.name,
           position: e.position,
           cardAccountId: e.card_account_id,
+          dueDay: e.due_day ?? null,
         })),
         envelopeMonths: file.category_months.map((m) => ({
           envelopeId: m.category_id,

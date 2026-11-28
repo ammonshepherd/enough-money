@@ -70,6 +70,7 @@ export type Database = {
         Row: {
           card_account_id: string | null
           created_at: string
+          due_day: number | null
           group_id: string
           household_id: string
           id: string
@@ -79,6 +80,7 @@ export type Database = {
         Insert: {
           card_account_id?: string | null
           created_at?: string
+          due_day?: number | null
           group_id: string
           household_id: string
           id?: string
@@ -88,6 +90,7 @@ export type Database = {
         Update: {
           card_account_id?: string | null
           created_at?: string
+          due_day?: number | null
           group_id?: string
           household_id?: string
           id?: string

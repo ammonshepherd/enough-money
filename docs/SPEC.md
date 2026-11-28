@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.56.0.
+Version described: 0.57.0.
 
 ## 1. Purpose
 
@@ -162,7 +162,7 @@ visitors get nothing.
 | `household_members`       | household, user (one household per user), role `owner`/`member`.                                                                                                                                                                                                        |
 | `accounts`                | name, `type` (`checking`/`credit_card`), `on_budget` (false = a tracking account; only `checking` can be off budget), `opening_balance`, `opening_date`, `closed_at`, `import_format` (JSON, ≤ 8 KB). `type` and `on_budget` never change. Never deleted.               |
 | `category_groups`         | name, `position`. Deletable only when empty.                                                                                                                                                                                                                            |
-| `categories` (envelopes)  | group, name, `position`, `card_account_id` (set on a card's payment envelope; unique per card). Deletable only with no transactions; deleting removes its months (their Assigned returns to Available to Assign).                                                       |
+| `categories` (envelopes)  | group, name, `position`, `card_account_id` (set on a card's payment envelope; unique per card), `due_day` (1–31 or null, v0.57.0; display only). Deletable only with no transactions; deleting removes its months (their Assigned returns to Available to Assign).      |
 | `category_months`         | (envelope, `YYYY-MM`) → `assigned` (may be negative after moves), `released` (≥ 0), `planned` (≥ 0).                                                                                                                                                                    |
 | `transactions`            | account, date, amount (≠ 0), payee (≤ 200), memo (≤ 500), `is_transfer`, `transfer_id`, `is_income`, `voided`, `source` (`manual`/`csv`), `import_key` (unique per account), `reconciled` (a mark only).                                                                |
 | `transaction_allocations` | transaction, envelope, amount. One row per envelope (several = a split), each envelope at most once, each with the transaction's sign. Must sum to the transaction amount (checked at commit). None for transfers, income or card credits; never to a payment envelope. |
@@ -232,6 +232,16 @@ These are implemented in `budgetMath.ts` and the controllers:
   (rounded up); each rounded up to the cent, so assigning it reaches the
   goal. A goal is set with a date from today on (the app's check; the
   database takes any date, since goal dates pass).
+
+- **Envelope due days** (v0.57.0, `src/models/dueDates.ts`, display only
+  like Planned: a due day changes no other number). An envelope (a card's
+  payment envelope too) may have a day of the month its bill is due,
+  1–31, the same every month (`categories.due_day`; null = none). In a
+  month shorter than the day it falls on the month's last day (the 31st
+  shows as "Due 30th" in November, "Due 28th" or "Due 29th" in February).
+  It is "soon" from 3 days before through the due day, and only in the
+  current month (another month's page never shows it as soon); after the
+  day it is plain again. Nothing tracks whether the bill was paid.
 
 - **Assign limit:** assigning in month M is limited to the smallest Available to
   Assign of M and every later month with data (`assignableIn`), never below 0.
@@ -544,7 +554,7 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   rounded corners, 8px in from the edges, 14px above and below). Its bar is
   pale blue with blue text and chevron and a card icon after the chevron.
 - "Compact rows" (phone only; in the page menu since v0.36.0, a
-  `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved and what is
+  `menuitemcheckbox` with a green tick when on): every envelope shows only line 1 (name, Saved, the due day and what is
   left); Planned, Spent (and Assigned on a desktop), Refunded and Short are hidden until it is
   switched off (the sheet still shows them). Kept in localStorage under
   `bb.budget.compactRows.<userId>` ("1" or "0"; unreadable means off).
@@ -552,7 +562,12 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   minus sign; "$0.00" when nothing is spent), in the cell's usual colour;
   so does every other Spent amount (the sheet's Spent field and plan line,
   the desktop month summary; `SpentAmount` in `src/views/components.tsx`).
-  Envelope names are regular weight (not bold). A phone row's line 2 has
+  Envelope names are regular weight (not bold). An envelope with a due day
+  shows "Due 15th" on line 1 after the name and Saved pill (v0.57.0;
+  `DueChip` in `src/views/budget/DueDay.tsx`): small muted text, an amber
+  pill while soon (screen readers hear "(soon)"); Compact rows keep it, a
+  collapsed group's bar never shows it, and a desktop row shows it in the
+  same place, after the name. A phone row's line 2 has
   only Planned and Spent (v0.40.0); a desktop row adds an Assigned column.
   Planned and Assigned cells are buttons ("Edit
   planned amount for Groceries, currently $300.00"). Planned turns into a text
@@ -606,6 +621,10 @@ Mockup: `docs/mockups/budget-screen.html` (design "J"; sample amounts).
   - Planned and Assigned fields (blur or Enter saves, Escape undoes the typing
     without closing; same checks as the cells; on a phone Assigned opens the
     number pad over the sheet) and Spent;
+  - Due day (v0.57.0, on its own line under them; on a card's payment
+    envelope under its Assign form): a picker of "None" and "1st of each
+    month" to "31st of each month", saved as soon as it is picked (see §4
+    Envelope due days);
   - Saved: purple with sparkles and "Move some into Remaining…" (opens "Amount
     to move into Remaining" + Move, i.e. Release from Saved); at $0.00 a quiet
     "Nothing saved yet" panel;
@@ -1132,7 +1151,8 @@ none chosen, Envelopes is open.
   says what it holds (counts and the
   months with transactions or a stored Planned/Assigned/Released). The file
   mirrors the tables without `household_id`: household name, accounts (closed
-  ones, `import_format`), groups, envelopes (`card_account_id`), envelope
+  ones, `import_format`), groups, envelopes (`card_account_id`, `due_day`;
+  files from before v0.57.0 have none), envelope
   months, transactions (`reconciled`, `voided`, `import_key`, `source`,
   `transfer_id`, `is_income`, `created_at`), allocations, income rules,
   tags and transaction tags (files from before v0.39.0 have no tag lists
@@ -1146,7 +1166,7 @@ none chosen, Envelopes is open.
 - **Restore from Backup** (red, under Budget, `BackupRestore`) reads a file, checks every database rule first
   (`validateBackup`: types and limits, unique ids/months/split
   envelopes/import keys per account, tag and payee names ignoring case, tags per
-  transaction (≤ 20), links, goals (amount above $0.00, one active per
+  transaction (≤ 20), links, due days (1–31 or none), goals (amount above $0.00, one active per
   envelope, never on a payment envelope), one payment envelope per card and
   none allocated to, transfer pairs, split sums and signs, Income and card
   credits) and shows what it holds. Restore only works while the household
@@ -1341,10 +1361,6 @@ Decided or wanted, but not in the app:
 - Inviting someone into your household from the app (today an invite
   from the Supabase dashboard creates a new household, v0.50.0), perhaps
   with a limit of 5 members per household.
-- Envelope due dates: a due date per envelope (a bill's due day, say),
-  shown on its Budget row while its group is open (not when collapsed).
-  Display only, like Planned; open decisions: one date or a monthly day,
-  and whether it shows in Compact rows.
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a

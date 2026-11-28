@@ -449,6 +449,22 @@ button.envelope-left:focus-visible {
   color: var(--muted-zero);
 }
 
+/* Due day: a quiet label after the name and Saved; amber when near. */
+
+.due-chip {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.due-chip.soon {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+}
+
 /* Saved: a pill next to the name; solid purple with sparkles once above $0.00. */
 
 .saved-chip {

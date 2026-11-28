@@ -13,7 +13,16 @@ function household(): BudgetData {
     payees: [],
     accounts: [],
     groups: [{ id: "bills", name: "Bills", position: 0 }],
-    envelopes: [{ id: "rent", groupId: "bills", name: "Rent", position: 0, cardAccountId: null }],
+    envelopes: [
+      {
+        id: "rent",
+        groupId: "bills",
+        name: "Rent",
+        position: 0,
+        cardAccountId: null,
+        dueDay: null,
+      },
+    ],
     monthPlans: [],
     envelopeMonths: [
       { envelopeId: "rent", month: "2026-10", assigned: 0, released: 0, planned: 100_000 },
@@ -173,9 +182,30 @@ describe("copying a month's plan", () => {
       groups: [...data.groups, { id: "cards", name: "Credit card payments", position: 1 }],
       envelopes: [
         ...data.envelopes,
-        { id: "food", groupId: "bills", name: "Food", position: 1, cardAccountId: null },
-        { id: "fun", groupId: "bills", name: "Fun", position: 2, cardAccountId: null },
-        { id: "visa-pay", groupId: "cards", name: "Visa", position: 0, cardAccountId: "visa" },
+        {
+          id: "food",
+          groupId: "bills",
+          name: "Food",
+          position: 1,
+          cardAccountId: null,
+          dueDay: null,
+        },
+        {
+          id: "fun",
+          groupId: "bills",
+          name: "Fun",
+          position: 2,
+          cardAccountId: null,
+          dueDay: null,
+        },
+        {
+          id: "visa-pay",
+          groupId: "cards",
+          name: "Visa",
+          position: 0,
+          cardAccountId: "visa",
+          dueDay: null,
+        },
       ],
       envelopeMonths: [
         ...data.envelopeMonths,

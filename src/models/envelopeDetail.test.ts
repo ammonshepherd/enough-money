@@ -60,7 +60,9 @@ describe("remainingParts", () => {
         },
       ],
       groups: [{ id: "g", name: "Everyday", position: 0 }],
-      envelopes: [{ id: "food", groupId: "g", name: "Food", position: 0, cardAccountId: null }],
+      envelopes: [
+        { id: "food", groupId: "g", name: "Food", position: 0, cardAccountId: null, dueDay: null },
+      ],
       monthPlans: [],
       envelopeMonths: [
         { envelopeId: "food", month: "2026-09", assigned: 10_000, released: 0, planned: 0 },

@@ -23,6 +23,7 @@ import {
   remainingParts,
 } from "../models/envelopeDetail";
 import { monthHasPlan, planToCopy, type PlanSource } from "../models/envelopePlan";
+import { dueLabel, withDueDay } from "../models/dueDates";
 import { formatCents, roundMoney, type Cents } from "../models/money";
 import { activeGoal, checkGoalDetails } from "../models/goals";
 import { addMonths, currentMonth, formatMonth, todayIso, type Month } from "../models/month";
@@ -118,6 +119,10 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
     return goal && { ...goal, progress: goalProgress(goal, row.envelopeMoney, todayIso()) };
   };
 
+  /** The envelope's due day (1–31), or null for none. */
+  const dueDayOf = (envelopeId: string) =>
+    data.envelopes.find((e) => e.id === envelopeId)?.dueDay ?? null;
+
   // Moves only in this month and later: a past move would change later months' Saved.
   const canMove = canMoveIn(month, currentMonth());
   const movable = (envelopeId: string) => (canMove ? movableFrom(envelope(envelopeId)) : 0);
@@ -192,6 +197,24 @@ export function useBudgetPage(budget: Budget, data: BudgetData, month: Month) {
           ),
       );
       setOffer({ month, show: false });
+    },
+
+    /**
+     * What an envelope's row shows for its due day this month ("Due 15th",
+     * soon from 3 days before through the day in the current month), or null.
+     */
+    due: (envelopeId: string) => dueLabel(dueDayOf(envelopeId), month, todayIso()),
+    dueDayOf,
+    /**
+     * Sets the day of the month (1–31) the envelope is due, every month; null
+     * clears it. Display only: no other number changes.
+     */
+    setDueDay: async (envelopeId: string, dueDay: number | null) => {
+      if (dueDay === dueDayOf(envelopeId)) return;
+      await budget.change(
+        (store) => store.setDueDay(envelopeId, dueDay),
+        (current) => withDueDay(current, envelopeId, dueDay),
+      );
     },
 
     /** The groups an envelope can move to, in order (never the card group). */
