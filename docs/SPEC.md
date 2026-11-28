@@ -9,7 +9,7 @@ sources together are the full picture; when they disagree, fix the docs:
 | `supabase/migrations/*.sql` | The exact database: columns, constraints, SQL, RLS |
 | This file                   | Everything else: structure, screens, import, look  |
 
-Version described: 0.55.0.
+Version described: 0.55.1.
 
 ## 1. Purpose
 
@@ -106,8 +106,8 @@ always show what the store holds.
   starts with a plan; then envelopes can't go negative, no autopilot,
   leftover money becomes Saved, debt stays in view), "How it
   works" (set up once: add accounts, create envelopes; then every month:
-  make a plan, assign, record spending, reconcile, watch Saved grow, as
-  numbered cards with pictures, and two unnumbered ones: no money, no
+  set Expected income (v0.55.1), make a plan, assign, record
+  spending, reconcile, watch Saved grow, as numbered cards with pictures, and two unnumbered ones: no money, no
   spending, and reviewing imported transactions; v0.54.1), an FAQ and a closing band, each picture a phone screenshot
   in `landing/images/` (see Commands). `legacy-redirect.js` sends old
   `/#route` links and home screen icons saved before v0.43.0 to `/app/`,
@@ -1340,8 +1340,6 @@ Decided or wanted, but not in the app:
   and whether it shows in Compact rows.
 - A short "what's new" blurb in the Refresh banner (`useAppUpdate`),
   written for each release. The owner reviews every blurb before it ships.
-- Landing page How it works: a new step 3, before Make a plan, to work out
-  how much income you'll have this month.
 - Editing an income rule (delete and re-add instead).
 - Budget page: an icon chosen per envelope (every row shows the same
   envelope icon, `EnvelopeIcon`; Manage shows none); the page menu on a

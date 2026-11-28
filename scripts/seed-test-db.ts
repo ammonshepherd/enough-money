@@ -293,6 +293,13 @@ async function seedHouseholdA(db: Client): Promise<void> {
       await w.plan(envelope, m, planned);
       await w.assign(envelope, m, assigned);
     }
+    // $3,000.00 of Expected income, so $850.00 is left to plan.
+    check(
+      await db
+        .from("month_plans")
+        .insert({ household_id: householdId, month: m, expected_income: 300_000 }),
+      "set expected income",
+    );
   }
   // Cash set aside to pay the card this month.
   await w.assign(payment, now, 15_000);
