@@ -158,7 +158,7 @@ test("the envelope sheet moves an envelope to another group", async ({ page }) =
   await addAccount(page, { name: "Visa", owed: "0" });
   await goTo(page, "Budget");
   const card = await openEnvelope(page, "Visa payment");
-  await expect(card.getByRole("combobox")).toHaveCount(0);
+  await expect(card.getByRole("combobox", { name: "Group for Visa payment" })).toHaveCount(0);
   await expect(card).toContainText("Credit card payments");
 });
 
